@@ -5,7 +5,7 @@ const GitHubAchievements = ({ achievements }) => {
 
   return (
     <div className="bg-white p-4 group shadow-lg border border-gray-200 rounded-2xl hover:shadow-xl hover:border-gray-300 hover:bg-gradient-to-br hover:from-white hover:to-blue-50/30 transition-all duration-300">
-      <h4 className="text-xs font-medium uppercase tracking-wide text-black/80 mb-4 hover:text-blue-600 hover:scale-105 transition-all duration-200">GitHub Achievements</h4>
+      <h4 className="text-xs font-medium uppercase tracking-wide text-black/80 mb-4 transition-all duration-200">GitHub Achievements</h4>
       <div className="space-y-3">
         {achievements.map((achievement, index) => (
           <div 
