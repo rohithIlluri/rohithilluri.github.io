@@ -55,11 +55,13 @@ const Hero = () => {
   }, []);
 
   return (
-    <section id="hero" className={COMPONENT_STYLES.section.base} aria-label="Hero section">
+    <section id="hero" className={`${COMPONENT_STYLES.section.base} -mt-8 pt-2`} aria-label="Hero section">
       <div className={COMPONENT_STYLES.section.container}>
-        <h1 className={`${COMPONENT_STYLES.fontSizes['4xl']} lg:${COMPONENT_STYLES.fontSizes['5xl']} font-bold text-black mb-8`}>
-          Rohith Illuri
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className={`${COMPONENT_STYLES.fontSizes['4xl']} lg:${COMPONENT_STYLES.fontSizes['5xl']} font-bold text-black`}>
+            Rohith Illuri
+          </h1>
+        </div>
         
         <div className="mb-8">
           <h2 className={`${COMPONENT_STYLES.fontSizes.lg} font-bold text-black mb-3`}>tldr; </h2>

@@ -4,23 +4,24 @@
 
 /* Global App Visibility Improvements */
 html {
-  font-size: 18px; /* Increase base font size from 16px to 18px */
+  /* Reduce base scale by ~15% (from 18px -> 15.3px) */
+  font-size: 15.3px;
 }
 
 body {
-  font-size: 1.1rem; /* Slightly larger body text */
-  line-height: 1.6; /* Better line spacing for readability */
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
-/* Increase spacing and sizing for better visibility */
-.text-sm { font-size: 1rem; }
-.text-base { font-size: 1.125rem; }
-.text-lg { font-size: 1.25rem; }
-.text-xl { font-size: 1.5rem; }
-.text-2xl { font-size: 1.875rem; }
-.text-3xl { font-size: 2.25rem; }
-.text-4xl { font-size: 3rem; }
-.text-5xl { font-size: 3.75rem; }
+/* Keep utility overrides in sync with new root size */
+.text-sm { font-size: 0.85rem; }
+.text-base { font-size: 0.956rem; }
+.text-lg { font-size: 1.063rem; }
+.text-xl { font-size: 1.275rem; }
+.text-2xl { font-size: 1.594rem; }
+.text-3xl { font-size: 1.913rem; }
+.text-4xl { font-size: 2.55rem; }
+.text-5xl { font-size: 3.188rem; }
 
 /* GitHub contribution graph grid */
 .grid-cols-53 {
