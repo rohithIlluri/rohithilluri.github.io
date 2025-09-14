@@ -181,20 +181,20 @@ const Projects = ({ repos, loading, error }) => {
 
   return (
     <section id="projects" className={COMPONENT_STYLES.section.base} aria-label="Projects section">
-      {/* Header at navbar height */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Header - responsive layout */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Projects</h2>
-          <p className="text-lg text-gray-600 max-w-2xl">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Featured Projects</h2>
+          <p className="text-sm sm:text-lg text-gray-600 max-w-2xl leading-tight sm:leading-normal">
             Here are some of my recent projects showcasing different technologies and approaches to problem-solving.
           </p>
         </div>
         
-        {/* Refresh button - top right */}
+        {/* Refresh button - responsive positioning */}
         <button
           onClick={fetchLiveData}
           disabled={liveDataLoading}
-          className="flex items-center space-x-2 px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          className="flex items-center justify-center sm:justify-start space-x-2 px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm w-full sm:w-auto"
           title="Refresh live data from GitHub"
         >
           <svg 
@@ -205,7 +205,7 @@ const Projects = ({ repos, loading, error }) => {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span>{liveDataLoading ? 'Updating...' : 'Refresh Data'}</span>
+          <span className="whitespace-nowrap">{liveDataLoading ? 'Updating...' : 'Refresh Data'}</span>
         </button>
       </div>
       
@@ -225,7 +225,7 @@ const Projects = ({ repos, loading, error }) => {
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
             {filteredRepos.map((repo) => {
               const repoInfo = getRepoInfo(repo);
               const techStack = normalizeTopicsToStack(repoInfo.liveData?.topics || repo.topics || []);
@@ -235,7 +235,7 @@ const Projects = ({ repos, loading, error }) => {
                   className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 will-change-transform"
                 >
                   {/* Enhanced thumbnail with live screenshot priority */}
-                  <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                  <div className="relative h-36 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                     {(() => {
                       const { liveScreenshot, mshot, og } = getRepoThumbnailUrl(repo.name, repoInfo.liveUrl);
                       const primaryImage = repoInfo.liveUrl ? (liveScreenshot || mshot) : og;
@@ -246,7 +246,7 @@ const Projects = ({ repos, loading, error }) => {
                           <img
                             src={primaryImage}
                             alt={`${repo.name} preview`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain sm:object-cover bg-white"
                             loading="lazy"
                             onError={(e) => {
                               if (fallbackImage && e.currentTarget.src !== fallbackImage) {
@@ -284,18 +284,18 @@ const Projects = ({ repos, loading, error }) => {
                   </div>
 
                   {/* Content section */}
-                  <div className="p-6">
-                    <div className="mb-3">
-                      <h3 className="font-bold text-gray-900 text-lg line-clamp-1 group-hover:text-blue-600 transition-colors">
+                  <div className="p-3 sm:p-6">
+                    <div className="mb-2">
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg line-clamp-1 group-hover:text-blue-600 transition-colors">
                         {repo.name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </h3>
                     </div>
                     
-                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4">
                       {repoInfo.description}
                     </p>
                     
-                    <div className="h-6 flex items-center text-xs text-gray-500 mb-4">
+                    <div className="h-5 sm:h-6 flex items-center text-xs text-gray-500 mb-2 sm:mb-4">
                       <span className="flex items-center">
                         <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
@@ -304,23 +304,24 @@ const Projects = ({ repos, loading, error }) => {
                       </span>
                     </div>
 
-                    {/* Action buttons - consistent spacing and sizing for all cards */}
-                    <div className="flex items-end justify-between">
-                      <div className="flex flex-col items-start">
+                    {/* Action buttons - responsive layout */}
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-0">
+                      {/* Mobile: Stack vertically, Desktop: Side by side */}
+                      <div className="flex flex-col items-start order-2 sm:order-1">
                         <button
                           type="button"
                           aria-label="View on GitHub"
                           onClick={() => window.open(repoInfo.githubUrl, '_blank', 'noopener,noreferrer')}
-                          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 min-w-[80px] justify-center hover:bg-gray-200 hover:border-gray-300"
+                          className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-gray-200 hover:border-gray-300 w-full sm:w-auto"
                         >
                           <FaGithub className="w-4 h-4" />
                           <span>Code</span>
                         </button>
                       </div>
 
-                      <div className="flex flex-col items-end">
-                        {/* Technology icons - always show in consistent area */}
-                        <div className="h-6 flex items-center justify-end mb-2">
+                      <div className="flex flex-col items-end order-1 sm:order-2">
+                        {/* Technology icons - responsive sizing */}
+                        <div className="h-5 sm:h-6 flex items-center justify-end mb-1.5 sm:mb-2">
                           {(() => {
                             const allTechs = [...techStack];
                             // Add primary language if not already in techStack
@@ -330,10 +331,10 @@ const Projects = ({ repos, loading, error }) => {
                             
                             return allTechs.length > 0 && (
                               <div className="flex items-center space-x-1">
-                                {allTechs.slice(0, 4).map((tech) => {
-                                  const icon = getLanguageIcon(tech.toLowerCase(), "w-6 h-6");
+                                {allTechs.slice(0, 3).map((tech) => {
+                                  const icon = getLanguageIcon(tech.toLowerCase(), "w-4 h-4 sm:w-6 sm:h-6");
                                   return icon ? (
-                                    <div key={tech} className="w-7 h-7 flex items-center justify-center">
+                                    <div key={tech} className="w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center">
                                       {icon}
                                     </div>
                                   ) : null;
@@ -343,13 +344,13 @@ const Projects = ({ repos, loading, error }) => {
                           })()}
                         </div>
 
-                        {/* Demo button or spacer - maintains consistent height */}
-                        <div className="h-10 flex items-center">
+                        {/* Demo button - responsive sizing */}
+                        <div className="h-8 sm:h-10 flex items-center w-full sm:w-auto">
                           {repoInfo.liveUrl && (
                             <button
                               type="button"
                               onClick={() => window.open(repoInfo.liveUrl, '_blank', 'noopener,noreferrer')}
-                              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-sm transition-all duration-200 min-w-[80px] justify-center hover:bg-blue-700 hover:shadow-md"
+                              className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-sm transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-blue-700 hover:shadow-md w-full sm:w-auto"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
