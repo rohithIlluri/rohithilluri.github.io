@@ -94,59 +94,61 @@ const Projects = ({ repos, loading, error }) => {
   };
 
   // Helper function to get the skill icon for a language
-  const getLanguageIcon = (language) => {
+  const getLanguageIcon = (language, size = "w-4 h-4") => {
     if (!language) return null;
     
     switch (language.toLowerCase()) {
       case "javascript":
-        return <SiJavascript className="w-4 h-4 text-yellow-400" />;
+        return <SiJavascript className={`${size} text-yellow-400`} />;
       case "typescript":
-        return <SiTypescript className="w-4 h-4 text-blue-600" />;
+        return <SiTypescript className={`${size} text-blue-600`} />;
       case "react":
-        return <SiReact className="w-4 h-4 text-blue-400" />;
+        return <SiReact className={`${size} text-blue-400`} />;
       case "node.js":
       case "nodejs":
-        return <SiNodedotjs className="w-4 h-4 text-green-600" />;
+        return <SiNodedotjs className={`${size} text-green-600`} />;
       case "python":
-        return <SiPython className="w-4 h-4 text-blue-500" />;
+        return <SiPython className={`${size} text-blue-500`} />;
       case "java":
-        return <FaJava className="w-4 h-4 text-red-600" />;
+        return <FaJava className={`${size} text-red-600`} />;
       case "html":
-        return <SiHtml5 className="w-4 h-4 text-orange-500" />;
+        return <SiHtml5 className={`${size} text-orange-500`} />;
       case "css":
-        return <SiCss3 className="w-4 h-4 text-blue-500" />;
+        return <SiCss3 className={`${size} text-blue-500`} />;
       case "tailwind":
       case "tailwind css":
-        return <SiTailwindcss className="w-4 h-4 text-cyan-500" />;
+        return <SiTailwindcss className={`${size} text-cyan-500`} />;
       case "git":
-        return <SiGit className="w-4 h-4 text-orange-600" />;
+        return <SiGit className={`${size} text-orange-600`} />;
       case "docker":
-        return <SiDocker className="w-4 h-4 text-blue-500" />;
+        return <SiDocker className={`${size} text-blue-500`} />;
       case "mongodb":
-        return <SiMongodb className="w-4 h-4 text-green-500" />;
+        return <SiMongodb className={`${size} text-green-500`} />;
       case "postgresql":
-        return <SiPostgresql className="w-4 h-4 text-blue-600" />;
+        return <SiPostgresql className={`${size} text-blue-600`} />;
       case "next.js":
       case "nextjs":
-        return <SiNextdotjs className="w-4 h-4 text-black" />;
+        return <SiNextdotjs className={`${size} text-black`} />;
       case "graphql":
-        return <SiGraphql className="w-4 h-4 text-pink-500" />;
+        return <SiGraphql className={`${size} text-pink-500`} />;
       default:
         return (
-          <div className="w-4 h-4 bg-gray-400 rounded-sm flex items-center justify-center text-white text-xs font-bold">
+          <div className={`${size} bg-gray-400 rounded-sm flex items-center justify-center text-white text-xs font-bold`}>
             {language.charAt(0).toUpperCase()}
           </div>
         );
     }
   };
 
-  // Derive a thumbnail automatically from GitHub OpenGraph image
+  // Enhanced thumbnail logic - prioritize live app screenshots
   const getRepoThumbnailUrl = (repoName, liveUrl) => {
-    // Primary: GitHub OpenGraph image for the repo
+    // Primary: Live app screenshot if available
+    const liveScreenshot = liveUrl ? `https://api.screenshotone.com/take?access_key=demo&url=${encodeURIComponent(liveUrl)}&viewport_width=1200&viewport_height=800&device_scale_factor=1&format=png&image_quality=80&block_ads=true&block_cookie_banners=true&block_banners_by_heuristics=false&block_trackers=true&delay=3&timeout=60` : null;
+    // Secondary: WordPress mshots as fallback
+    const mshot = liveUrl ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(liveUrl)}?w=1200&h=800` : null;
+    // Tertiary: GitHub OpenGraph image
     const og = `https://opengraph.githubassets.com/1/${GITHUB_USERNAME}/${repoName}`;
-    // Secondary: WordPress mshots of live URL (if available)
-    const mshot = liveUrl ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(liveUrl)}?w=1200` : null;
-    return { og, mshot };
+    return { liveScreenshot, mshot, og };
   };
 
   // Map GitHub topics into a small set of recognizable tech labels
@@ -179,26 +181,35 @@ const Projects = ({ repos, loading, error }) => {
 
   return (
     <section id="projects" className={COMPONENT_STYLES.section.base} aria-label="Projects section">
-      <div className={COMPONENT_STYLES.section.container}>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className={COMPONENT_STYLES.section.heading}>Recent Work</h2>
-          <button
-            onClick={fetchLiveData}
-            disabled={liveDataLoading}
-            className="flex items-center space-x-2 px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Refresh live data from GitHub"
-          >
-            <svg 
-              className={`w-4 h-4 ${liveDataLoading ? 'animate-spin' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>{liveDataLoading ? 'Updating...' : 'Refresh'}</span>
-          </button>
+      {/* Header at navbar height */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Projects</h2>
+          <p className="text-lg text-gray-600 max-w-2xl">
+            Here are some of my recent projects showcasing different technologies and approaches to problem-solving.
+          </p>
         </div>
+        
+        {/* Refresh button - top right */}
+        <button
+          onClick={fetchLiveData}
+          disabled={liveDataLoading}
+          className="flex items-center space-x-2 px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          title="Refresh live data from GitHub"
+        >
+          <svg 
+            className={`w-4 h-4 ${liveDataLoading ? 'animate-spin' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>{liveDataLoading ? 'Updating...' : 'Refresh Data'}</span>
+        </button>
+      </div>
+      
+      <div className={COMPONENT_STYLES.section.container}>
         
         {loading && (
           <div className="text-center py-12 bg-white/50 rounded-md border border-black/5">
@@ -214,81 +225,141 @@ const Projects = ({ repos, loading, error }) => {
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {filteredRepos.map((repo) => {
               const repoInfo = getRepoInfo(repo);
+              const techStack = normalizeTopicsToStack(repoInfo.liveData?.topics || repo.topics || []);
               return (
                 <div
                   key={repo.id}
-                  className="p-6 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors group min-h-[220px] flex flex-col"
+                  className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 will-change-transform"
                 >
-                  {/* Auto-generated thumbnail */}
-                  <div className="w-full h-40 rounded-md overflow-hidden border border-gray-200 bg-white mb-4 relative">
+                  {/* Enhanced thumbnail with live screenshot priority */}
+                  <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                     {(() => {
-                      const { og, mshot } = getRepoThumbnailUrl(repo.name, repoInfo.liveUrl);
+                      const { liveScreenshot, mshot, og } = getRepoThumbnailUrl(repo.name, repoInfo.liveUrl);
+                      const primaryImage = repoInfo.liveUrl ? (liveScreenshot || mshot) : og;
+                      const fallbackImage = repoInfo.liveUrl ? og : null;
+                      
                       return (
                         <>
                           <img
-                            src={og}
-                            alt={`${repo.name} banner`}
+                            src={primaryImage}
+                            alt={`${repo.name} preview`}
                             className="w-full h-full object-cover"
                             loading="lazy"
                             onError={(e) => {
-                              if (mshot) {
-                                e.currentTarget.src = mshot;
+                              if (fallbackImage && e.currentTarget.src !== fallbackImage) {
+                                e.currentTarget.src = fallbackImage;
                               } else {
                                 e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement.classList.add('bg-gradient-to-br', 'from-blue-50', 'to-purple-50');
                               }
                             }}
                           />
-                          {/* Derived badges overlay (bottom-right) */}
-                          <div className="absolute bottom-2 right-2 flex items-center space-x-2 bg-white/80 backdrop-blur px-2 py-1 rounded-md border border-gray-200">
-                            {normalizeTopicsToStack(repoInfo.liveData?.topics || repo.topics || []).slice(0,4).map((label) => (
-                              <span key={label} className="text-xs text-black/80">{label}</span>
-                            ))}
-                          </div>
+                          {/* Tech stack overlay */}
+                          {techStack.length > 0 && (
+                            <div className="absolute bottom-3 left-3 right-3">
+                              <div className="flex flex-wrap gap-1">
+                                {techStack.slice(0, 3).map((tech) => (
+                                  <span 
+                                    key={tech} 
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-700 rounded-md shadow-sm"
+                                  >
+                                    {getLanguageIcon(tech.toLowerCase())}
+                                    <span className="ml-1">{tech}</span>
+                                  </span>
+                                ))}
+                                {techStack.length > 3 && (
+                                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-500 rounded-md shadow-sm">
+                                    +{techStack.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </>
                       );
                     })()}
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1">
-                    <h3 className="font-bold text-black text-xl mb-2 line-clamp-1">{repo.name}</h3>
-                    <p className="text-gray-600 text-lg leading-relaxed line-clamp-3">{repoInfo.description}</p>
-                    <div className="mt-3 text-sm text-black/60 flex items-center space-x-3">
-                      {repoInfo.language && (
-                        <span className="flex items-center">
-                          {getLanguageIcon(repoInfo.language)}
-                          <span className="ml-2">{repoInfo.language}</span>
-                        </span>
-                      )}
-                      <span>{getRelativeTime(repoInfo.updated)}</span>
-                      {repoInfo.liveData && <span className="text-green-600">●</span>}
+                  {/* Content section */}
+                  <div className="p-6">
+                    <div className="mb-3">
+                      <h3 className="font-bold text-gray-900 text-lg line-clamp-1 group-hover:text-blue-600 transition-colors">
+                        {repo.name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </h3>
                     </div>
-                  </div>
+                    
+                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
+                      {repoInfo.description}
+                    </p>
+                    
+                    <div className="h-6 flex items-center text-xs text-gray-500 mb-4">
+                      <span className="flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        {getRelativeTime(repoInfo.updated)}
+                      </span>
+                    </div>
 
-                  <div className="mt-auto pt-4 border-t border-gray-200 flex items-center justify-between">
-                    <button
-                      type="button"
-                      aria-label="Open GitHub repository"
-                      onClick={() => window.open(repoInfo.githubUrl, '_blank', 'noopener,noreferrer')}
-                      className="p-2 rounded-md border border-gray-200 bg-white text-black/70 hover:text-black hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
-                    >
-                      <FaGithub className="w-4 h-4" />
-                    </button>
+                    {/* Action buttons - consistent spacing and sizing for all cards */}
+                    <div className="flex items-end justify-between">
+                      <div className="flex flex-col items-start">
+                        <button
+                          type="button"
+                          aria-label="View on GitHub"
+                          onClick={() => window.open(repoInfo.githubUrl, '_blank', 'noopener,noreferrer')}
+                          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 min-w-[80px] justify-center hover:bg-gray-200 hover:border-gray-300"
+                        >
+                          <FaGithub className="w-4 h-4" />
+                          <span>Code</span>
+                        </button>
+                      </div>
 
-                    {repoInfo.liveUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => window.open(repoInfo.liveUrl, '_blank', 'noopener,noreferrer')}
-                        className="px-3 py-2 text-xs font-medium rounded-md bg-black text-button hover:bg-black/90 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200"
-                      >
-                        Check Demo
-                      </button>
-                    ) : (
-                      <div />
-                    )}
+                      <div className="flex flex-col items-end">
+                        {/* Technology icons - always show in consistent area */}
+                        <div className="h-6 flex items-center justify-end mb-2">
+                          {(() => {
+                            const allTechs = [...techStack];
+                            // Add primary language if not already in techStack
+                            if (repoInfo.language && !allTechs.some(tech => tech.toLowerCase() === repoInfo.language.toLowerCase())) {
+                              allTechs.unshift(repoInfo.language);
+                            }
+                            
+                            return allTechs.length > 0 && (
+                              <div className="flex items-center space-x-1">
+                                {allTechs.slice(0, 4).map((tech) => {
+                                  const icon = getLanguageIcon(tech.toLowerCase(), "w-6 h-6");
+                                  return icon ? (
+                                    <div key={tech} className="w-7 h-7 flex items-center justify-center">
+                                      {icon}
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Demo button or spacer - maintains consistent height */}
+                        <div className="h-10 flex items-center">
+                          {repoInfo.liveUrl && (
+                            <button
+                              type="button"
+                              onClick={() => window.open(repoInfo.liveUrl, '_blank', 'noopener,noreferrer')}
+                              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-sm transition-all duration-200 min-w-[80px] justify-center hover:bg-blue-700 hover:shadow-md"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              <span>Demo</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
