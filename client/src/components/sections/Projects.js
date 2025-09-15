@@ -140,15 +140,17 @@ const Projects = ({ repos, loading, error }) => {
     }
   };
 
-  // Enhanced thumbnail logic - prioritize live app screenshots
-  const getRepoThumbnailUrl = (repoName, liveUrl) => {
-    // Primary: Live app screenshot if available
+  // Enhanced thumbnail logic - prioritize manual screenshots
+  const getRepoThumbnailUrl = (repoName, liveUrl, customScreenshot) => {
+    // Primary: Manual screenshot if provided
+    const manual = customScreenshot;
+    // Secondary: Live app screenshot if available  
     const liveScreenshot = liveUrl ? `https://api.screenshotone.com/take?access_key=demo&url=${encodeURIComponent(liveUrl)}&viewport_width=1200&viewport_height=800&device_scale_factor=1&format=png&image_quality=80&block_ads=true&block_cookie_banners=true&block_banners_by_heuristics=false&block_trackers=true&delay=3&timeout=60` : null;
-    // Secondary: WordPress mshots as fallback
+    // Tertiary: WordPress mshots as fallback
     const mshot = liveUrl ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(liveUrl)}?w=1200&h=800` : null;
-    // Tertiary: GitHub OpenGraph image
+    // Quaternary: GitHub OpenGraph image
     const og = `https://opengraph.githubassets.com/1/${GITHUB_USERNAME}/${repoName}`;
-    return { liveScreenshot, mshot, og };
+    return { manual, liveScreenshot, mshot, og };
   };
 
   // Map GitHub topics into a small set of recognizable tech labels
@@ -234,12 +236,13 @@ const Projects = ({ repos, loading, error }) => {
                   key={repo.id}
                   className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 will-change-transform"
                 >
-                  {/* Enhanced thumbnail with live screenshot priority */}
+                  {/* Enhanced thumbnail with manual screenshot priority */}
                   <div className="relative h-36 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                     {(() => {
-                      const { liveScreenshot, mshot, og } = getRepoThumbnailUrl(repo.name, repoInfo.liveUrl);
-                      const primaryImage = repoInfo.liveUrl ? (liveScreenshot || mshot) : og;
-                      const fallbackImage = repoInfo.liveUrl ? og : null;
+                      const customInfo = CUSTOM_PROJECTS[repo.name];
+                      const { manual, liveScreenshot, mshot, og } = getRepoThumbnailUrl(repo.name, repoInfo.liveUrl, customInfo?.screenshot);
+                      const primaryImage = manual || (repoInfo.liveUrl ? (liveScreenshot || mshot) : og);
+                      const fallbackImage = manual ? (repoInfo.liveUrl ? (liveScreenshot || mshot || og) : og) : (repoInfo.liveUrl ? og : null);
                       
                       return (
                         <>
@@ -350,7 +353,7 @@ const Projects = ({ repos, loading, error }) => {
                             <button
                               type="button"
                               onClick={() => window.open(repoInfo.liveUrl, '_blank', 'noopener,noreferrer')}
-                              className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-sm transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-blue-700 hover:shadow-md w-full sm:w-auto"
+                              className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-sm transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-blue-800 hover:shadow-md w-full sm:w-auto"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

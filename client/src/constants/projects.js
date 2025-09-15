@@ -11,7 +11,7 @@
 // ========================================
 
 export const PROJECT_REPOS = [
-  'Nnets',           // Neural Networks implementation
+  'Crave',           // Neural Networks implementation
   'toronto-project', // Toronto city data analysis project
   'cryptoapp',            // Personal blog application
   'spotify-UI'       // Spotify UI clone/redesign
@@ -28,9 +28,11 @@ export const PROJECT_REPOS = [
 // ========================================
 
 export const CUSTOM_PROJECTS = {
-  'Nnets': {
-    description: 'A comprehensive neural network implementation featuring backpropagation, multiple activation functions, and gradient descent optimization. Built with Python and NumPy for educational purposes and practical machine learning applications.',
-    language: 'Python'
+  'Crave': {
+    description: 'A food delivery app built with Next.js and Tailwind CSS. A marketplace for food lovers to share their recipes and find new ones.',
+    language: 'JavaScript',
+    liveUrl: 'https://crave-food-sharing.vercel.app/',
+    screenshot: '/project-screenshots/crave.png'
   },
   
   'toronto-project': {
@@ -41,7 +43,8 @@ export const CUSTOM_PROJECTS = {
   'cryptoapp': {
     description: 'A modern, responsive cryptocurrency dashboard built with React and Tailwind CSS, featuring real-time market data, charts, and news.',
     language: 'JavaScript',
-    liveUrl: 'https://cryptoapp-livid-sigma.vercel.app/'
+    liveUrl: 'https://cryptoapp-livid-sigma.vercel.app/',
+    screenshot: '/project-screenshots/cryptoapp.png'
   },
   
   'spotify-UI': {
