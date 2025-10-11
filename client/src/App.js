@@ -42,7 +42,7 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       <main className="py-6 xl:py-8 relative pb-12 sm:pb-16 lg:pb-8 xl:pb-12" role="main">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Suspense fallback={<div />}> 
@@ -53,7 +53,7 @@ function App() {
               <Route
                 path="/"
                 element={
-                  <Suspense fallback={<div className="bg-white p-8 rounded-2xl border border-gray-200 text-center">Loading...</div>}>
+                  <Suspense fallback={<div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-gray-200 dark:border-slate-700 text-center text-gray-900 dark:text-white">Loading...</div>}>
                     <ErrorBoundary>
                       <Hero />
                       {/* Keep rest of home sections */}
@@ -68,7 +68,7 @@ function App() {
               <Route
                 path="/projects"
                 element={
-                  <Suspense fallback={<div className="bg-white p-8 rounded-2xl border border-gray-200 text-center">Loading projects...</div>}>
+                  <Suspense fallback={<div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-gray-200 dark:border-slate-700 text-center text-gray-900 dark:text-white">Loading projects...</div>}>
                     <ErrorBoundary>
                       <section aria-label="Projects">
                         <Projects repos={repos} loading={loading} error={error} />
@@ -83,9 +83,9 @@ function App() {
       </main>
 
       <Suspense fallback={
-        <div className="bg-white p-8 text-center border-t border-gray-200">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-gray-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading footer...</p>
+        <div className="bg-white dark:bg-slate-800 p-8 text-center border-t border-gray-200 dark:border-slate-700">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 dark:border-slate-600 border-t-gray-600 dark:border-t-slate-200 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-slate-400">Loading footer...</p>
         </div>
       }>
         <Footer />

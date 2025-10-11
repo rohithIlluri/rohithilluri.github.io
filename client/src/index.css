@@ -269,4 +269,148 @@ body {
   animation-delay: 1000ms;
 }
 
+/* Dark mode styles */
+.dark {
+  @apply bg-slate-900 text-white;
+}
+
+.dark .bg-white {
+  @apply bg-slate-800;
+}
+
+.dark .text-black {
+  @apply text-white;
+}
+
+.dark .text-gray-800 {
+  @apply text-slate-200;
+}
+
+.dark .text-gray-600 {
+  @apply text-slate-400;
+}
+
+.dark .text-gray-700 {
+  @apply text-slate-300;
+}
+
+.dark .text-gray-500 {
+  @apply text-slate-400;
+}
+
+.dark .text-gray-400 {
+  @apply text-slate-500;
+}
+
+.dark .border-gray-200 {
+  @apply border-slate-700;
+}
+
+.dark .border-gray-300 {
+  @apply border-slate-600;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-slate-800;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-slate-700;
+}
+
+.dark .bg-gray-200 {
+  @apply bg-slate-600;
+}
+
+.dark .bg-gray-800 {
+  @apply bg-slate-700;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  @apply hover:bg-slate-800;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  @apply hover:bg-slate-700;
+}
+
+.dark .hover\:text-gray-600:hover {
+  @apply hover:text-slate-300;
+}
+
+.dark .hover\:text-gray-900:hover {
+  @apply hover:text-slate-100;
+}
+
+.dark .hover\:border-gray-300:hover {
+  @apply hover:border-slate-600;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  @apply bg-slate-800;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-slate-600;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-500;
+}
+
+/* Dark mode focus styles */
+.dark *:focus {
+  outline-color: #94a3b8;
+}
+
+/* Dark mode shadows */
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.dark .shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark mode hover shadow effects */
+.dark .hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.dark .hover\:shadow-2xl:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark mode liquid glass effect adjustments */
+.dark .liquid-bg::before,
+.dark .liquid-bg::after {
+  opacity: 0.2;
+}
+
+.dark .liquid-button {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(30, 41, 59, 0.7));
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.dark .liquid-button::before {
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
+}
+
  

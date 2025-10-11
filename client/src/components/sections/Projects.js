@@ -186,8 +186,8 @@ const Projects = ({ repos, loading, error }) => {
       {/* Header - responsive layout */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-8">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Featured Projects</h2>
-          <p className="text-sm sm:text-lg text-gray-600 max-w-2xl leading-tight sm:leading-normal">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Featured Projects</h2>
+          <p className="text-sm sm:text-lg text-gray-600 dark:text-slate-400 max-w-2xl leading-tight sm:leading-normal">
             Here are some of my recent projects showcasing different technologies and approaches to problem-solving.
           </p>
         </div>
@@ -196,7 +196,7 @@ const Projects = ({ repos, loading, error }) => {
         <button
           onClick={fetchLiveData}
           disabled={liveDataLoading}
-          className="flex items-center justify-center sm:justify-start space-x-2 px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm w-full sm:w-auto"
+          className="flex items-center justify-center sm:justify-start space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 hover:border-gray-300 dark:hover:border-slate-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm w-full sm:w-auto"
           title="Refresh live data from GitHub"
         >
           <svg 
@@ -214,15 +214,15 @@ const Projects = ({ repos, loading, error }) => {
       <div className={COMPONENT_STYLES.section.container}>
         
         {loading && (
-          <div className="text-center py-12 bg-white/50 rounded-md border border-black/5">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-black/20 border-t-black"></div>
-            <p className="mt-4 text-black/70 text-sm">Loading projects...</p>
+          <div className="text-center py-12 bg-white/50 dark:bg-slate-800/50 rounded-md border border-black/5 dark:border-slate-700">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-black/20 dark:border-slate-600 border-t-black dark:border-t-slate-200"></div>
+            <p className="mt-4 text-black/70 dark:text-slate-400 text-sm">Loading projects...</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-black/5 border border-black/10 rounded-md p-6 shadow-sm">
-            <p className="text-black/80 text-center text-sm">{error}</p>
+          <div className="bg-black/5 dark:bg-slate-800/50 border border-black/10 dark:border-slate-700 rounded-md p-6 shadow-sm">
+            <p className="text-black/80 dark:text-slate-300 text-center text-sm">{error}</p>
           </div>
         )}
 
@@ -234,10 +234,10 @@ const Projects = ({ repos, loading, error }) => {
               return (
                 <div
                   key={repo.id}
-                  className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 will-change-transform"
+                  className="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 will-change-transform"
                 >
                   {/* Enhanced thumbnail with manual screenshot priority */}
-                  <div className="relative h-36 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                  <div className="relative h-36 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-600 overflow-hidden">
                     {(() => {
                       const customInfo = CUSTOM_PROJECTS[repo.name];
                       const { manual, liveScreenshot, mshot, og } = getRepoThumbnailUrl(repo.name, repoInfo.liveUrl, customInfo?.screenshot);
@@ -267,14 +267,14 @@ const Projects = ({ repos, loading, error }) => {
                                 {techStack.slice(0, 3).map((tech) => (
                                   <span 
                                     key={tech} 
-                                    className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-700 rounded-md shadow-sm"
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-gray-700 dark:text-slate-200 rounded-md shadow-sm"
                                   >
                                     {getLanguageIcon(tech.toLowerCase())}
                                     <span className="ml-1">{tech}</span>
                                   </span>
                                 ))}
                                 {techStack.length > 3 && (
-                                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-500 rounded-md shadow-sm">
+                                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-gray-500 dark:text-slate-400 rounded-md shadow-sm">
                                     +{techStack.length - 3}
                                   </span>
                                 )}
@@ -289,16 +289,16 @@ const Projects = ({ repos, loading, error }) => {
                   {/* Content section */}
                   <div className="p-3 sm:p-6">
                     <div className="mb-2">
-                      <h3 className="font-bold text-gray-900 text-base sm:text-lg line-clamp-1 group-hover:text-blue-600 transition-colors">
+                      <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {repo.name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </h3>
                     </div>
                     
-                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4">
+                    <p className="text-gray-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4">
                       {repoInfo.description}
                     </p>
                     
-                    <div className="h-5 sm:h-6 flex items-center text-xs text-gray-500 mb-2 sm:mb-4">
+                    <div className="h-5 sm:h-6 flex items-center text-xs text-gray-500 dark:text-slate-400 mb-2 sm:mb-4">
                       <span className="flex items-center">
                         <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
@@ -315,7 +315,7 @@ const Projects = ({ repos, loading, error }) => {
                           type="button"
                           aria-label="View on GitHub"
                           onClick={() => window.open(repoInfo.githubUrl, '_blank', 'noopener,noreferrer')}
-                          className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-gray-200 hover:border-gray-300 w-full sm:w-auto"
+                          className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-gray-200 dark:hover:bg-slate-600 hover:border-gray-300 dark:hover:border-slate-500 w-full sm:w-auto"
                         >
                           <FaGithub className="w-4 h-4" />
                           <span>Code</span>
@@ -353,7 +353,7 @@ const Projects = ({ repos, loading, error }) => {
                             <button
                               type="button"
                               onClick={() => window.open(repoInfo.liveUrl, '_blank', 'noopener,noreferrer')}
-                              className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-sm transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-blue-800 hover:shadow-md w-full sm:w-auto"
+                              className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-lg shadow-sm transition-all duration-200 min-w-[70px] sm:min-w-[80px] justify-center hover:bg-blue-800 dark:hover:bg-blue-600 hover:shadow-md w-full sm:w-auto"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -372,9 +372,9 @@ const Projects = ({ repos, loading, error }) => {
         )}
 
         {!loading && !error && filteredRepos.length === 0 && (
-          <div className="text-center py-12 bg-white/50 rounded-md border border-black/5">
-            <p className="text-black/70 text-sm">
-              No matching projects found. Update the repo names in <code className="bg-gray-100 px-2 py-1 rounded">src/constants/projects.js</code> to display your projects.
+          <div className="text-center py-12 bg-white/50 dark:bg-slate-800/50 rounded-md border border-black/5 dark:border-slate-700">
+            <p className="text-black/70 dark:text-slate-400 text-sm">
+              No matching projects found. Update the repo names in <code className="bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">src/constants/projects.js</code> to display your projects.
             </p>
           </div>
         )}

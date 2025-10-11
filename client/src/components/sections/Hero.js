@@ -58,14 +58,14 @@ const Hero = () => {
     <section id="hero" className={`${COMPONENT_STYLES.section.base} -mt-8 pt-2`} aria-label="Hero section">
       <div className={COMPONENT_STYLES.section.container}>
         <div className="flex items-center justify-between mb-8">
-          <h1 className={`${COMPONENT_STYLES.fontSizes['4xl']} lg:${COMPONENT_STYLES.fontSizes['5xl']} font-bold text-black`}>
+          <h1 className={`${COMPONENT_STYLES.fontSizes['4xl']} lg:${COMPONENT_STYLES.fontSizes['5xl']} font-bold text-black dark:text-white`}>
             Rohith Illuri
           </h1>
         </div>
         
         <div className="mb-8">
-          <h2 className={`${COMPONENT_STYLES.fontSizes.lg} font-bold text-black mb-3`}>tldr; </h2>
-          <div className="space-y-2 text-black/70">
+          <h2 className={`${COMPONENT_STYLES.fontSizes.lg} font-bold text-black dark:text-white mb-3`}>tldr; </h2>
+          <div className="space-y-2 text-black/70 dark:text-slate-400">
             <p>self-taught developer by shipping things on the internet</p>
             <p>into tech and physics – things that shape the universe</p>
             <p>fascinated by space, science, and ideas that expand the mind</p>
@@ -73,14 +73,14 @@ const Hero = () => {
         </div>
 
         <div className="mb-8">
-          <h2 className={`${COMPONENT_STYLES.fontSizes.lg} font-bold text-black mb-3`}>Socials</h2>
+          <h2 className={`${COMPONENT_STYLES.fontSizes.lg} font-bold text-black dark:text-white mb-3`}>Socials</h2>
           <div className="flex space-x-4">
             {/* Twitter/X */}
             <a
               href="https://twitter.com/notforgrind"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
+              className="group relative w-16 h-16 bg-gray-800 dark:bg-slate-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 dark:hover:bg-slate-600 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
               aria-label="Follow on Twitter/X"
             >
               <svg
@@ -109,7 +109,7 @@ const Hero = () => {
               href="https://linkedin.com/in/sree-naga-illuri"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
+              className="group relative w-16 h-16 bg-gray-800 dark:bg-slate-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 dark:hover:bg-slate-600 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
               aria-label="Connect on LinkedIn"
             >
               <svg
@@ -138,7 +138,7 @@ const Hero = () => {
               href="https://github.com/rohithIlluri"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
+              className="group relative w-16 h-16 bg-gray-800 dark:bg-slate-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 dark:hover:bg-slate-600 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
               aria-label="View GitHub profile"
             >
               <svg
@@ -169,7 +169,7 @@ const Hero = () => {
               href="https://discord.com/users/tars9791"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
+              className="group relative w-16 h-16 bg-gray-800 dark:bg-slate-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 dark:hover:bg-slate-600 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
               aria-label="Join Discord server"
             >
               <svg
@@ -198,7 +198,7 @@ const Hero = () => {
             {/* Email */}
             <a
               href="mailto:rohith.illuri@gmail.com"
-              className="group relative w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
+              className="group relative w-16 h-16 bg-gray-800 dark:bg-slate-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-700 dark:hover:bg-slate-600 transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-lg"
               aria-label="Send email"
             >
               <svg

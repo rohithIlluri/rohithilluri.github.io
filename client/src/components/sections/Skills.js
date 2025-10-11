@@ -21,12 +21,12 @@ import { FaJava } from 'react-icons/fa';
 // Memoized Skill Item Component
 const SkillItem = memo(({ skill, index, getSkillIcon }) => (
   <div
-    className="group/skill bg-gray-100 p-4 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer hover:scale-105 hover:-translate-y-1 transition-all duration-300"
+    className="group/skill bg-gray-100 dark:bg-slate-700 p-4 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors cursor-pointer hover:scale-105 hover:-translate-y-1 transition-all duration-300"
   >
     <div className="mb-3 group-hover/skill:scale-125 group-hover/skill:rotate-12 transition-all duration-300">
       {getSkillIcon(skill)}
     </div>
-    <span className="text-sm font-medium text-black/80 group-hover/skill:text-black group-hover/skill:font-bold transition-all duration-300">
+    <span className="text-sm font-medium text-black/80 dark:text-slate-300 group-hover/skill:text-black dark:group-hover/skill:text-white group-hover/skill:font-bold transition-all duration-300">
       {skill}
     </span>
   </div>
@@ -78,12 +78,12 @@ const Skills = () => {
         return <SiPostgresql className="w-6 h-6 text-blue-600" />;
       case "Express.js":
         return (
-          <div className="w-6 h-6 bg-gray-700 text-white rounded-sm flex items-center justify-center text-xs font-bold">
+          <div className="w-6 h-6 bg-gray-700 dark:bg-slate-600 text-white rounded-sm flex items-center justify-center text-xs font-bold">
             E
           </div>
         );
       case "Next.js":
-        return <SiNextdotjs className="w-6 h-6 text-black" />;
+        return <SiNextdotjs className="w-6 h-6 text-black dark:text-white" />;
       case "GraphQL":
         return <SiGraphql className="w-6 h-6 text-pink-500" />;
       default:

@@ -13,7 +13,7 @@ const Stats = () => {
   return (
     <section id="stats" className={COMPONENT_STYLES.section.base} aria-label="Stats section">
       <div className={COMPONENT_STYLES.section.container}>
-        <h2 className="text-2xl font-black text-black mb-8 tracking-[0.4em] uppercase" style={{ 
+        <h2 className="text-2xl font-black text-black dark:text-white mb-8 tracking-[0.4em] uppercase" style={{ 
           fontFamily: '"Courier New", monospace',
           fontSize: '1.5rem',
           fontWeight: '900',
@@ -24,7 +24,7 @@ const Stats = () => {
         <div className="space-y-4">
           {stats.map((stat, index) => (
             <div key={index} className="flex justify-between items-center">
-              <span className="text-black text-sm font-bold" style={{ 
+              <span className="text-black dark:text-white text-sm font-bold" style={{ 
                 fontFamily: '"Courier New", monospace',
                 fontSize: '0.875rem',
                 fontWeight: '700',
@@ -32,7 +32,7 @@ const Stats = () => {
               }}>
                 {stat.label}
               </span>
-              <span className="text-black text-sm font-bold" style={{ 
+              <span className="text-black dark:text-white text-sm font-bold" style={{ 
                 fontFamily: '"Courier New", monospace',
                 fontSize: '0.875rem',
                 fontWeight: '700',
