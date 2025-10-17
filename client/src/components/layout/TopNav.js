@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 
 const TopNav = () => {
@@ -9,15 +9,20 @@ const TopNav = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Apply theme to document when isDark changes
+  // Apply theme to document when isDark changes with requestAnimationFrame for smooth transitions
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    const applyTheme = () => {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    };
+    
+    // Use requestAnimationFrame to ensure smooth theme transitions
+    requestAnimationFrame(applyTheme);
   }, [isDark]);
 
   // Listen for system theme changes
@@ -33,7 +38,10 @@ const TopNav = () => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  const toggleTheme = () => setIsDark(!isDark);
+  // Memoize theme toggle to prevent unnecessary re-renders
+  const toggleTheme = useCallback(() => {
+    setIsDark(prev => !prev);
+  }, []);
 
   const base = 'px-4 py-2 text-sm font-medium rounded-full transition-colors';
   const active = isDark 
@@ -44,7 +52,16 @@ const TopNav = () => {
     : 'text-gray-800 hover:text-gray-600';
 
   return (
-    <nav className="flex justify-end mb-8" aria-label="Primary">
+    <nav className="flex justify-between items-center mb-8" aria-label="Primary">
+      {/* Name on the left */}
+      <div className="flex-shrink-0">
+        <h1 className={`text-4xl lg:text-5xl font-bold text-black dark:text-white transition-colors duration-300`}>
+          Rohith Illuri
+        </h1>
+        
+      </div>
+      
+      {/* Navigation and theme toggle on the right */}
       <div className="flex items-center space-x-4">
         <NavLink
           to="/"
