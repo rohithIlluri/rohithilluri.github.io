@@ -4,180 +4,178 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A modern React portfolio website featuring GitHub integration, project showcase, skills display, and embedded multimedia (YouTube music player, TMDB movie favorites). Uses a glass-morphism design aesthetic with Tailwind CSS.
+An interactive 3D NYC street portfolio experience built with Three.js and Vite. Walk through stylized NYC streets where portfolio sections are interactive storefronts/buildings. Inspired by the [Messenger by Abeto](https://messenger.abeto.co/) 3D experience.
 
 ## Technology Stack
 
-- **Frontend**: React 19, React Router v6
-- **Styling**: Tailwind CSS with custom dark mode support (class-based)
-- **Icons**: react-icons, simple-icons
-- **Build**: Create React App (react-scripts 5.0.1)
-- **Testing**: Jest, React Testing Library
-- **Deployment**: GitHub Pages (via gh-pages)
+- **3D Engine**: Three.js (WebGL)
+- **Physics/Collision**: three-mesh-bvh (BVH-based collision detection)
+- **Animation**: GSAP
+- **Build Tool**: Vite
+- **State Management**: Zustand
+- **Styling**: CSS with custom properties
 
 ## Common Commands
 
-### Setup
-```bash
-# First time setup - installs dependencies for both root and client
-npm run setup
-
-# Or manually
-npm install && cd client && npm install
-```
-
 ### Development
 ```bash
-# Start dev server (runs on default CRA port 3000)
+# Install dependencies
+npm install
+
+# Start dev server (runs on port 3000)
 npm run dev
-# or
-npm start
-# or
-cd client && npm start
 
-# Access at: http://localhost:3000
-```
-
-### Testing
-```bash
-cd client && npm test
-```
-
-### Building
-```bash
-# Build production bundle
+# Build for production
 npm run build
-# or
-cd client && npm run build
 
-# Output: client/build/
-```
+# Preview production build
+npm run preview
 
-### Deployment
-```bash
-cd client && npm run deploy
-# Builds and deploys to GitHub Pages
-# Note: postbuild script copies .nojekyll to build/
-```
-
-### Cleanup
-```bash
-npm run clean
-# Removes node_modules and build artifacts from both root and client
+# Deploy to GitHub Pages
+npm run deploy
 ```
 
 ## Architecture
 
-### Monorepo Structure
-- **Root**: Contains convenience scripts that delegate to client
-- **client/**: Complete React application (all source code lives here)
-
-### Component Organization
+### Project Structure
 
 ```
-client/src/
-├── components/
-│   ├── sections/     # Page sections (Hero, Skills, Projects, Music, etc.)
-│   ├── layout/       # Layout components (TopNav, Footer, Sidebar)
-│   ├── github/       # GitHub-specific components (GitHubStats, GitHubAchievements)
-│   └── ui/           # Reusable UI components (ErrorBoundary)
-├── constants/        # Configuration files (see Configuration System below)
-├── utils/            # Helper functions (API utilities for GitHub, Spotify, TMDB)
-└── assets/           # Static assets
+/
+├── index.html              # Entry point
+├── src/
+│   ├── main.js             # App entry, scene setup
+│   ├── World.js            # Main 3D scene orchestrator
+│   ├── Player.js           # Character controller
+│   ├── Camera.js           # Third-person camera
+│   ├── InputManager.js     # Keyboard/touch input
+│   ├── environment/
+│   │   └── Street.js       # NYC street environment
+│   ├── effects/
+│   │   └── PostProcessing.js
+│   ├── shaders/
+│   │   ├── toon.js         # Cel-shading materials
+│   │   └── sky.js          # Sky gradient shader
+│   ├── stores/
+│   │   └── gameStore.js    # Zustand state store
+│   └── utils/
+│       ├── loader.js       # Asset loading utilities
+│       └── collision.js    # BVH collision helpers
+├── styles/
+│   └── main.css            # UI styles
+├── public/
+│   └── favicon.svg
+├── assets/                  # 3D models, textures, audio (to be added)
+├── vite.config.js
+└── package.json
 ```
 
-### Configuration System
+### Core Components
 
-All customizable data lives in `client/src/constants/`:
+**World.js** - Main scene orchestrator
+- Manages Three.js scene, renderer, and lighting
+- Coordinates all world components
+- Handles day/night transitions
 
-- **projects.js**:
-  - `PROJECT_REPOS`: Array of GitHub repo names to display
-  - `CUSTOM_PROJECTS`: Override repo descriptions, add live URLs, screenshots
+**Player.js** - Character controller
+- WASD/arrow key movement
+- Collision detection with buildings/props
+- Interaction with buildings (proximity detection)
 
-- **github.js**:
-  - `GITHUB_USERNAME`: GitHub username for API calls
-  - `SHOWCASE_REPOS`: Legacy, use PROJECT_REPOS instead
+**Camera.js** - Third-person camera
+- Follows player with smooth interpolation
+- Collision avoidance (doesn't clip through walls)
 
-- **spotify.js**: Music artists configuration with Spotify IDs
+**Street.js** - Environment
+- Creates NYC street geometry (streets, sidewalks, curbs)
+- Places buildings at cardinal directions:
+  - North: Projects Tower
+  - East: Skills Brownstone
+  - West: Music Record Shop
+  - South: Contact Coffee Shop
+- Adds street props (lights, hydrants, benches)
 
-- **tmdb.js**: Favorite movies configuration with TMDB IDs
+**gameStore.js** - Global state (Zustand)
+- Player position
+- Current building interaction
+- Day/night mode
+- Building content data
 
-- **theme.js**: `COMPONENT_STYLES` - centralized styling constants
+### Visual Style Reference
 
-### Data Flow
+From `branches-visual-quality-plan.md`:
+- **Cel-shading**: 4-band lighting (highlight, light, mid, shadow)
+- **Shadow color**: `#4A4063` (purple undertone, never pure black)
+- **Sky gradient**: `#87CEEB` (day) → `#1E3A5F` (night)
+- **Rim lighting**: White `#FFFFFF`, intensity 0.4
+- **Outlines**: 2px, color `#1A1A2E`
+- **UI dark**: `#1A1A2E`, accent `#FFD54F`
 
-**GitHub Integration:**
-- App.js fetches all repos from GitHub API on mount
-- Projects component filters repos based on PROJECT_REPOS array
-- Projects component fetches live data for specific repos every 5 minutes
-- Custom descriptions from CUSTOM_PROJECTS override GitHub descriptions
-- Live data (stars, forks, updates) merged with custom info
+### Controls
 
-**Route Structure:**
-- `/` - Home page with Hero, Skills, Music, FavoriteMovies, Stats
-- `/projects` - Dedicated projects page with GitHub integration
-
-### Performance Optimizations
-
-- Lazy loading for all major components via React.lazy()
-- Memoized callbacks and props in App.js
-- Component-level memoization with React.memo()
-- Suspense boundaries with loading states
-- ErrorBoundary wraps all major sections
-- GitHub API calls use caching headers
-
-### API Integrations
-
-**GitHub API:**
-- Base URL: `https://api.github.com`
-- Rate limit: 60 requests/hour (unauthenticated)
-- Utils: `client/src/utils/github.js`
-
-**Spotify API:**
-- Requires `REACT_APP_SPOTIFY_CLIENT_ID` and `REACT_APP_SPOTIFY_CLIENT_SECRET` in `.env.local`
-- Utils: `client/src/utils/spotify.js`
-
-**TMDB API:**
-- Requires `REACT_APP_TMDB_API_KEY` in `.env.local`
-- Utils: `client/src/utils/tmdb.js`
-
-### Environment Variables
-
-Create `client/.env.local` for API keys (optional):
-```
-REACT_APP_SPOTIFY_CLIENT_ID=your-client-id
-REACT_APP_SPOTIFY_CLIENT_SECRET=your-client-secret
-REACT_APP_TMDB_API_KEY=your-tmdb-api-key
-```
+- **WASD / Arrow Keys**: Move
+- **Shift**: Run
+- **E**: Interact with buildings
+- **N**: Toggle day/night
+- **ESC**: Close modals
 
 ## Key Implementation Details
 
-### Adding New Projects
-1. Edit `client/src/constants/projects.js`
-2. Add repo name to `PROJECT_REPOS` array (must match GitHub repo name exactly)
-3. Optionally add custom description/URL in `CUSTOM_PROJECTS` object
+### Adding New Buildings
 
-### Styling System
-- Tailwind CSS with JIT mode
-- Dark mode: class-based (`class` strategy in tailwind.config.js)
-- Custom colors for opacity variants (black.5, black.10, etc.)
-- Component styles centralized in `COMPONENT_STYLES` (client/src/constants/theme.js)
+1. Add building data to `gameStore.js` buildings array
+2. Create building geometry in `Street.js`
+3. Add building to collision meshes
 
-### Port Configuration
-Default port is **3000** (standard Create React App default).
+### Asset Loading
 
-### Deployment Configuration
-- **homepage**: Set to `https://rohithilluri.github.io` in client/package.json
-- **.nojekyll**: Copied to build folder via postbuild script (required for GitHub Pages)
-- **gh-pages**: Deploys from client/build/ directory
+Use utilities in `src/utils/loader.js`:
+```javascript
+import { loadModel, loadTexture, loadAssets } from './utils/loader.js';
 
-## Testing
+// Load single model
+const model = await loadModel('/assets/models/building.glb');
 
-Tests use Jest and React Testing Library. Located in `client/src/components/__tests__/`:
-- App.test.js
-- Hero.test.js
-- Projects.test.js
-- Skills.test.js
-- Contact.test.js
+// Load multiple assets with progress
+const assets = await loadAssets([
+  { url: '/assets/models/building.glb', type: 'model' },
+  { url: '/assets/textures/brick.png', type: 'texture' },
+], onProgress);
+```
 
-Run tests from client directory: `cd client && npm test`
+### Collision Detection
+
+Uses three-mesh-bvh for efficient collision:
+```javascript
+import { buildBVH, sphereCollision } from './utils/collision.js';
+
+// Build BVH for mesh
+await buildBVH(mesh);
+
+// Check collision
+const hit = await sphereCollision(mesh, position, radius);
+```
+
+## Performance Targets
+
+| Metric | Target |
+|--------|--------|
+| Initial Load | < 3 MB |
+| Frame Rate | 60 FPS desktop |
+| Load Time (4G) | < 5 seconds |
+
+## Reference Documents
+
+- `/NYC-STREET-THEME-COMPLETE-PLAN.md` - Primary design spec
+- `/messenger-game-complete-plan.md` - Technical reference
+- `/branches-visual-quality-plan.md` - Visual quality details
+- `/compression-quality-plan.md` - Asset optimization
+- `/physics-reality-metrics-master-plan.md` - Physics implementation
+
+## Deployment
+
+Deploys to GitHub Pages via `gh-pages`:
+```bash
+npm run deploy
+```
+
+The `vite.config.js` sets the base URL to `/rohithilluri.github.io/`.
