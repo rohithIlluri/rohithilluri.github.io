@@ -25,6 +25,17 @@ const NEON_COLORS = {
   red: 0xFF3333,
 };
 
+// NYC prop colors
+const NYC_COLORS = {
+  taxi: 0xF7B731,        // Yellow taxi
+  hydrant: 0xFF3333,     // Red fire hydrant
+  mailbox: 0x004A9C,     // USPS blue
+  subway: 0x0B7A41,      // Subway green
+  trashCan: 0x2D5A27,    // Dark green trash can
+  streetSign: 0x006400,  // Street sign green
+  hotDogCart: 0xB22222,  // Hot dog cart red
+};
+
 // Planet color palette (messenger.abeto.co style)
 const PLANET_COLORS = {
   grass: 0x7CB342,      // Vibrant green
@@ -71,6 +82,7 @@ export class Planet {
     this.createPlanetSphere();
     this.createPortfolioBuildings();
     this.createProps();
+    this.createGroundScatter();
   }
 
   /**
@@ -239,6 +251,9 @@ export class Planet {
     // Add neon sign
     this.addNeonSignToBuilding(building, name, neonColor, height, depth, surfacePos, up);
 
+    // Add architectural details (rooftop, awning, AC units)
+    this.addBuildingDetails(building, width, height, depth, color);
+
     // Store building reference
     this.buildings.push({
       mesh: building,
@@ -248,6 +263,251 @@ export class Planet {
       lat,
       lon,
     });
+  }
+
+  /**
+   * Add architectural details to buildings (rooftop, awning, AC units, fire escapes, water tanks)
+   */
+  addBuildingDetails(building, width, height, depth, baseColor) {
+    // Rooftop parapet/edge
+    const parapetGeo = new THREE.BoxGeometry(width + 0.3, 0.25, depth + 0.3);
+    const parapetColor = this.darkenColor(baseColor, 0.15);
+    const parapetMat = createToonMaterial({ color: parapetColor });
+    const parapet = new THREE.Mesh(parapetGeo, parapetMat);
+    parapet.position.y = height / 2 + 0.125;
+    parapet.castShadow = true;
+    building.add(parapet);
+    this.meshes.push(parapet);
+
+    // Awning over door (front face)
+    const awningGeo = new THREE.BoxGeometry(width * 0.6, 0.12, 0.8);
+    const awningMat = createToonMaterial({ color: 0xB22222 }); // Red awning
+    const awning = new THREE.Mesh(awningGeo, awningMat);
+    awning.position.set(0, -height / 2 + 2.5, depth / 2 + 0.4);
+    awning.castShadow = true;
+    building.add(awning);
+    this.meshes.push(awning);
+
+    // Awning stripe (decorative)
+    const stripeGeo = new THREE.BoxGeometry(width * 0.6, 0.05, 0.82);
+    const stripeMat = createToonMaterial({ color: 0xFFFFFF });
+    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+    stripe.position.set(0, -height / 2 + 2.55, depth / 2 + 0.4);
+    building.add(stripe);
+    this.meshes.push(stripe);
+
+    // AC unit on side (random side)
+    const acGeo = new THREE.BoxGeometry(0.8, 0.4, 0.6);
+    const acMat = createToonMaterial({ color: 0x757575 }); // Gray metal
+    const acUnit = new THREE.Mesh(acGeo, acMat);
+    const acSide = Math.random() > 0.5 ? 1 : -1;
+    acUnit.position.set(acSide * (width / 2 + 0.3), 0, 0);
+    acUnit.castShadow = true;
+    building.add(acUnit);
+    this.meshes.push(acUnit);
+
+    // AC unit outline
+    const acOutline = createOutlineMesh(acUnit, 0.02);
+    acOutline.position.copy(acUnit.position);
+    building.add(acOutline);
+    this.meshes.push(acOutline);
+
+    // Door frame
+    const doorFrameGeo = new THREE.BoxGeometry(1.4, 2.4, 0.08);
+    const doorFrameMat = createToonMaterial({ color: 0x3D3D3D });
+    const doorFrame = new THREE.Mesh(doorFrameGeo, doorFrameMat);
+    doorFrame.position.set(0, -height / 2 + 1.3, depth / 2 + 0.01);
+    building.add(doorFrame);
+    this.meshes.push(doorFrame);
+
+    // Door (slightly recessed)
+    const doorGeo = new THREE.BoxGeometry(1.2, 2.2, 0.06);
+    const doorMat = createToonMaterial({ color: 0x5D4037 }); // Brown door
+    const door = new THREE.Mesh(doorGeo, doorMat);
+    door.position.set(0, -height / 2 + 1.3, depth / 2 + 0.04);
+    building.add(door);
+    this.meshes.push(door);
+
+    // Chimney on roof (for shorter buildings)
+    if (height < 8) {
+      const chimneyGeo = new THREE.BoxGeometry(0.5, 1.2, 0.5);
+      const chimneyMat = createToonMaterial({ color: 0x8B4513 });
+      const chimney = new THREE.Mesh(chimneyGeo, chimneyMat);
+      chimney.position.set(width / 4, height / 2 + 0.6, -depth / 4);
+      chimney.castShadow = true;
+      building.add(chimney);
+      this.meshes.push(chimney);
+    }
+
+    // Fire escape on taller buildings (height > 8)
+    if (height > 8) {
+      this.addFireEscape(building, width, height, depth);
+    }
+
+    // Water tank on roof for taller buildings (height > 10)
+    if (height > 10) {
+      this.addWaterTank(building, width, height, depth);
+    }
+
+    // Window sills for visual depth
+    this.addWindowSills(building, width, height, depth);
+  }
+
+  /**
+   * Add a fire escape to the side of a building (NYC brownstone style)
+   */
+  addFireEscape(building, width, height, depth) {
+    const metalMat = createToonMaterial({ color: 0x2A2A2A }); // Dark metal
+    const platformCount = Math.floor((height - 3) / 3);
+    const side = -1; // Left side of building
+
+    for (let i = 0; i < platformCount; i++) {
+      const platformY = -height / 2 + 3 + i * 3;
+
+      // Platform
+      const platformGeo = new THREE.BoxGeometry(1.5, 0.06, 1.2);
+      const platform = new THREE.Mesh(platformGeo, metalMat);
+      platform.position.set(side * (width / 2 + 0.75), platformY, 0);
+      platform.castShadow = true;
+      building.add(platform);
+      this.meshes.push(platform);
+
+      // Railings - front
+      const railFrontGeo = new THREE.BoxGeometry(1.5, 0.5, 0.03);
+      const railFront = new THREE.Mesh(railFrontGeo, metalMat);
+      railFront.position.set(0, 0.28, 0.58);
+      platform.add(railFront);
+      this.meshes.push(railFront);
+
+      // Railings - side
+      const railSideGeo = new THREE.BoxGeometry(0.03, 0.5, 1.2);
+      const railSide = new THREE.Mesh(railSideGeo, metalMat);
+      railSide.position.set(side * 0.73, 0.28, 0);
+      platform.add(railSide);
+      this.meshes.push(railSide);
+
+      // Ladder between platforms (except top)
+      if (i < platformCount - 1) {
+        const ladderGeo = new THREE.BoxGeometry(0.4, 2.8, 0.06);
+        const ladder = new THREE.Mesh(ladderGeo, metalMat);
+        ladder.position.set(side * (width / 2 + 0.9), platformY + 1.5, -0.4);
+        building.add(ladder);
+        this.meshes.push(ladder);
+
+        // Ladder rungs
+        for (let r = 0; r < 5; r++) {
+          const rungGeo = new THREE.BoxGeometry(0.4, 0.04, 0.08);
+          const rung = new THREE.Mesh(rungGeo, metalMat);
+          rung.position.set(0, -1.2 + r * 0.55, 0);
+          ladder.add(rung);
+          this.meshes.push(rung);
+        }
+      }
+    }
+
+    // Drop ladder at bottom (angled)
+    const dropLadderGeo = new THREE.BoxGeometry(0.4, 2.0, 0.06);
+    const dropLadder = new THREE.Mesh(dropLadderGeo, metalMat);
+    dropLadder.position.set(side * (width / 2 + 1.1), -height / 2 + 1.5, -0.4);
+    dropLadder.rotation.z = side * 0.3;
+    building.add(dropLadder);
+    this.meshes.push(dropLadder);
+  }
+
+  /**
+   * Add a rooftop water tank (NYC iconic element)
+   */
+  addWaterTank(building, width, height, depth) {
+    const woodMat = createToonMaterial({ color: 0x6B4423 }); // Dark wood
+    const metalMat = createToonMaterial({ color: 0x3D3D3D });
+
+    // Tank body (cylinder)
+    const tankGeo = new THREE.CylinderGeometry(0.8, 0.9, 1.8, 10);
+    const tank = new THREE.Mesh(tankGeo, woodMat);
+    tank.position.set(-width / 4, height / 2 + 1.8, -depth / 4);
+    tank.castShadow = true;
+    building.add(tank);
+    this.meshes.push(tank);
+
+    // Conical roof
+    const roofGeo = new THREE.ConeGeometry(0.9, 0.6, 10);
+    const roof = new THREE.Mesh(roofGeo, metalMat);
+    roof.position.set(0, 1.2, 0);
+    tank.add(roof);
+    this.meshes.push(roof);
+
+    // Metal bands around tank
+    const bandGeo = new THREE.TorusGeometry(0.85, 0.03, 6, 16);
+    const band1 = new THREE.Mesh(bandGeo, metalMat);
+    band1.position.set(0, 0.5, 0);
+    band1.rotation.x = Math.PI / 2;
+    tank.add(band1);
+    this.meshes.push(band1);
+
+    const band2 = new THREE.Mesh(bandGeo, metalMat);
+    band2.position.set(0, -0.3, 0);
+    band2.rotation.x = Math.PI / 2;
+    tank.add(band2);
+    this.meshes.push(band2);
+
+    // Support legs (4)
+    const legGeo = new THREE.BoxGeometry(0.1, 0.8, 0.1);
+    const legPositions = [
+      { x: 0.5, z: 0.5 },
+      { x: 0.5, z: -0.5 },
+      { x: -0.5, z: 0.5 },
+      { x: -0.5, z: -0.5 },
+    ];
+
+    legPositions.forEach((pos) => {
+      const leg = new THREE.Mesh(legGeo, metalMat);
+      leg.position.set(pos.x, -1.3, pos.z);
+      tank.add(leg);
+      this.meshes.push(leg);
+    });
+
+    // Tank outline
+    const tankOutline = createOutlineMesh(tank, 0.03);
+    tankOutline.position.copy(tank.position);
+    building.add(tankOutline);
+    this.meshes.push(tankOutline);
+  }
+
+  /**
+   * Add window sills for visual depth
+   */
+  addWindowSills(building, width, height, depth) {
+    const sillMat = createToonMaterial({ color: 0x757575 }); // Gray stone
+
+    const windowSize = 1.0;
+    const windowGap = 0.6;
+    const windowsPerRow = Math.floor((width - 1) / (windowSize + windowGap));
+    const windowRows = Math.floor((height - 2) / (windowSize + windowGap));
+
+    for (let row = 0; row < windowRows; row++) {
+      for (let col = 0; col < windowsPerRow; col++) {
+        // Position relative to building
+        const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
+        const localY = height / 2 - 1 - row * (windowSize + windowGap) - 0.5;
+
+        // Window sill (small ledge under window)
+        const sillGeo = new THREE.BoxGeometry(windowSize + 0.2, 0.08, 0.12);
+        const sill = new THREE.Mesh(sillGeo, sillMat);
+        sill.position.set(localX, localY, depth / 2 + 0.05);
+        sill.castShadow = true;
+        building.add(sill);
+        this.meshes.push(sill);
+      }
+    }
+  }
+
+  /**
+   * Darken a hex color by a factor
+   */
+  darkenColor(hexColor, factor) {
+    const color = new THREE.Color(hexColor);
+    color.multiplyScalar(1 - factor);
+    return color.getHex();
   }
 
   /**
@@ -316,10 +576,11 @@ export class Planet {
   }
 
   /**
-   * Create props (trees, benches, etc.) on the planet
+   * Create props (trees, benches, NYC props, etc.) on the planet
+   * Increased density for messenger.abeto.co visual parity
    */
   createProps() {
-    // Create trees around the planet
+    // Create trees around the planet - increased density
     const treePositions = [
       { lat: 10, lon: 45 },
       { lat: -10, lon: 45 },
@@ -329,32 +590,123 @@ export class Planet {
       { lat: -15, lon: 135 },
       { lat: 10, lon: -135 },
       { lat: -10, lon: -135 },
+      // Additional trees for density
+      { lat: 25, lon: 60 },
+      { lat: -25, lon: 60 },
+      { lat: 30, lon: -60 },
+      { lat: -30, lon: -60 },
+      { lat: 5, lon: 160 },
+      { lat: -5, lon: 160 },
+      { lat: 35, lon: 120 },
+      { lat: -35, lon: 120 },
+      { lat: 15, lon: -160 },
+      { lat: -15, lon: -160 },
+      { lat: 40, lon: 30 },
+      { lat: -40, lon: 30 },
     ];
 
     treePositions.forEach((pos) => {
       this.createTree(pos.lat, pos.lon);
     });
 
-    // Create benches
+    // Create benches - increased density
     const benchPositions = [
       { lat: 5, lon: 30 },
       { lat: -5, lon: -30 },
+      { lat: 10, lon: 60 },
+      { lat: -10, lon: -60 },
+      { lat: 15, lon: 150 },
+      { lat: -15, lon: -150 },
+      { lat: 20, lon: 25 },
+      { lat: -20, lon: -25 },
     ];
 
     benchPositions.forEach((pos) => {
       this.createBench(pos.lat, pos.lon);
     });
 
-    // Create street lights
+    // Create street lights - increased density
     const lightPositions = [
       { lat: 0, lon: 45 },
       { lat: 0, lon: -45 },
       { lat: 0, lon: 135 },
       { lat: 0, lon: -135 },
+      { lat: 20, lon: 20 },
+      { lat: -20, lon: -20 },
+      { lat: 30, lon: 70 },
+      { lat: -30, lon: -70 },
+      { lat: 25, lon: -110 },
+      { lat: -25, lon: 110 },
+      { lat: 10, lon: 180 },
+      { lat: -10, lon: 180 },
     ];
 
     lightPositions.forEach((pos) => {
       this.createStreetLight(pos.lat, pos.lon);
+    });
+
+    // NYC Props - taxis
+    const taxiPositions = [
+      { lat: 5, lon: 50 },
+      { lat: -8, lon: -55 },
+      { lat: 12, lon: 140 },
+      { lat: -12, lon: -140 },
+    ];
+
+    taxiPositions.forEach((pos) => {
+      this.createTaxi(pos.lat, pos.lon);
+    });
+
+    // Fire hydrants
+    const hydrantPositions = [
+      { lat: 3, lon: 35 },
+      { lat: -3, lon: -35 },
+      { lat: 8, lon: 125 },
+      { lat: -8, lon: -125 },
+      { lat: 15, lon: 75 },
+      { lat: -15, lon: -75 },
+    ];
+
+    hydrantPositions.forEach((pos) => {
+      this.createFireHydrant(pos.lat, pos.lon);
+    });
+
+    // Mailboxes
+    const mailboxPositions = [
+      { lat: 2, lon: 55 },
+      { lat: -2, lon: -55 },
+      { lat: 6, lon: 145 },
+      { lat: -6, lon: -145 },
+    ];
+
+    mailboxPositions.forEach((pos) => {
+      this.createMailbox(pos.lat, pos.lon);
+    });
+
+    // Trash cans
+    const trashCanPositions = [
+      { lat: 4, lon: 40 },
+      { lat: -4, lon: -40 },
+      { lat: 7, lon: 130 },
+      { lat: -7, lon: -130 },
+      { lat: 12, lon: 65 },
+      { lat: -12, lon: -65 },
+      { lat: 18, lon: 155 },
+      { lat: -18, lon: -155 },
+    ];
+
+    trashCanPositions.forEach((pos) => {
+      this.createTrashCan(pos.lat, pos.lon);
+    });
+
+    // Hot dog carts
+    const hotDogCartPositions = [
+      { lat: 6, lon: 70 },
+      { lat: -20, lon: -15 },
+    ];
+
+    hotDogCartPositions.forEach((pos) => {
+      this.createHotDogCart(pos.lat, pos.lon);
     });
   }
 
@@ -482,6 +834,317 @@ export class Planet {
   }
 
   /**
+   * Create a yellow NYC taxi at the specified position
+   */
+  createTaxi(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Taxi body
+    const bodyGeom = new THREE.BoxGeometry(1.8, 0.6, 0.9);
+    const bodyMaterial = createToonMaterial({ color: NYC_COLORS.taxi });
+    const body = new THREE.Mesh(bodyGeom, bodyMaterial);
+
+    const bodyPos = surfacePos.clone().add(up.clone().multiplyScalar(0.5));
+    body.position.copy(bodyPos);
+    body.quaternion.copy(orientation);
+    body.castShadow = true;
+
+    this.scene.add(body);
+    this.meshes.push(body);
+    this.collisionMeshes.push(body);
+
+    // Taxi roof/cab
+    const roofGeom = new THREE.BoxGeometry(0.9, 0.35, 0.7);
+    const roofMaterial = createToonMaterial({ color: NYC_COLORS.taxi });
+    const roof = new THREE.Mesh(roofGeom, roofMaterial);
+    roof.position.set(-0.1, 0.47, 0);
+    roof.castShadow = true;
+    body.add(roof);
+    this.meshes.push(roof);
+
+    // Wheels (4)
+    const wheelGeom = new THREE.CylinderGeometry(0.18, 0.18, 0.1, 12);
+    const wheelMaterial = createToonMaterial({ color: 0x1A1A1A });
+
+    const wheelPositions = [
+      { x: 0.6, y: -0.2, z: 0.5 },
+      { x: 0.6, y: -0.2, z: -0.5 },
+      { x: -0.6, y: -0.2, z: 0.5 },
+      { x: -0.6, y: -0.2, z: -0.5 },
+    ];
+
+    wheelPositions.forEach((pos) => {
+      const wheel = new THREE.Mesh(wheelGeom, wheelMaterial);
+      wheel.position.set(pos.x, pos.y, pos.z);
+      wheel.rotation.x = Math.PI / 2;
+      body.add(wheel);
+      this.meshes.push(wheel);
+    });
+
+    // Taxi sign on roof (lights up at night)
+    const signGeom = new THREE.BoxGeometry(0.3, 0.12, 0.15);
+    const signMaterial = new THREE.MeshBasicMaterial({
+      color: 0xFFFFFF,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const sign = new THREE.Mesh(signGeom, signMaterial);
+    sign.position.set(0, 0.24, 0);
+    roof.add(sign);
+    this.neonSigns.push({ mesh: sign, color: 0xFFFFFF, type: 'taxiSign' });
+
+    // Outline for taxi
+    const outline = createOutlineMesh(body, 0.03);
+    outline.position.copy(body.position);
+    outline.quaternion.copy(body.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: body, type: 'taxi', lat, lon });
+  }
+
+  /**
+   * Create a red fire hydrant at the specified position
+   */
+  createFireHydrant(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Main body cylinder
+    const bodyGeom = new THREE.CylinderGeometry(0.12, 0.15, 0.45, 8);
+    const bodyMaterial = createToonMaterial({ color: NYC_COLORS.hydrant });
+    const body = new THREE.Mesh(bodyGeom, bodyMaterial);
+
+    const bodyPos = surfacePos.clone().add(up.clone().multiplyScalar(0.225));
+    body.position.copy(bodyPos);
+    body.quaternion.copy(orientation);
+    body.castShadow = true;
+
+    this.scene.add(body);
+    this.meshes.push(body);
+    this.collisionMeshes.push(body);
+
+    // Top cap
+    const capGeom = new THREE.CylinderGeometry(0.08, 0.1, 0.1, 8);
+    const cap = new THREE.Mesh(capGeom, bodyMaterial);
+    cap.position.set(0, 0.27, 0);
+    body.add(cap);
+    this.meshes.push(cap);
+
+    // Side nozzles (2)
+    const nozzleGeom = new THREE.CylinderGeometry(0.04, 0.04, 0.08, 6);
+    const nozzle1 = new THREE.Mesh(nozzleGeom, bodyMaterial);
+    nozzle1.position.set(0.14, 0.05, 0);
+    nozzle1.rotation.z = Math.PI / 2;
+    body.add(nozzle1);
+    this.meshes.push(nozzle1);
+
+    const nozzle2 = new THREE.Mesh(nozzleGeom, bodyMaterial);
+    nozzle2.position.set(-0.14, 0.05, 0);
+    nozzle2.rotation.z = -Math.PI / 2;
+    body.add(nozzle2);
+    this.meshes.push(nozzle2);
+
+    // Outline
+    const outline = createOutlineMesh(body, 0.02);
+    outline.position.copy(body.position);
+    outline.quaternion.copy(body.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: body, type: 'hydrant', lat, lon });
+  }
+
+  /**
+   * Create a USPS blue mailbox at the specified position
+   */
+  createMailbox(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Mailbox body (rounded top)
+    const bodyGeom = new THREE.BoxGeometry(0.35, 0.55, 0.3);
+    const bodyMaterial = createToonMaterial({ color: NYC_COLORS.mailbox });
+    const body = new THREE.Mesh(bodyGeom, bodyMaterial);
+
+    const bodyPos = surfacePos.clone().add(up.clone().multiplyScalar(0.45));
+    body.position.copy(bodyPos);
+    body.quaternion.copy(orientation);
+    body.castShadow = true;
+
+    this.scene.add(body);
+    this.meshes.push(body);
+    this.collisionMeshes.push(body);
+
+    // Rounded top
+    const topGeom = new THREE.CylinderGeometry(0.175, 0.175, 0.35, 8, 1, false, 0, Math.PI);
+    const top = new THREE.Mesh(topGeom, bodyMaterial);
+    top.position.set(0, 0.275, 0);
+    top.rotation.x = Math.PI / 2;
+    top.rotation.y = Math.PI / 2;
+    body.add(top);
+    this.meshes.push(top);
+
+    // Mail slot
+    const slotGeom = new THREE.BoxGeometry(0.2, 0.02, 0.05);
+    const slotMaterial = createToonMaterial({ color: 0x002855 }); // Darker blue
+    const slot = new THREE.Mesh(slotGeom, slotMaterial);
+    slot.position.set(0, 0.1, 0.16);
+    body.add(slot);
+    this.meshes.push(slot);
+
+    // Pedestal/base
+    const baseGeom = new THREE.BoxGeometry(0.25, 0.15, 0.22);
+    const base = new THREE.Mesh(baseGeom, bodyMaterial);
+    base.position.set(0, -0.35, 0);
+    body.add(base);
+    this.meshes.push(base);
+
+    // Outline
+    const outline = createOutlineMesh(body, 0.02);
+    outline.position.copy(body.position);
+    outline.quaternion.copy(body.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: body, type: 'mailbox', lat, lon });
+  }
+
+  /**
+   * Create a dark green trash can at the specified position
+   */
+  createTrashCan(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Trash can body (cylinder)
+    const bodyGeom = new THREE.CylinderGeometry(0.18, 0.15, 0.45, 10);
+    const bodyMaterial = createToonMaterial({ color: NYC_COLORS.trashCan });
+    const body = new THREE.Mesh(bodyGeom, bodyMaterial);
+
+    const bodyPos = surfacePos.clone().add(up.clone().multiplyScalar(0.225));
+    body.position.copy(bodyPos);
+    body.quaternion.copy(orientation);
+    body.castShadow = true;
+
+    this.scene.add(body);
+    this.meshes.push(body);
+    this.collisionMeshes.push(body);
+
+    // Lid
+    const lidGeom = new THREE.CylinderGeometry(0.2, 0.18, 0.05, 10);
+    const lid = new THREE.Mesh(lidGeom, bodyMaterial);
+    lid.position.set(0, 0.25, 0);
+    body.add(lid);
+    this.meshes.push(lid);
+
+    // Rim detail
+    const rimGeom = new THREE.TorusGeometry(0.18, 0.02, 6, 12);
+    const rim = new THREE.Mesh(rimGeom, bodyMaterial);
+    rim.position.set(0, 0.2, 0);
+    rim.rotation.x = Math.PI / 2;
+    body.add(rim);
+    this.meshes.push(rim);
+
+    // Outline
+    const outline = createOutlineMesh(body, 0.02);
+    outline.position.copy(body.position);
+    outline.quaternion.copy(body.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: body, type: 'trashCan', lat, lon });
+  }
+
+  /**
+   * Create a hot dog cart at the specified position
+   */
+  createHotDogCart(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Cart body
+    const cartGeom = new THREE.BoxGeometry(1.0, 0.5, 0.6);
+    const cartMaterial = createToonMaterial({ color: 0x8B8B8B }); // Silver cart
+    const cart = new THREE.Mesh(cartGeom, cartMaterial);
+
+    const cartPos = surfacePos.clone().add(up.clone().multiplyScalar(0.5));
+    cart.position.copy(cartPos);
+    cart.quaternion.copy(orientation);
+    cart.castShadow = true;
+
+    this.scene.add(cart);
+    this.meshes.push(cart);
+    this.collisionMeshes.push(cart);
+
+    // Umbrella pole
+    const poleGeom = new THREE.CylinderGeometry(0.03, 0.03, 1.0, 6);
+    const poleMaterial = createToonMaterial({ color: 0x3D3D3D });
+    const pole = new THREE.Mesh(poleGeom, poleMaterial);
+    pole.position.set(0, 0.75, 0);
+    cart.add(pole);
+    this.meshes.push(pole);
+
+    // Umbrella top (red with white stripes look)
+    const umbrellaGeom = new THREE.ConeGeometry(0.6, 0.3, 8);
+    const umbrellaMaterial = createToonMaterial({ color: NYC_COLORS.hotDogCart });
+    const umbrella = new THREE.Mesh(umbrellaGeom, umbrellaMaterial);
+    umbrella.position.set(0, 1.3, 0);
+    umbrella.rotation.x = Math.PI;
+    umbrella.castShadow = true;
+    cart.add(umbrella);
+    this.meshes.push(umbrella);
+
+    // White stripes on umbrella
+    const stripeGeom = new THREE.ConeGeometry(0.62, 0.05, 8);
+    const stripeMaterial = createToonMaterial({ color: 0xFFFFFF });
+    const stripe = new THREE.Mesh(stripeGeom, stripeMaterial);
+    stripe.position.set(0, 1.15, 0);
+    stripe.rotation.x = Math.PI;
+    cart.add(stripe);
+    this.meshes.push(stripe);
+
+    // Wheels (2)
+    const wheelGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.06, 10);
+    const wheelMaterial = createToonMaterial({ color: 0x1A1A1A });
+
+    const wheel1 = new THREE.Mesh(wheelGeom, wheelMaterial);
+    wheel1.position.set(-0.4, -0.2, 0.35);
+    wheel1.rotation.x = Math.PI / 2;
+    cart.add(wheel1);
+    this.meshes.push(wheel1);
+
+    const wheel2 = new THREE.Mesh(wheelGeom, wheelMaterial);
+    wheel2.position.set(-0.4, -0.2, -0.35);
+    wheel2.rotation.x = Math.PI / 2;
+    cart.add(wheel2);
+    this.meshes.push(wheel2);
+
+    // Handle
+    const handleGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6);
+    const handle = new THREE.Mesh(handleGeom, poleMaterial);
+    handle.position.set(0.55, 0.1, 0);
+    handle.rotation.z = Math.PI / 4;
+    cart.add(handle);
+    this.meshes.push(handle);
+
+    // Outline
+    const outline = createOutlineMesh(cart, 0.025);
+    outline.position.copy(cart.position);
+    outline.quaternion.copy(cart.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: cart, type: 'hotDogCart', lat, lon });
+  }
+
+  /**
    * Set time of day and update lighting
    */
   setTimeOfDay(time) {
@@ -520,6 +1183,236 @@ export class Planet {
 
   update(deltaTime) {
     // Animate any props that need it
+    // Animate flowers swaying
+    if (this.flowerInstances) {
+      this.flowerTime = (this.flowerTime || 0) + deltaTime;
+      // Flowers would need instance matrix updates for animation
+      // Keeping simple for now
+    }
+  }
+
+  /**
+   * Create ground scatter (grass, rocks, flowers) using instancing for performance
+   */
+  createGroundScatter() {
+    this.createGrassPatches();
+    this.createRocks();
+    this.createFlowers();
+  }
+
+  /**
+   * Create instanced grass patches across the planet
+   */
+  createGrassPatches() {
+    // Grass blade geometry (thin triangle)
+    const grassGeo = new THREE.ConeGeometry(0.08, 0.4, 4);
+    const grassColors = [0x558B2F, 0x689F38, 0x7CB342]; // Various green shades
+
+    const dummy = new THREE.Object3D();
+    const grassCount = 300;
+
+    // Create instanced mesh for each color variation
+    grassColors.forEach((color, colorIndex) => {
+      const grassMat = createToonMaterial({ color });
+      const grassInstanced = new THREE.InstancedMesh(grassGeo, grassMat, grassCount / grassColors.length);
+
+      for (let i = 0; i < grassCount / grassColors.length; i++) {
+        // Random position on planet (avoiding building areas)
+        let lat, lon;
+        let attempts = 0;
+        do {
+          lat = (Math.random() - 0.5) * 120; // -60 to +60 degrees
+          lon = Math.random() * 360;
+          attempts++;
+        } while (this.isNearBuilding(lat, lon) && attempts < 10);
+
+        const pos = this.planet.latLonToPosition(lat, lon);
+        const orientation = this.planet.getSurfaceOrientation(pos);
+
+        dummy.position.copy(pos);
+        dummy.quaternion.copy(orientation);
+        // Random scale and slight rotation
+        dummy.scale.set(
+          0.5 + Math.random() * 0.5,
+          0.6 + Math.random() * 0.8,
+          0.5 + Math.random() * 0.5
+        );
+        // Small random rotation around local Y
+        dummy.rotateY(Math.random() * Math.PI * 2);
+        dummy.updateMatrix();
+
+        grassInstanced.setMatrixAt(i, dummy.matrix);
+      }
+
+      grassInstanced.instanceMatrix.needsUpdate = true;
+      grassInstanced.castShadow = true;
+      this.scene.add(grassInstanced);
+      this.meshes.push(grassInstanced);
+    });
+  }
+
+  /**
+   * Create instanced rocks scattered on the planet
+   */
+  createRocks() {
+    // Low-poly rock geometry
+    const rockGeo = new THREE.DodecahedronGeometry(0.2, 0);
+    const rockMat = createToonMaterial({ color: 0x757575 }); // Gray
+    const rockCount = 60;
+    const rockInstanced = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
+
+    const dummy = new THREE.Object3D();
+
+    for (let i = 0; i < rockCount; i++) {
+      // Random position
+      let lat, lon;
+      let attempts = 0;
+      do {
+        lat = (Math.random() - 0.5) * 140;
+        lon = Math.random() * 360;
+        attempts++;
+      } while (this.isNearBuilding(lat, lon) && attempts < 10);
+
+      const pos = this.planet.latLonToPosition(lat, lon);
+      const orientation = this.planet.getSurfaceOrientation(pos);
+
+      dummy.position.copy(pos);
+      dummy.quaternion.copy(orientation);
+      // Random scale (some small, some larger)
+      const scale = 0.3 + Math.random() * 0.6;
+      dummy.scale.set(
+        scale * (0.8 + Math.random() * 0.4),
+        scale * (0.6 + Math.random() * 0.3),
+        scale * (0.8 + Math.random() * 0.4)
+      );
+      // Random rotation
+      dummy.rotateY(Math.random() * Math.PI * 2);
+      dummy.rotateX((Math.random() - 0.5) * 0.3);
+      dummy.updateMatrix();
+
+      rockInstanced.setMatrixAt(i, dummy.matrix);
+    }
+
+    rockInstanced.instanceMatrix.needsUpdate = true;
+    rockInstanced.castShadow = true;
+    rockInstanced.receiveShadow = true;
+    this.scene.add(rockInstanced);
+    this.meshes.push(rockInstanced);
+  }
+
+  /**
+   * Create instanced flowers scattered on the planet
+   */
+  createFlowers() {
+    // Flower colors
+    const flowerColors = [
+      { petal: 0xFF69B4, center: 0xFFD700 }, // Pink with yellow center
+      { petal: 0xFFFFFF, center: 0xFFD700 }, // White daisy
+      { petal: 0x9370DB, center: 0xFFFF00 }, // Purple
+      { petal: 0xFF6347, center: 0xFFD700 }, // Red-orange
+    ];
+
+    const flowerCount = 80;
+    const dummy = new THREE.Object3D();
+
+    // Create each flower type
+    flowerColors.forEach((colors, colorIndex) => {
+      const count = flowerCount / flowerColors.length;
+
+      // Stem
+      const stemGeo = new THREE.CylinderGeometry(0.02, 0.03, 0.25, 6);
+      const stemMat = createToonMaterial({ color: 0x228B22 });
+      const stemInstanced = new THREE.InstancedMesh(stemGeo, stemMat, count);
+
+      // Petal (simple cone/circle approximation)
+      const petalGeo = new THREE.ConeGeometry(0.12, 0.08, 6);
+      const petalMat = createToonMaterial({ color: colors.petal });
+      const petalInstanced = new THREE.InstancedMesh(petalGeo, petalMat, count);
+
+      // Center
+      const centerGeo = new THREE.SphereGeometry(0.04, 6, 6);
+      const centerMat = createToonMaterial({ color: colors.center });
+      const centerInstanced = new THREE.InstancedMesh(centerGeo, centerMat, count);
+
+      for (let i = 0; i < count; i++) {
+        // Random position
+        let lat, lon;
+        let attempts = 0;
+        do {
+          lat = (Math.random() - 0.5) * 100;
+          lon = Math.random() * 360;
+          attempts++;
+        } while (this.isNearBuilding(lat, lon) && attempts < 10);
+
+        const pos = this.planet.latLonToPosition(lat, lon);
+        const orientation = this.planet.getSurfaceOrientation(pos);
+        const up = this.planet.getUpVector(pos);
+
+        // Stem position
+        const stemPos = pos.clone().add(up.clone().multiplyScalar(0.125));
+        dummy.position.copy(stemPos);
+        dummy.quaternion.copy(orientation);
+        dummy.scale.setScalar(1);
+        dummy.updateMatrix();
+        stemInstanced.setMatrixAt(i, dummy.matrix);
+
+        // Petal position (on top of stem)
+        const petalPos = pos.clone().add(up.clone().multiplyScalar(0.3));
+        dummy.position.copy(petalPos);
+        dummy.quaternion.copy(orientation);
+        // Flip cone to be upside down for petal shape
+        dummy.rotateX(Math.PI);
+        dummy.updateMatrix();
+        petalInstanced.setMatrixAt(i, dummy.matrix);
+
+        // Center position
+        const centerPos = pos.clone().add(up.clone().multiplyScalar(0.28));
+        dummy.position.copy(centerPos);
+        dummy.quaternion.copy(orientation);
+        dummy.rotation.set(0, 0, 0); // Reset rotation
+        dummy.scale.setScalar(1);
+        dummy.updateMatrix();
+        centerInstanced.setMatrixAt(i, dummy.matrix);
+      }
+
+      stemInstanced.instanceMatrix.needsUpdate = true;
+      petalInstanced.instanceMatrix.needsUpdate = true;
+      centerInstanced.instanceMatrix.needsUpdate = true;
+
+      this.scene.add(stemInstanced);
+      this.scene.add(petalInstanced);
+      this.scene.add(centerInstanced);
+
+      this.meshes.push(stemInstanced, petalInstanced, centerInstanced);
+    });
+
+    this.flowerInstances = true;
+  }
+
+  /**
+   * Check if a latitude/longitude is near a building
+   */
+  isNearBuilding(lat, lon) {
+    const buildingPositions = [
+      { lat: 0, lon: 90 },   // Skills
+      { lat: 45, lon: 0 },   // Projects
+      { lat: 0, lon: -90 },  // Music
+      { lat: -45, lon: 0 },  // Contact
+    ];
+
+    const threshold = 20; // degrees
+
+    for (const building of buildingPositions) {
+      const latDiff = Math.abs(lat - building.lat);
+      const lonDiff = Math.abs(lon - building.lon);
+      // Handle longitude wrap-around
+      const lonDiffWrapped = Math.min(lonDiff, 360 - lonDiff);
+
+      if (latDiff < threshold && lonDiffWrapped < threshold) {
+        return true;
+      }
+    }
+    return false;
   }
 
   dispose() {
