@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Rohith Illuri - Interactive 3D NYC Street Portfolio" />
+    <title>Rohith Illuri | NYC Street Portfolio</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Loading Screen -->
+      <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+          <h1 class="loading-title">NYC STREET</h1>
+          <div class="loading-bar-container">
+            <div class="loading-bar" id="loading-bar"></div>
+          </div>
+          <p class="loading-text" id="loading-text">Loading assets...</p>
+        </div>
+      </div>
+
+      <!-- HUD Overlay -->
+      <div id="hud" class="hud hidden">
+        <div class="hud-top">
+          <h2 class="location-name" id="location-name">Spawn Point</h2>
+        </div>
+        <div class="hud-bottom">
+          <div class="controls-hint">
+            <span>WASD</span> Move
+            <span>SHIFT</span> Run
+            <span>E</span> Interact
+            <span>N</span> Day/Night
+          </div>
+        </div>
+      </div>
+
+      <!-- Interaction Prompt -->
+      <div id="interaction-prompt" class="interaction-prompt hidden">
+        <span class="prompt-key">E</span>
+        <span class="prompt-text" id="prompt-text">Enter Building</span>
+      </div>
+
+      <!-- Building Modal -->
+      <div id="building-modal" class="modal hidden">
+        <div class="modal-content">
+          <button class="modal-close" id="modal-close">&times;</button>
+          <div class="modal-header">
+            <h2 class="modal-title" id="modal-title">Building</h2>
+          </div>
+          <div class="modal-body" id="modal-body">
+            <!-- Dynamic content loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Three.js Canvas Container -->
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
