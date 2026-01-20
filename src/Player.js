@@ -1,0 +1,650 @@
+/**
+ * Player.js - Spherical Planet Player Controller
+ * Handles player movement on a tiny planet sphere with proper orientation
+ * Player always stands perpendicular to the sphere surface (local "up")
+ * With enhanced toon material, outline mesh, and character model support
+ */
+
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { useGameStore } from './stores/gameStore.js';
+import {
+  createEnhancedToonMaterial,
+  createOutlineMesh,
+  TOON_CONSTANTS,
+} from './shaders/toon.js';
+
+// Animation states
+const ANIM_STATES = {
+  IDLE: 'idle',
+  WALK: 'walk',
+  RUN: 'run',
+};
+
+// Animation blend times
+const BLEND_TIMES = {
+  [ANIM_STATES.IDLE]: 0.25,
+  [ANIM_STATES.WALK]: 0.15,
+  [ANIM_STATES.RUN]: 0.15,
+};
+
+export class Player {
+  constructor(scene, inputManager, spawnPosition, planet = null) {
+    this.scene = scene;
+    this.inputManager = inputManager;
+    this.planet = planet; // TinyPlanet instance (null for flat world fallback)
+
+    // Player settings
+    this.walkSpeed = 5;
+    this.runSpeed = 10;
+    this.turnSpeed = 8;
+
+    // Capsule collision dimensions
+    this.capsuleRadius = 0.4;
+    this.capsuleHeight = 1.8;
+
+    // Position and physics
+    this.position = spawnPosition.clone();
+    this.velocity = new THREE.Vector3();
+    this.heading = 0; // Heading angle in radians (rotation around local up)
+
+    // For spherical movement
+    this.localUp = new THREE.Vector3(0, 1, 0);
+    this.localForward = new THREE.Vector3(0, 0, -1);
+    this.localRight = new THREE.Vector3(1, 0, 0);
+
+    // Legacy rotation support (for flat world)
+    this.rotation = 0;
+
+    // Collision
+    this.collisionMeshes = [];
+    this.raycaster = new THREE.Raycaster();
+    this.groundRay = new THREE.Vector3(0, -1, 0);
+
+    // State
+    this.isGrounded = true;
+    this.currentBuilding = null;
+
+    // Visual representation
+    this.mesh = null;
+    this.outlineMesh = null;
+    this.characterModel = null;
+    this.mixer = null;
+    this.animations = {};
+    this.currentAnimState = ANIM_STATES.IDLE;
+
+    // Container for player (mesh + outline)
+    this.container = new THREE.Group();
+    this.scene.add(this.container);
+
+    // Light direction for enhanced toon material (synced with sun)
+    this.lightDirection = new THREE.Vector3(1, 1, 1).normalize();
+
+    // Create visual representation
+    this.createMesh();
+
+    // Try to load character model
+    this.loadCharacterModel();
+
+    // Interaction
+    this.interactionRange = 3;
+    this.nearbyBuilding = null;
+
+    // Listen for interactions
+    this.inputManager.on('interact', () => this.onInteract());
+
+    // Initialize orientation if on planet
+    if (this.planet) {
+      this.updateOrientationFromPlanet();
+    }
+  }
+
+  /**
+   * Set the planet for spherical movement
+   * @param {TinyPlanet} planet
+   */
+  setPlanet(planet) {
+    this.planet = planet;
+    if (planet) {
+      // Project current position onto planet surface
+      this.position = planet.projectToSurface(this.position);
+      this.updateOrientationFromPlanet();
+    }
+  }
+
+  /**
+   * Update local orientation vectors from planet
+   */
+  updateOrientationFromPlanet() {
+    if (!this.planet) return;
+
+    const axes = this.planet.getLocalAxes(this.position, this.heading);
+    this.localUp = axes.up;
+    this.localForward = axes.forward;
+    this.localRight = axes.right;
+  }
+
+  /**
+   * Create the player mesh (capsule with enhanced toon material)
+   */
+  createMesh() {
+    // Simple capsule representation (fallback / placeholder)
+    const geometry = new THREE.CapsuleGeometry(
+      this.capsuleRadius,
+      this.capsuleHeight - this.capsuleRadius * 2,
+      16,
+      32
+    );
+
+    // Enhanced toon material with rim lighting
+    const material = createEnhancedToonMaterial({
+      color: 0x4A90D9, // Blue player color
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = false;
+
+    // Create outline mesh (inverted hull)
+    this.outlineMesh = createOutlineMesh(this.mesh, 0.025);
+
+    // Add mesh and outline to container
+    this.container.add(this.outlineMesh);
+    this.container.add(this.mesh);
+
+    // Position the container
+    this.container.position.copy(this.position);
+    this.container.position.y += this.capsuleHeight / 2;
+  }
+
+  /**
+   * Attempt to load a character model
+   */
+  async loadCharacterModel() {
+    const loader = new GLTFLoader();
+
+    try {
+      // Try to load character model from assets
+      const modelPath = '/assets/models/character.glb';
+
+      const gltf = await loader.loadAsync(modelPath);
+      this.characterModel = gltf.scene;
+
+      // Apply enhanced toon material to all meshes in the model
+      this.characterModel.traverse((child) => {
+        if (child.isMesh) {
+          // Get the original color if available
+          const originalColor = child.material.color
+            ? child.material.color.getHex()
+            : 0x4A90D9;
+
+          // Replace with enhanced toon material
+          child.material = createEnhancedToonMaterial({
+            color: originalColor,
+            isCharacter: true,
+            lightDirection: this.lightDirection,
+          });
+
+          child.castShadow = true;
+          child.receiveShadow = false;
+
+          // Create and add outline for this mesh
+          const outline = createOutlineMesh(child, 0.02);
+          child.parent.add(outline);
+        }
+      });
+
+      // Setup animation mixer if animations exist
+      if (gltf.animations && gltf.animations.length > 0) {
+        this.mixer = new THREE.AnimationMixer(this.characterModel);
+
+        gltf.animations.forEach((clip) => {
+          const name = clip.name.toLowerCase();
+          if (name.includes('idle')) {
+            this.animations[ANIM_STATES.IDLE] = this.mixer.clipAction(clip);
+          } else if (name.includes('walk')) {
+            this.animations[ANIM_STATES.WALK] = this.mixer.clipAction(clip);
+          } else if (name.includes('run')) {
+            this.animations[ANIM_STATES.RUN] = this.mixer.clipAction(clip);
+          }
+        });
+
+        // Start with idle animation
+        if (this.animations[ANIM_STATES.IDLE]) {
+          this.animations[ANIM_STATES.IDLE].play();
+        }
+      }
+
+      // Scale and position the model
+      this.characterModel.scale.set(1, 1, 1);
+      this.characterModel.position.y = -this.capsuleHeight / 2;
+
+      // Hide capsule and show character
+      this.mesh.visible = false;
+      this.outlineMesh.visible = false;
+      this.container.add(this.characterModel);
+
+      console.log('Character model loaded successfully');
+    } catch (error) {
+      // Model not found, use capsule fallback
+      console.log('Character model not found, using capsule fallback');
+    }
+  }
+
+  /**
+   * Set the light direction (synced with sun position)
+   * @param {THREE.Vector3} direction
+   */
+  setLightDirection(direction) {
+    this.lightDirection.copy(direction).normalize();
+
+    // Update material uniform if using enhanced toon material
+    if (this.mesh && this.mesh.material.uniforms) {
+      this.mesh.material.uniforms.lightDirection.value = this.lightDirection;
+    }
+
+    // Update character model materials
+    if (this.characterModel) {
+      this.characterModel.traverse((child) => {
+        if (child.isMesh && child.material.uniforms) {
+          child.material.uniforms.lightDirection.value = this.lightDirection;
+        }
+      });
+    }
+  }
+
+  /**
+   * Transition to a new animation state
+   * @param {string} newState
+   */
+  setAnimationState(newState) {
+    if (newState === this.currentAnimState) return;
+    if (!this.mixer || !this.animations[newState]) return;
+
+    const currentAnim = this.animations[this.currentAnimState];
+    const newAnim = this.animations[newState];
+    const blendTime = BLEND_TIMES[newState] || 0.2;
+
+    if (currentAnim) {
+      currentAnim.fadeOut(blendTime);
+    }
+
+    newAnim.reset().fadeIn(blendTime).play();
+    this.currentAnimState = newState;
+  }
+
+  setCollisionMeshes(meshes) {
+    this.collisionMeshes = meshes;
+  }
+
+  update(deltaTime) {
+    // Update animation mixer
+    if (this.mixer) {
+      this.mixer.update(deltaTime);
+    }
+
+    // Get movement input
+    const movement = this.inputManager.getMovementDirection();
+    const isRunning = this.inputManager.isRunning();
+    const isMoving = this.inputManager.isMoving();
+
+    // Calculate speed
+    const speed = isRunning ? this.runSpeed : this.walkSpeed;
+
+    // Update animation state based on movement
+    if (isMoving) {
+      this.setAnimationState(isRunning ? ANIM_STATES.RUN : ANIM_STATES.WALK);
+    } else {
+      this.setAnimationState(ANIM_STATES.IDLE);
+    }
+
+    // Use spherical movement if planet exists, otherwise flat movement
+    if (this.planet) {
+      this.updateSpherical(deltaTime, movement, speed, isMoving);
+    } else {
+      this.updateFlat(deltaTime, movement, speed, isMoving);
+    }
+
+    // Update game store with player position
+    useGameStore.getState().setPlayerPosition(this.position.clone());
+
+    // Check for nearby buildings
+    this.checkNearbyBuildings();
+  }
+
+  /**
+   * Update movement on spherical planet
+   */
+  updateSpherical(deltaTime, movement, speed, isMoving) {
+    if (isMoving) {
+      // Update orientation from planet
+      this.updateOrientationFromPlanet();
+
+      // Calculate target heading based on movement direction
+      const targetHeading = Math.atan2(movement.x, movement.z);
+
+      // Smoothly rotate towards target heading
+      let headingDiff = targetHeading - this.heading;
+      while (headingDiff > Math.PI) headingDiff -= Math.PI * 2;
+      while (headingDiff < -Math.PI) headingDiff += Math.PI * 2;
+      this.heading += headingDiff * this.turnSpeed * deltaTime;
+
+      // Update local axes with new heading
+      this.updateOrientationFromPlanet();
+
+      // Calculate movement direction in world space
+      // Forward is into the screen (negative Z in input), so we invert
+      const moveDir = new THREE.Vector3()
+        .addScaledVector(this.localForward, movement.z)
+        .addScaledVector(this.localRight, movement.x)
+        .normalize();
+
+      // Move on sphere surface
+      const distance = speed * deltaTime;
+      const newPosition = this.planet.moveOnSurface(this.position, moveDir, distance);
+
+      // Check collision
+      if (this.canMoveTo(newPosition)) {
+        this.position.copy(newPosition);
+      }
+    }
+
+    // Project position to surface to ensure we stay on the sphere
+    this.position = this.planet.projectToSurface(this.position);
+
+    // Update container position (at height above surface)
+    this.container.position.copy(
+      this.planet.projectToSurfaceWithHeight(this.position, this.capsuleHeight / 2)
+    );
+
+    // Update container orientation to match planet surface
+    const orientation = this.planet.getSurfaceOrientation(this.position, this.heading);
+    this.container.quaternion.copy(orientation);
+
+    // Keep legacy rotation in sync
+    this.rotation = this.heading;
+  }
+
+  /**
+   * Update movement on flat surface (legacy)
+   */
+  updateFlat(deltaTime, movement, speed, isMoving) {
+    if (isMoving) {
+      // Calculate target rotation based on movement direction
+      const targetRotation = Math.atan2(movement.x, movement.z);
+
+      // Smoothly rotate towards target
+      let rotationDiff = targetRotation - this.rotation;
+
+      // Normalize rotation difference to [-PI, PI]
+      while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
+      while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
+
+      this.rotation += rotationDiff * this.turnSpeed * deltaTime;
+
+      // Calculate forward movement in world space
+      const forward = new THREE.Vector3(
+        Math.sin(this.rotation),
+        0,
+        Math.cos(this.rotation)
+      );
+
+      // Apply movement
+      this.velocity.x = forward.x * speed;
+      this.velocity.z = forward.z * speed;
+    } else {
+      // Decelerate
+      this.velocity.x *= 0.9;
+      this.velocity.z *= 0.9;
+    }
+
+    // Apply velocity
+    const newPosition = this.position.clone();
+    newPosition.x += this.velocity.x * deltaTime;
+    newPosition.z += this.velocity.z * deltaTime;
+
+    // Check collision
+    if (this.canMoveTo(newPosition)) {
+      this.position.copy(newPosition);
+    } else {
+      // Try sliding along obstacles
+      const slideX = this.position.clone();
+      slideX.x = newPosition.x;
+      if (this.canMoveTo(slideX)) {
+        this.position.x = slideX.x;
+      }
+
+      const slideZ = this.position.clone();
+      slideZ.z = newPosition.z;
+      if (this.canMoveTo(slideZ)) {
+        this.position.z = slideZ.z;
+      }
+
+      // Stop velocity on collision
+      this.velocity.set(0, 0, 0);
+    }
+
+    // Update container position and rotation
+    this.container.position.copy(this.position);
+    this.container.position.y += this.capsuleHeight / 2;
+    this.container.rotation.y = this.rotation;
+
+    // Keep heading in sync
+    this.heading = this.rotation;
+  }
+
+  canMoveTo(position) {
+    // For spherical movement on planet
+    if (this.planet) {
+      return this.canMoveToSpherical(position);
+    }
+
+    // Flat world boundary check
+    const boundary = 50;
+    if (Math.abs(position.x) > boundary || Math.abs(position.z) > boundary) {
+      return false;
+    }
+
+    // Check collision with meshes using raycasting
+    return this.checkCollisionWithMeshes(position);
+  }
+
+  /**
+   * Check if can move to position on spherical planet
+   */
+  canMoveToSpherical(position) {
+    // On a sphere, there's no boundary - you can walk all the way around
+
+    // Check collision with buildings/props on the planet
+    if (this.collisionMeshes.length === 0) {
+      return true;
+    }
+
+    // Get the "up" direction at the target position
+    const up = this.planet.getUpVector(position);
+
+    // Create origin point at player height above surface
+    const origin = this.planet.projectToSurfaceWithHeight(
+      position,
+      this.capsuleHeight / 2
+    );
+
+    // Cast rays in multiple directions to check for obstacles
+    const directions = [
+      this.localForward.clone(),
+      this.localRight.clone(),
+      this.localForward.clone().negate(),
+      this.localRight.clone().negate(),
+    ];
+
+    for (const dir of directions) {
+      this.raycaster.set(origin, dir);
+      this.raycaster.far = this.capsuleRadius + 0.1;
+
+      const intersects = this.raycaster.intersectObjects(this.collisionMeshes, true);
+      if (intersects.length > 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Check collision with meshes (shared between flat and spherical)
+   */
+  checkCollisionWithMeshes(position) {
+    if (this.collisionMeshes.length === 0) {
+      return true;
+    }
+
+    const origin = new THREE.Vector3(
+      position.x,
+      position.y + this.capsuleHeight / 2,
+      position.z
+    );
+
+    // Check in movement direction
+    const direction = new THREE.Vector3()
+      .subVectors(position, this.position)
+      .normalize();
+
+    if (direction.length() > 0) {
+      this.raycaster.set(origin, direction);
+      this.raycaster.far = this.capsuleRadius + 0.1;
+
+      const intersects = this.raycaster.intersectObjects(
+        this.collisionMeshes,
+        true
+      );
+
+      if (intersects.length > 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  checkNearbyBuildings() {
+    const store = useGameStore.getState();
+    const buildings = store.buildings;
+
+    let nearestBuilding = null;
+    let nearestDistance = this.interactionRange;
+
+    buildings.forEach((building) => {
+      const distance = this.position.distanceTo(building.position);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestBuilding = building;
+      }
+    });
+
+    if (nearestBuilding !== this.nearbyBuilding) {
+      this.nearbyBuilding = nearestBuilding;
+
+      // Update UI prompt
+      const promptEl = document.getElementById('interaction-prompt');
+      const promptText = document.getElementById('prompt-text');
+
+      if (nearestBuilding && promptEl && promptText) {
+        promptEl.classList.remove('hidden');
+        promptText.textContent = `Enter ${nearestBuilding.name}`;
+      } else if (promptEl) {
+        promptEl.classList.add('hidden');
+      }
+    }
+  }
+
+  onInteract() {
+    if (this.nearbyBuilding) {
+      // Open building modal
+      const store = useGameStore.getState();
+      store.setCurrentBuilding(this.nearbyBuilding);
+      store.openModal();
+
+      // Update UI
+      this.showBuildingModal(this.nearbyBuilding);
+    }
+  }
+
+  showBuildingModal(building) {
+    const modal = document.getElementById('building-modal');
+    const title = document.getElementById('modal-title');
+    const body = document.getElementById('modal-body');
+    const closeBtn = document.getElementById('modal-close');
+
+    if (modal && title && body) {
+      modal.classList.remove('hidden');
+      title.textContent = building.name;
+      body.innerHTML = building.content || '<p>Loading content...</p>';
+
+      // Close button handler
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        useGameStore.getState().closeModal();
+        closeBtn.removeEventListener('click', closeModal);
+      };
+
+      closeBtn.addEventListener('click', closeModal);
+
+      // Also close on escape
+      const escapeHandler = (e) => {
+        if (e.code === 'Escape') {
+          closeModal();
+          document.removeEventListener('keydown', escapeHandler);
+        }
+      };
+      document.addEventListener('keydown', escapeHandler);
+    }
+  }
+
+  getPosition() {
+    return this.position.clone();
+  }
+
+  getRotation() {
+    return this.rotation;
+  }
+
+  /**
+   * Get the player container (for camera targeting)
+   */
+  getContainer() {
+    return this.container;
+  }
+
+  dispose() {
+    // Dispose mesh and material
+    if (this.mesh) {
+      this.mesh.geometry.dispose();
+      if (this.mesh.material.dispose) {
+        this.mesh.material.dispose();
+      }
+    }
+
+    // Dispose outline mesh
+    if (this.outlineMesh) {
+      this.outlineMesh.geometry.dispose();
+      this.outlineMesh.material.dispose();
+    }
+
+    // Dispose character model
+    if (this.characterModel) {
+      this.characterModel.traverse((child) => {
+        if (child.isMesh) {
+          child.geometry.dispose();
+          if (child.material.dispose) {
+            child.material.dispose();
+          }
+        }
+      });
+    }
+
+    // Remove container from scene
+    this.scene.remove(this.container);
+  }
+}
