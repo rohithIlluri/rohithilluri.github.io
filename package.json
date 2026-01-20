@@ -1,18 +1,33 @@
 {
-  "name": "portfolio",
-  "version": "1.0.0",
-  "description": "Modern portfolio website built with React, featuring GitHub integration and YouTube music player",
-  "main": "index.js",
+  "name": "nyc-street-portfolio",
+  "version": "2.0.0",
+  "description": "Interactive 3D NYC street portfolio experience built with Three.js and Vite",
+  "type": "module",
   "scripts": {
-    "dev": "cd client && PORT=3001 npm start",
-    "client": "cd client && PORT=3001 npm start",
-    "build": "cd client && npm run build",
-    "clean": "rm -rf node_modules client/node_modules client/build",
-    "setup": "npm install && cd client && npm install",
-    "start": "npm run dev"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist"
   },
-  "keywords": ["portfolio", "react", "github", "youtube", "tailwindcss"],
+  "keywords": [
+    "portfolio",
+    "threejs",
+    "3d",
+    "webgl",
+    "nyc",
+    "vite"
+  ],
   "author": "Rohith Illuri",
-  "license": "ISC",
-  "devDependencies": {}
-} 
+  "license": "MIT",
+  "dependencies": {
+    "gsap": "^3.12.5",
+    "three": "^0.170.0",
+    "three-mesh-bvh": "^0.8.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.1.0",
+    "gh-pages": "^6.2.0",
+    "vite": "^6.0.5"
+  }
+}
