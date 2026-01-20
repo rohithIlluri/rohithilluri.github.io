@@ -1,7 +1,7 @@
 /**
  * World.js - Enhanced 3D Scene Orchestrator
  * Manages the Three.js scene, renderer, lighting, and all world objects
- * With rim lighting, quality presets, and post-processing enabled
+ * With rim lighting, quality presets, post-processing, and particle systems
  */
 
 import * as THREE from 'three';
@@ -11,15 +11,18 @@ import { Street } from './environment/Street.js';
 import { Planet } from './environment/Planet.js';
 import { SkyShader } from './shaders/sky.js';
 import { PostProcessing } from './effects/PostProcessing.js';
+import { ParticleManager } from './effects/particles/ParticleManager.js';
+import { createFireflyEmitter, createLeafEmitter } from './effects/particles/Emitters.js';
+import { LODManager } from './optimization/LODManager.js';
 import { useGameStore } from './stores/gameStore.js';
 
-// Quality presets from spec
+// Quality presets - enhanced for messenger.abeto.co parity
 const QUALITY_PRESETS = {
   high: {
     shadowMapSize: 2048,
     pixelRatio: Math.min(window.devicePixelRatio, 2),
     bloomEnabled: true,
-    ssaoEnabled: false, // Enable for ultra quality
+    ssaoEnabled: true, // Enabled for high quality
     antialias: true,
   },
   medium: {
@@ -59,6 +62,14 @@ export class World {
     this.tinyPlanet = null;  // TinyPlanet system for movement
     this.sky = null;
     this.postProcessing = null;
+
+    // Particle system
+    this.particleManager = null;
+    this.fireflyEmitter = null;
+    this.leafEmitters = [];
+
+    // LOD system
+    this.lodManager = null;
 
     // Lighting
     this.ambientLight = null;
@@ -161,8 +172,12 @@ export class World {
     this.reportProgress(0.8, 'Setting up camera...');
     this.setupCamera();
 
-    this.reportProgress(0.9, 'Initializing post-processing...');
+    this.reportProgress(0.85, 'Initializing post-processing...');
     this.setupPostProcessing(preset);
+
+    this.reportProgress(0.9, 'Setting up particles and LOD...');
+    this.setupParticles();
+    this.setupLOD();
 
     this.reportProgress(1.0, 'Ready!');
 
@@ -180,24 +195,26 @@ export class World {
   }
 
   setupLighting(preset) {
-    // Ambient light for base illumination
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    // Ambient light - reduced for dramatic cel-shading shadows
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     this.scene.add(this.ambientLight);
 
     // Hemisphere light for natural sky/ground color blending
+    // Reduced intensity for more dramatic shadows
     this.hemisphereLight = new THREE.HemisphereLight(
       0x87CEEB, // Sky color
       0x4A4063, // Ground color (shadow purple from spec)
-      0.6
+      0.4       // Reduced from 0.6 for darker shadows
     );
     this.scene.add(this.hemisphereLight);
 
-    // Main directional light (sun)
-    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    this.directionalLight.position.set(50, 100, 50);
+    // Main directional light (sun) - increased intensity for dramatic lighting
+    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    // Position sun lower for more dramatic shadows
+    this.directionalLight.position.set(40, 60, 30);
     this.directionalLight.castShadow = true;
 
-    // Shadow configuration based on quality
+    // Shadow configuration - enhanced for soft shadows
     this.directionalLight.shadow.mapSize.width = preset.shadowMapSize;
     this.directionalLight.shadow.mapSize.height = preset.shadowMapSize;
     this.directionalLight.shadow.camera.near = 0.5;
@@ -207,6 +224,7 @@ export class World {
     this.directionalLight.shadow.camera.top = 100;
     this.directionalLight.shadow.camera.bottom = -100;
     this.directionalLight.shadow.bias = -0.0001;
+    this.directionalLight.shadow.radius = 3; // Soft shadow edges
 
     this.scene.add(this.directionalLight);
 
@@ -289,6 +307,48 @@ export class World {
 
     // Apply quality preset
     this.postProcessing.setQualityPreset(this.qualityLevel);
+  }
+
+  setupParticles() {
+    // Initialize particle manager
+    this.particleManager = new ParticleManager(this.scene, {
+      quality: this.qualityLevel,
+    });
+
+    // Create ambient leaf emitters (bounds depend on world mode)
+    const bounds = this.worldMode === 'planet'
+      ? { min: { x: -30, y: 5, z: -30 }, max: { x: 30, y: 20, z: 30 } }
+      : { min: { x: -50, y: 5, z: -50 }, max: { x: 50, y: 15, z: 50 } };
+
+    this.leafEmitters = createLeafEmitter(
+      this.particleManager,
+      bounds,
+      this.qualityLevel === 'low' ? 10 : 30
+    );
+
+    // Create firefly emitter (activated at night)
+    const fireflyBounds = {
+      min: new THREE.Vector3(-40, 0.5, -40),
+      max: new THREE.Vector3(40, 4, 40),
+    };
+    this.fireflyEmitter = createFireflyEmitter(
+      this.particleManager,
+      fireflyBounds,
+      this.qualityLevel === 'low' ? 15 : 40
+    );
+
+    // Store particle manager for player to access
+    if (this.player) {
+      this.player.particleManager = this.particleManager;
+    }
+  }
+
+  setupLOD() {
+    // Initialize LOD manager with camera
+    this.lodManager = new LODManager(this.camera.camera);
+
+    // Note: LOD objects would be added here for complex meshes
+    // For now, the environment uses simple geometry that doesn't need LOD
   }
 
   /**
@@ -385,9 +445,9 @@ export class World {
     const skyColor = dayColor.clone().lerp(nightColor, this.timeOfDay);
     this.scene.background = skyColor;
 
-    // Adjust main light
-    const dayIntensity = 1.0;
-    const nightIntensity = 0.2;
+    // Adjust main light - keeping dramatic contrast
+    const dayIntensity = 1.8;
+    const nightIntensity = 0.3;
     this.directionalLight.intensity = THREE.MathUtils.lerp(
       dayIntensity,
       nightIntensity,
@@ -403,8 +463,8 @@ export class World {
       this.timeOfDay
     );
 
-    // Adjust ambient
-    this.ambientLight.intensity = THREE.MathUtils.lerp(0.4, 0.15, this.timeOfDay);
+    // Adjust ambient - low for dramatic shadows
+    this.ambientLight.intensity = THREE.MathUtils.lerp(0.2, 0.1, this.timeOfDay);
 
     // Adjust hemisphere light
     const dayGroundColor = new THREE.Color(0x4A4063);
@@ -429,8 +489,8 @@ export class World {
 
     // Update bloom intensity (stronger at night for neon)
     if (this.postProcessing) {
-      const bloomBase = 0.15;
-      const bloomNight = 0.25;
+      const bloomBase = 0.25;  // Increased from 0.15
+      const bloomNight = 0.4;  // Increased from 0.25
       this.postProcessing.setBloom({
         intensity: THREE.MathUtils.lerp(bloomBase, bloomNight, this.timeOfDay),
       });
@@ -453,6 +513,27 @@ export class World {
       this.planetEnv.update(deltaTime);
     } else if (this.street) {
       this.street.update(deltaTime);
+    }
+
+    // Update particle systems
+    if (this.particleManager) {
+      this.particleManager.update(deltaTime);
+    }
+
+    // Update fireflies (only at night)
+    if (this.fireflyEmitter) {
+      const store = useGameStore.getState();
+      this.fireflyEmitter.update(deltaTime, store.isNight);
+    }
+
+    // Update LOD system
+    if (this.lodManager) {
+      this.lodManager.update(deltaTime);
+    }
+
+    // Update post-processing (for film grain animation)
+    if (this.postProcessing) {
+      this.postProcessing.update(deltaTime);
     }
 
     // Render
@@ -496,6 +577,8 @@ export class World {
     if (this.camera) this.camera.dispose();
     if (this.postProcessing) this.postProcessing.dispose();
     if (this.sky) this.sky.dispose();
+    if (this.particleManager) this.particleManager.dispose();
+    if (this.lodManager) this.lodManager.dispose();
 
     // Dispose of Three.js resources
     this.scene.traverse((object) => {
