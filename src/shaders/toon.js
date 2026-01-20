@@ -44,17 +44,19 @@ export function createToonMaterial(options = {}) {
 /**
  * Create a 4-band gradient map for DISCRETE cel shading
  * Per messenger.abeto.co style: hard color bands, NOT smooth transitions
+ * Higher contrast values for visible banding:
  * - Highlight (brightest): 1.0
- * - Light: 0.75
- * - Mid: 0.5
- * - Shadow (darkest): 0.25
+ * - Light: 0.7
+ * - Mid: 0.4
+ * - Shadow (darkest): 0.15
  */
 function createGradientMap() {
   // 4 discrete values - NearestFilter ensures hard edges between bands
+  // Higher contrast values for more visible cel-shading
   const colors = new Uint8Array(4);
-  colors[0] = 64;   // Shadow (0.25)
-  colors[1] = 128;  // Mid (0.5)
-  colors[2] = 191;  // Light (0.75)
+  colors[0] = 38;   // Shadow (0.15) - darker for visible bands
+  colors[1] = 102;  // Mid (0.4) - more contrast
+  colors[2] = 178;  // Light (0.7)
   colors[3] = 255;  // Highlight (1.0)
 
   const gradientMap = new THREE.DataTexture(
@@ -180,7 +182,7 @@ export function createEnhancedToonMaterial(options = {}) {
       rimColor: { value: new THREE.Color(RIM_COLOR) },
       rimIntensity: { value: rimIntensity },
       lightDirection: { value: lightDirection },
-      ambientIntensity: { value: 0.15 }, // Lowered from 0.4 to allow darker shadows
+      ambientIntensity: { value: 0.08 }, // Very low for dramatic cel-shading shadows
     },
     vertexShader: `
       varying vec3 vNormal;
@@ -220,21 +222,22 @@ export function createEnhancedToonMaterial(options = {}) {
         // ============================================
         // DISCRETE 4-BAND CEL-SHADING (messenger.abeto.co style)
         // Uses hard step() functions - NO smoothstep interpolation
+        // Sharper band transitions for more visible cel-shading
         // ============================================
         float intensity;
 
-        if (NdotL > 0.7) {
-          intensity = 1.0;      // Highlight band
-        } else if (NdotL > 0.35) {
-          intensity = 0.75;     // Light band
+        if (NdotL > 0.6) {
+          intensity = 1.0;      // Highlight band (narrower for more contrast)
+        } else if (NdotL > 0.3) {
+          intensity = 0.7;      // Light band
         } else if (NdotL > 0.0) {
-          intensity = 0.5;      // Mid band
+          intensity = 0.4;      // Mid band (darker for more contrast)
         } else {
-          intensity = 0.25;     // Shadow band (dark, visible)
+          intensity = 0.15;     // Shadow band (deeper purple-tinted shadow)
         }
 
-        // Add minimal ambient to prevent pure black
-        intensity = max(intensity, ambientIntensity);
+        // Lower ambient for darker shadows - allows cel-shading to show
+        intensity = max(intensity, ambientIntensity * 0.5);
 
         // Mix base color with purple shadow color (never pure black per spec)
         vec3 shadedColor = mix(shadowColor, baseColor, intensity);
@@ -305,15 +308,17 @@ export function createEnhancedToonMaterialLit(options = {}) {
       '#include <dithering_fragment>',
       `
       // DISCRETE cel-shading: hard quantize into 4 bands
+      // Sharper transitions for messenger.abeto.co style
       vec3 quantizedColor = gl_FragColor.rgb;
       float luminance = dot(quantizedColor, vec3(0.299, 0.587, 0.114));
 
       // 4-band DISCRETE quantization (no interpolation)
+      // Higher contrast values for visible cel-shading
       float band;
-      if (luminance > 0.7) band = 1.0;       // Highlight
-      else if (luminance > 0.4) band = 0.75; // Light
-      else if (luminance > 0.15) band = 0.5; // Mid
-      else band = 0.25;                       // Shadow (visible dark)
+      if (luminance > 0.6) band = 1.0;       // Highlight (narrower)
+      else if (luminance > 0.35) band = 0.7;  // Light
+      else if (luminance > 0.12) band = 0.4;  // Mid (more contrast)
+      else band = 0.15;                        // Shadow (deeper)
 
       // Mix with purple shadow (never pure black)
       quantizedColor = mix(shadowColor, quantizedColor, band);
@@ -378,15 +383,16 @@ export const ToonShaderMaterial = {
 
       // ============================================
       // DISCRETE 4-band cel-shading (no smoothstep)
+      // Sharper transitions for messenger.abeto.co style
       // ============================================
       float intensity;
-      if (NdotL > 0.7) intensity = 1.0;       // Highlight
-      else if (NdotL > 0.35) intensity = 0.75; // Light
-      else if (NdotL > 0.0) intensity = 0.5;   // Mid
-      else intensity = 0.25;                    // Shadow (visible dark)
+      if (NdotL > 0.6) intensity = 1.0;       // Highlight (narrower)
+      else if (NdotL > 0.3) intensity = 0.7;   // Light
+      else if (NdotL > 0.0) intensity = 0.4;   // Mid (more contrast)
+      else intensity = 0.15;                    // Shadow (deeper)
 
-      // Minimal ambient to prevent pure black
-      intensity = max(intensity, 0.15);
+      // Very low ambient for dramatic shadows
+      intensity = max(intensity, 0.08);
 
       // Mix base color with shadow color (purple undertone per spec)
       vec3 shadedColor = mix(shadowColor, color, intensity);
