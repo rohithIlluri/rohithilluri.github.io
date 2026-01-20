@@ -1,0 +1,22 @@
+# Code Owners for rohithilluri.github.io
+# These owners will be requested for review when someone opens a pull request.
+
+# Default owner for everything
+* @rohithIlluri
+
+# Security-sensitive files require owner review
+SECURITY.md @rohithIlluri
+.github/ @rohithIlluri
+package.json @rohithIlluri
+package-lock.json @rohithIlluri
+
+# Client configuration and dependencies
+client/package.json @rohithIlluri
+client/package-lock.json @rohithIlluri
+
+# Environment and configuration files
+*.config.js @rohithIlluri
+.env* @rohithIlluri
+
+# Build and deployment
+client/public/ @rohithIlluri
