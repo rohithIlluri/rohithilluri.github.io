@@ -80,6 +80,14 @@ const store = createStore((set, get) => ({
   // Quality settings
   qualityLevel: 'high', // 'low', 'medium', 'high'
 
+  // Particle settings
+  particlesEnabled: true,
+  ambientParticlesEnabled: true,
+
+  // Audio settings
+  audioEnabled: true,
+  audioVolume: 0.7,
+
   // Actions
   setLoaded: (loaded) => set({ isLoaded: loaded }),
   setLoadProgress: (progress) => set({ loadProgress: progress }),
@@ -99,6 +107,10 @@ const store = createStore((set, get) => ({
     set({ visitedBuildings: new Set(visited) });
   },
   setQualityLevel: (level) => set({ qualityLevel: level }),
+  setParticlesEnabled: (enabled) => set({ particlesEnabled: enabled }),
+  setAmbientParticlesEnabled: (enabled) => set({ ambientParticlesEnabled: enabled }),
+  setAudioEnabled: (enabled) => set({ audioEnabled: enabled }),
+  setAudioVolume: (volume) => set({ audioVolume: volume }),
 
   // Getters
   getBuildingById: (id) => get().buildings.find((b) => b.id === id),

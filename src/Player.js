@@ -125,44 +125,207 @@ export class Player {
   }
 
   /**
-   * Create the player mesh (capsule with enhanced toon material)
+   * Create the player mesh - stylized procedural character
    */
   createMesh() {
-    // Simple capsule representation (fallback / placeholder)
-    const geometry = new THREE.CapsuleGeometry(
-      this.capsuleRadius,
-      this.capsuleHeight - this.capsuleRadius * 2,
-      16,
-      32
-    );
+    // Create procedural character (no external model needed)
+    this.characterGroup = new THREE.Group();
 
-    // Enhanced toon material with rim lighting
-    const material = createEnhancedToonMaterial({
-      color: 0x4A90D9, // Blue player color
+    // Character colors
+    const skinColor = 0xFFD1AA; // Warm skin tone
+    const shirtColor = 0x4FC3F7; // Light blue shirt
+    const pantsColor = 0x3D5A80; // Dark blue pants
+    const hairColor = 0x5D4037; // Brown hair
+
+    // Create materials
+    const skinMaterial = createEnhancedToonMaterial({
+      color: skinColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
 
-    this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.castShadow = true;
-    this.mesh.receiveShadow = false;
+    const shirtMaterial = createEnhancedToonMaterial({
+      color: shirtColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
 
-    // Create outline mesh (inverted hull)
-    this.outlineMesh = createOutlineMesh(this.mesh, 0.025);
+    const pantsMaterial = createEnhancedToonMaterial({
+      color: pantsColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
 
-    // Add mesh and outline to container
-    this.container.add(this.outlineMesh);
-    this.container.add(this.mesh);
+    const hairMaterial = createEnhancedToonMaterial({
+      color: hairColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    // HEAD
+    const headGeo = new THREE.SphereGeometry(0.25, 16, 16);
+    const head = new THREE.Mesh(headGeo, skinMaterial);
+    head.position.y = 1.45;
+    head.castShadow = true;
+    this.characterGroup.add(head);
+
+    // Head outline
+    const headOutline = createOutlineMesh(head, 0.015);
+    headOutline.position.copy(head.position);
+    this.characterGroup.add(headOutline);
+
+    // HAIR (half-sphere on top of head)
+    const hairGeo = new THREE.SphereGeometry(0.27, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+    const hair = new THREE.Mesh(hairGeo, hairMaterial);
+    hair.position.y = 1.5;
+    hair.castShadow = true;
+    this.characterGroup.add(hair);
+
+    const hairOutline = createOutlineMesh(hair, 0.012);
+    hairOutline.position.copy(hair.position);
+    this.characterGroup.add(hairOutline);
+
+    // EYES (black dots)
+    const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x1A1A2E });
+    const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
+
+    const leftEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+    leftEye.position.set(-0.08, 1.48, 0.2);
+    this.characterGroup.add(leftEye);
+
+    const rightEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+    rightEye.position.set(0.08, 1.48, 0.2);
+    this.characterGroup.add(rightEye);
+
+    // EYE WHITES (slightly larger, behind black dots)
+    const eyeWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const eyeWhiteGeo = new THREE.SphereGeometry(0.055, 8, 8);
+
+    const leftEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMaterial);
+    leftEyeWhite.position.set(-0.08, 1.48, 0.18);
+    this.characterGroup.add(leftEyeWhite);
+
+    const rightEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMaterial);
+    rightEyeWhite.position.set(0.08, 1.48, 0.18);
+    this.characterGroup.add(rightEyeWhite);
+
+    // BODY (torso)
+    const bodyGeo = new THREE.BoxGeometry(0.4, 0.5, 0.22);
+    const body = new THREE.Mesh(bodyGeo, shirtMaterial);
+    body.position.y = 1.0;
+    body.castShadow = true;
+    this.characterGroup.add(body);
+
+    const bodyOutline = createOutlineMesh(body, 0.015);
+    bodyOutline.position.copy(body.position);
+    this.characterGroup.add(bodyOutline);
+
+    // ARMS
+    const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8);
+
+    // Left arm
+    this.leftArm = new THREE.Mesh(armGeo, skinMaterial);
+    this.leftArm.position.set(-0.28, 1.0, 0);
+    this.leftArm.rotation.z = Math.PI / 12;
+    this.leftArm.castShadow = true;
+    this.characterGroup.add(this.leftArm);
+
+    const leftArmOutline = createOutlineMesh(this.leftArm, 0.012);
+    leftArmOutline.position.copy(this.leftArm.position);
+    leftArmOutline.rotation.copy(this.leftArm.rotation);
+    this.characterGroup.add(leftArmOutline);
+
+    // Right arm
+    this.rightArm = new THREE.Mesh(armGeo, skinMaterial);
+    this.rightArm.position.set(0.28, 1.0, 0);
+    this.rightArm.rotation.z = -Math.PI / 12;
+    this.rightArm.castShadow = true;
+    this.characterGroup.add(this.rightArm);
+
+    const rightArmOutline = createOutlineMesh(this.rightArm, 0.012);
+    rightArmOutline.position.copy(this.rightArm.position);
+    rightArmOutline.rotation.copy(this.rightArm.rotation);
+    this.characterGroup.add(rightArmOutline);
+
+    // LEGS
+    const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
+
+    // Left leg
+    this.leftLeg = new THREE.Mesh(legGeo, pantsMaterial);
+    this.leftLeg.position.set(-0.1, 0.5, 0);
+    this.leftLeg.castShadow = true;
+    this.characterGroup.add(this.leftLeg);
+
+    const leftLegOutline = createOutlineMesh(this.leftLeg, 0.012);
+    leftLegOutline.position.copy(this.leftLeg.position);
+    this.characterGroup.add(leftLegOutline);
+
+    // Right leg
+    this.rightLeg = new THREE.Mesh(legGeo, pantsMaterial);
+    this.rightLeg.position.set(0.1, 0.5, 0);
+    this.rightLeg.castShadow = true;
+    this.characterGroup.add(this.rightLeg);
+
+    const rightLegOutline = createOutlineMesh(this.rightLeg, 0.012);
+    rightLegOutline.position.copy(this.rightLeg.position);
+    this.characterGroup.add(rightLegOutline);
+
+    // FEET (small boxes)
+    const footGeo = new THREE.BoxGeometry(0.1, 0.08, 0.16);
+    const footMaterial = createEnhancedToonMaterial({
+      color: 0x3D3D3D, // Dark shoes
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    const leftFoot = new THREE.Mesh(footGeo, footMaterial);
+    leftFoot.position.set(-0.1, 0.2, 0.02);
+    leftFoot.castShadow = true;
+    this.characterGroup.add(leftFoot);
+
+    const rightFoot = new THREE.Mesh(footGeo, footMaterial);
+    rightFoot.position.set(0.1, 0.2, 0.02);
+    rightFoot.castShadow = true;
+    this.characterGroup.add(rightFoot);
+
+    // SHADOW BLOB (circle under character)
+    const shadowGeo = new THREE.CircleGeometry(0.3, 16);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.3,
+    });
+    this.shadowBlob = new THREE.Mesh(shadowGeo, shadowMat);
+    this.shadowBlob.rotation.x = -Math.PI / 2;
+    this.shadowBlob.position.y = 0.02;
+    this.characterGroup.add(this.shadowBlob);
+
+    // Animation state
+    this.idleTime = 0;
+    this.walkCycle = 0;
+
+    // Store references for legacy compatibility
+    this.mesh = body; // Main mesh reference
+    this.outlineMesh = bodyOutline;
+
+    // Add character group to container
+    this.container.add(this.characterGroup);
 
     // Position the container
     this.container.position.copy(this.position);
-    this.container.position.y += this.capsuleHeight / 2;
   }
 
   /**
-   * Attempt to load a character model
+   * Attempt to load a character model (optional - uses procedural character by default)
    */
   async loadCharacterModel() {
+    // Skip model loading - we're using the procedural character
+    // This method is kept for future use if a custom GLB model is desired
+    console.log('Using procedural character (no external model needed)');
+    return;
+
+    // NOTE: The code below can be uncommented to load an external character model
+    /*
     const loader = new GLTFLoader();
 
     try {
@@ -221,16 +384,18 @@ export class Player {
       this.characterModel.scale.set(1, 1, 1);
       this.characterModel.position.y = -this.capsuleHeight / 2;
 
-      // Hide capsule and show character
-      this.mesh.visible = false;
-      this.outlineMesh.visible = false;
+      // Hide procedural character and show loaded model
+      if (this.characterGroup) {
+        this.characterGroup.visible = false;
+      }
       this.container.add(this.characterModel);
 
       console.log('Character model loaded successfully');
     } catch (error) {
-      // Model not found, use capsule fallback
-      console.log('Character model not found, using capsule fallback');
+      // Model not found, keep using procedural character
+      console.log('Character model not found, using procedural character');
     }
+    */
   }
 
   /**
@@ -280,7 +445,7 @@ export class Player {
   }
 
   update(deltaTime) {
-    // Update animation mixer
+    // Update animation mixer (for loaded models)
     if (this.mixer) {
       this.mixer.update(deltaTime);
     }
@@ -300,6 +465,9 @@ export class Player {
       this.setAnimationState(ANIM_STATES.IDLE);
     }
 
+    // Update procedural character animation
+    this.updateProceduralAnimation(deltaTime, isMoving, isRunning);
+
     // Use spherical movement if planet exists, otherwise flat movement
     if (this.planet) {
       this.updateSpherical(deltaTime, movement, speed, isMoving);
@@ -312,6 +480,72 @@ export class Player {
 
     // Check for nearby buildings
     this.checkNearbyBuildings();
+  }
+
+  /**
+   * Update procedural character animation (no external animation files needed)
+   */
+  updateProceduralAnimation(deltaTime, isMoving, isRunning) {
+    if (!this.characterGroup) return;
+
+    if (isMoving) {
+      // Walk/run cycle
+      const cycleSpeed = isRunning ? 12 : 8;
+      this.walkCycle += deltaTime * cycleSpeed;
+
+      // Leg swing
+      const legSwing = Math.sin(this.walkCycle) * 0.4;
+      if (this.leftLeg) {
+        this.leftLeg.rotation.x = legSwing;
+        this.leftLeg.position.z = Math.sin(this.walkCycle) * 0.05;
+      }
+      if (this.rightLeg) {
+        this.rightLeg.rotation.x = -legSwing;
+        this.rightLeg.position.z = -Math.sin(this.walkCycle) * 0.05;
+      }
+
+      // Arm swing (opposite to legs)
+      const armSwing = Math.sin(this.walkCycle) * 0.3;
+      if (this.leftArm) {
+        this.leftArm.rotation.x = -armSwing;
+      }
+      if (this.rightArm) {
+        this.rightArm.rotation.x = armSwing;
+      }
+
+      // Body bob
+      const bobAmount = isRunning ? 0.03 : 0.015;
+      this.characterGroup.position.y = Math.abs(Math.sin(this.walkCycle * 2)) * bobAmount;
+
+      // Reset idle time
+      this.idleTime = 0;
+    } else {
+      // Idle animation (gentle breathing)
+      this.idleTime += deltaTime;
+      const breathe = Math.sin(this.idleTime * 2) * 0.01;
+
+      // Slight body movement
+      this.characterGroup.position.y = breathe;
+
+      // Reset limbs to rest position
+      if (this.leftLeg) {
+        this.leftLeg.rotation.x *= 0.9;
+        this.leftLeg.position.z *= 0.9;
+      }
+      if (this.rightLeg) {
+        this.rightLeg.rotation.x *= 0.9;
+        this.rightLeg.position.z *= 0.9;
+      }
+      if (this.leftArm) {
+        this.leftArm.rotation.x *= 0.9;
+      }
+      if (this.rightArm) {
+        this.rightArm.rotation.x *= 0.9;
+      }
+
+      // Gradually reset walk cycle
+      this.walkCycle *= 0.95;
+    }
   }
 
   /**
