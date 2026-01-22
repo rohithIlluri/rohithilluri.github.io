@@ -142,16 +142,16 @@ export class Player {
     // Create procedural character (no external model needed)
     this.characterGroup = new THREE.Group();
 
-    // Messenger-style character colors from the palette
-    const skinColor = CHARACTER_COLORS.skin;        // #E8D8C8 warm beige
-    const shirtBaseColor = CHARACTER_COLORS.shirtWhite;  // #F5F0E8 off-white
-    const shirtDesignColor = CHARACTER_COLORS.shirtBlue; // #5ABBB8 teal
-    const shortsColor = CHARACTER_COLORS.shorts;    // #6A7A7A gray/blue
-    const hairColor = CHARACTER_COLORS.hair;        // #3A3A3A dark charcoal
-    const sockColor = CHARACTER_COLORS.socks;       // #2A2A2A black
-    const shoeColor = CHARACTER_COLORS.shoes;       // #E8B84A yellow
-    const bagColor = CHARACTER_COLORS.bag;          // #E8B84A yellow
-    const strapColor = CHARACTER_COLORS.strap;      // #D88A4A orange
+    // Messenger-style character colors from the palette (matching messenger.abeto.co)
+    const skinColor = CHARACTER_COLORS.skin;        // Warm peach skin tone
+    const shirtColor = CHARACTER_COLORS.shirt;      // Black/dark shirt
+    const collarColor = CHARACTER_COLORS.shirtCollar; // Cream collar accent
+    const skirtColor = CHARACTER_COLORS.skirt;      // Red/maroon skirt
+    const hairColor = CHARACTER_COLORS.hair;        // Black hair
+    const sockColor = CHARACTER_COLORS.socks;       // White socks
+    const shoeColor = CHARACTER_COLORS.shoes;       // Black shoes
+    const bagColor = CHARACTER_COLORS.bag;          // Dark messenger bag
+    const strapColor = CHARACTER_COLORS.strap;      // Dark bag strap
 
     // Create materials with messenger blue-gray shadows
     const skinMaterial = createEnhancedToonMaterial({
@@ -161,19 +161,19 @@ export class Player {
     });
 
     const shirtMaterial = createEnhancedToonMaterial({
-      color: shirtBaseColor,
+      color: shirtColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
 
-    const shirtDesignMaterial = createEnhancedToonMaterial({
-      color: shirtDesignColor,
+    const collarMaterial = createEnhancedToonMaterial({
+      color: collarColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
 
-    const shortsMaterial = createEnhancedToonMaterial({
-      color: shortsColor,
+    const skirtMaterial = createEnhancedToonMaterial({
+      color: skirtColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
@@ -317,43 +317,36 @@ export class Player {
     this.characterGroup.add(neck);
 
     // =====================================================
-    // TORSO - Upper (0.35 units) + Lower (0.2 units) = 0.55 units
+    // TORSO - Upper (0.35 units) + Skirt (0.25 units)
     // =====================================================
-    // Upper torso (t-shirt)
+    // Upper torso (black shirt)
     const upperTorsoGeo = new THREE.BoxGeometry(0.28, 0.35, 0.14);
     const upperTorso = new THREE.Mesh(upperTorsoGeo, shirtMaterial);
     upperTorso.position.y = 1.275;
-    // Taper at bottom
-    upperTorso.scale.set(1, 1, 1);
     upperTorso.castShadow = true;
     this.characterGroup.add(upperTorso);
 
-    // T-shirt triangle design (teal)
-    const triangleShape = new THREE.Shape();
-    triangleShape.moveTo(0, 0.12);
-    triangleShape.lineTo(-0.1, -0.08);
-    triangleShape.lineTo(0.1, -0.08);
-    triangleShape.lineTo(0, 0.12);
+    // Shirt collar (cream/white accent)
+    const collarGeo = new THREE.BoxGeometry(0.18, 0.05, 0.15);
+    const collar = new THREE.Mesh(collarGeo, collarMaterial);
+    collar.position.set(0, 1.43, 0.01);
+    this.characterGroup.add(collar);
 
-    const triangleGeo = new THREE.ShapeGeometry(triangleShape);
-    const triangleDecal = new THREE.Mesh(triangleGeo, shirtDesignMaterial);
-    triangleDecal.position.set(0, 1.28, 0.072);
-    this.characterGroup.add(triangleDecal);
-
-    const torsoOutline = createOutlineMesh(upperTorso, 0.01);
+    const torsoOutline = createOutlineMesh(upperTorso, 0.012);
     torsoOutline.position.copy(upperTorso.position);
     this.characterGroup.add(torsoOutline);
 
-    // Lower torso (shorts - higher waist)
-    const shortsTorsoGeo = new THREE.BoxGeometry(0.26, 0.2, 0.13);
-    const shortsTorso = new THREE.Mesh(shortsTorsoGeo, shortsMaterial);
-    shortsTorso.position.y = 1.0;
-    shortsTorso.castShadow = true;
-    this.characterGroup.add(shortsTorso);
+    // RED SKIRT (signature messenger.abeto.co look)
+    // A-line shape using a tapered cylinder
+    const skirtGeo = new THREE.CylinderGeometry(0.08, 0.18, 0.25, 8);
+    const skirt = new THREE.Mesh(skirtGeo, skirtMaterial);
+    skirt.position.y = 0.98;
+    skirt.castShadow = true;
+    this.characterGroup.add(skirt);
 
-    const shortsOutline = createOutlineMesh(shortsTorso, 0.008);
-    shortsOutline.position.copy(shortsTorso.position);
-    this.characterGroup.add(shortsOutline);
+    const skirtOutline = createOutlineMesh(skirt, 0.01);
+    skirtOutline.position.copy(skirt.position);
+    this.characterGroup.add(skirtOutline);
 
     // =====================================================
     // MESSENGER BAG (iconic yellow bag)
