@@ -344,16 +344,28 @@ export class Planet {
   }
 
   /**
-   * Create a building at the specified latitude/longitude on the planet
+   * Create a detailed multi-story building at the specified latitude/longitude
+   * Matches messenger.abeto.co visual style with storefronts, varied windows, and architectural details
    */
   createBuilding(config) {
-    const { lat, lon, name, type, color, neonColor, width, height, depth } = config;
+    const {
+      lat,
+      lon,
+      name,
+      type,
+      color,
+      neonColor,
+      width,
+      height,
+      depth,
+      floors = 3,
+    } = config;
 
     // Get position on planet surface
     const surfacePos = this.planet.latLonToPosition(lat, lon);
     const up = this.planet.getUpVector(surfacePos);
 
-    // Create building geometry
+    // Create main building body
     const geometry = new THREE.BoxGeometry(width, height, depth);
     const material = createEnhancedToonMaterial({
       color: color,
@@ -378,21 +390,39 @@ export class Planet {
     this.meshes.push(building);
     this.collisionMeshes.push(building);
 
-    // Create outline for the building
-    const outline = createOutlineMesh(building, 0.06);
+    // Create thick outline for the building (0.08 for visibility)
+    const outline = createOutlineMesh(building, 0.08);
     outline.position.copy(building.position);
     outline.quaternion.copy(building.quaternion);
     this.scene.add(outline);
     this.meshes.push(outline);
 
-    // Add windows
-    this.addWindowsToBuilding(building, width, height, depth, surfacePos, up);
+    // Calculate floor height
+    const floorHeight = (height - 1) / floors;
 
-    // Add neon sign
+    // Add ground floor storefront
+    this.addStorefront(building, width, height, depth, floorHeight);
+
+    // Add windows for upper floors with varied layouts
+    for (let floor = 1; floor < floors; floor++) {
+      this.addFloorWindows(building, width, height, depth, floor, floorHeight, floors);
+    }
+
+    // Add roof parapet
+    this.addRoofParapet(building, width, height, depth, color);
+
+    // Add water tank on tall buildings (5+ floors)
+    if (floors >= 5) {
+      this.addWaterTank(building, width, height, depth);
+    }
+
+    // Add Japanese-style vertical sign on some buildings
+    if (Math.random() > 0.3) {
+      this.addBuildingSign(building, width, height, depth, name);
+    }
+
+    // Add neon sign on front
     this.addNeonSignToBuilding(building, name, neonColor, height, depth, surfacePos, up);
-
-    // Add architectural details (rooftop, awning, AC units)
-    this.addBuildingDetails(building, width, height, depth, color);
 
     // Store building reference
     this.buildings.push({
@@ -406,162 +436,423 @@ export class Planet {
   }
 
   /**
-   * Add architectural details to buildings (rooftop, awning, AC units, fire escapes, water tanks)
+   * Add a ground floor storefront with glass windows and colored awning
    */
-  addBuildingDetails(building, width, height, depth, baseColor) {
-    // Rooftop parapet/edge
-    const parapetGeo = new THREE.BoxGeometry(width + 0.3, 0.25, depth + 0.3);
-    const parapetColor = this.darkenColor(baseColor, 0.15);
-    const parapetMat = createToonMaterial({ color: parapetColor });
-    const parapet = new THREE.Mesh(parapetGeo, parapetMat);
-    parapet.position.y = height / 2 + 0.125;
-    parapet.castShadow = true;
-    building.add(parapet);
-    this.meshes.push(parapet);
+  addStorefront(building, width, height, depth, floorHeight) {
+    const storefrontHeight = floorHeight * 0.9;
+    const storefrontY = -height / 2 + storefrontHeight / 2 + 0.1;
 
-    // Awning over door (front face)
-    const awningGeo = new THREE.BoxGeometry(width * 0.6, 0.12, 0.8);
-    const awningMat = createToonMaterial({ color: 0xB22222 }); // Red awning
+    // Storefront base
+    const baseGeo = new THREE.BoxGeometry(width - 0.2, 0.3, 0.15);
+    const baseMat = createToonMaterial({ color: 0x4A4A4A });
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.set(0, -height / 2 + 0.15, depth / 2 + 0.08);
+    building.add(base);
+    this.meshes.push(base);
+
+    // Base outline
+    const baseOutline = createOutlineMesh(base, 0.08);
+    baseOutline.position.copy(base.position);
+    building.add(baseOutline);
+    this.meshes.push(baseOutline);
+
+    // Large storefront windows
+    const windowWidth = (width - 1.5) / 2;
+    const windowHeight = storefrontHeight * 0.7;
+    const windowMat = createToonMaterial({ color: 0x87CEEB });
+    const frameMat = createToonMaterial({ color: 0x5A5A5A });
+
+    // Left window
+    const leftWindowGeo = new THREE.PlaneGeometry(windowWidth, windowHeight);
+    const leftWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+    leftWindow.position.set(-(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    building.add(leftWindow);
+    this.windowMeshes.push(leftWindow);
+
+    // Left window frame
+    this.addWindowFrame(building, -(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.01, windowWidth, windowHeight, frameMat);
+
+    // Right window
+    const rightWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+    rightWindow.position.set((windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    building.add(rightWindow);
+    this.windowMeshes.push(rightWindow);
+
+    // Right window frame
+    this.addWindowFrame(building, (windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.01, windowWidth, windowHeight, frameMat);
+
+    // Door
+    const doorGeo = new THREE.BoxGeometry(1.0, storefrontHeight * 0.85, 0.08);
+    const doorMat = createToonMaterial({ color: 0x5D4037 });
+    const door = new THREE.Mesh(doorGeo, doorMat);
+    door.position.set(0, storefrontY - 0.1, depth / 2 + 0.04);
+    building.add(door);
+    this.meshes.push(door);
+
+    // Door frame
+    const doorFrameGeo = new THREE.BoxGeometry(1.2, storefrontHeight * 0.9, 0.06);
+    const doorFrame = new THREE.Mesh(doorFrameGeo, frameMat);
+    doorFrame.position.set(0, storefrontY - 0.08, depth / 2 + 0.02);
+    building.add(doorFrame);
+    this.meshes.push(doorFrame);
+
+    // Door outline
+    const doorOutline = createOutlineMesh(door, 0.08);
+    doorOutline.position.copy(door.position);
+    building.add(doorOutline);
+    this.meshes.push(doorOutline);
+
+    // Awning
+    const awningColor = AWNING_COLORS[Math.floor(Math.random() * AWNING_COLORS.length)];
+    const awningGeo = new THREE.BoxGeometry(width * 0.85, 0.15, 1.0);
+    const awningMat = createToonMaterial({ color: awningColor });
     const awning = new THREE.Mesh(awningGeo, awningMat);
-    awning.position.set(0, -height / 2 + 2.5, depth / 2 + 0.4);
+    awning.position.set(0, storefrontY + windowHeight / 2 + 0.3, depth / 2 + 0.5);
+    awning.rotation.x = -0.15;
     awning.castShadow = true;
     building.add(awning);
     this.meshes.push(awning);
 
-    // Awning stripe (decorative)
-    const stripeGeo = new THREE.BoxGeometry(width * 0.6, 0.05, 0.82);
-    const stripeMat = createToonMaterial({ color: 0xFFFFFF });
-    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-    stripe.position.set(0, -height / 2 + 2.55, depth / 2 + 0.4);
-    building.add(stripe);
-    this.meshes.push(stripe);
+    // Awning outline
+    const awningOutline = createOutlineMesh(awning, 0.08);
+    awningOutline.position.copy(awning.position);
+    awningOutline.rotation.copy(awning.rotation);
+    building.add(awningOutline);
+    this.meshes.push(awningOutline);
 
-    // AC unit on side (random side)
-    const acGeo = new THREE.BoxGeometry(0.8, 0.4, 0.6);
-    const acMat = createToonMaterial({ color: 0x757575 }); // Gray metal
+    // Awning trim
+    const trimGeo = new THREE.BoxGeometry(width * 0.85, 0.08, 0.15);
+    const trimMat = createToonMaterial({ color: 0xFFFFFF });
+    const trim = new THREE.Mesh(trimGeo, trimMat);
+    trim.position.set(0, -0.04, 0.43);
+    awning.add(trim);
+    this.meshes.push(trim);
+  }
+
+  /**
+   * Add window frame around a window
+   */
+  addWindowFrame(building, x, y, z, windowWidth, windowHeight, frameMat) {
+    const frameThickness = 0.08;
+    const frameDepth = 0.05;
+
+    // Top frame
+    const topGeo = new THREE.BoxGeometry(windowWidth + frameThickness * 2, frameThickness, frameDepth);
+    const top = new THREE.Mesh(topGeo, frameMat);
+    top.position.set(x, y + windowHeight / 2 + frameThickness / 2, z);
+    building.add(top);
+    this.meshes.push(top);
+
+    // Bottom frame
+    const bottom = new THREE.Mesh(topGeo, frameMat);
+    bottom.position.set(x, y - windowHeight / 2 - frameThickness / 2, z);
+    building.add(bottom);
+    this.meshes.push(bottom);
+
+    // Left frame
+    const sideGeo = new THREE.BoxGeometry(frameThickness, windowHeight, frameDepth);
+    const left = new THREE.Mesh(sideGeo, frameMat);
+    left.position.set(x - windowWidth / 2 - frameThickness / 2, y, z);
+    building.add(left);
+    this.meshes.push(left);
+
+    // Right frame
+    const right = new THREE.Mesh(sideGeo, frameMat);
+    right.position.set(x + windowWidth / 2 + frameThickness / 2, y, z);
+    building.add(right);
+    this.meshes.push(right);
+  }
+
+  /**
+   * Add windows for a specific floor with random AC units and balconies
+   */
+  addFloorWindows(building, width, height, depth, floor, floorHeight, totalFloors) {
+    const windowSize = 0.9;
+    const windowGap = 0.5;
+    const windowsPerRow = Math.max(2, Math.floor((width - 1) / (windowSize + windowGap)));
+
+    const floorY = -height / 2 + floorHeight * floor + floorHeight / 2 + 0.5;
+
+    const windowMat = createToonMaterial({ color: 0x87CEEB });
+    const frameMat = createToonMaterial({ color: 0x5A5A5A });
+
+    for (let col = 0; col < windowsPerRow; col++) {
+      const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
+
+      // Window pane
+      const windowGeo = new THREE.PlaneGeometry(windowSize, windowSize * 1.2);
+      const windowMesh = new THREE.Mesh(windowGeo, windowMat.clone());
+      windowMesh.position.set(localX, floorY, depth / 2 + 0.02);
+      windowMesh.userData.isDarkWindow = Math.random() < 0.3;
+      building.add(windowMesh);
+      this.windowMeshes.push(windowMesh);
+
+      // Window frame
+      this.addWindowFrame(building, localX, floorY, depth / 2 + 0.01, windowSize, windowSize * 1.2, frameMat);
+
+      // Window sill
+      const sillGeo = new THREE.BoxGeometry(windowSize + 0.2, 0.08, 0.15);
+      const sillMat = createToonMaterial({ color: 0x757575 });
+      const sill = new THREE.Mesh(sillGeo, sillMat);
+      sill.position.set(localX, floorY - windowSize * 0.6 - 0.1, depth / 2 + 0.08);
+      sill.castShadow = true;
+      building.add(sill);
+      this.meshes.push(sill);
+
+      // Sill outline
+      const sillOutline = createOutlineMesh(sill, 0.08);
+      sillOutline.position.copy(sill.position);
+      building.add(sillOutline);
+      this.meshes.push(sillOutline);
+
+      // 20% chance of AC unit
+      if (Math.random() < 0.2 && floor > 1) {
+        this.addACUnit(building, localX, floorY, depth, windowSize);
+      }
+
+      // 15% chance of balcony on upper floors
+      if (Math.random() < 0.15 && floor >= 2 && floor < totalFloors - 1) {
+        this.addBalcony(building, localX, floorY, depth, windowSize);
+      }
+    }
+
+    // Add side windows
+    this.addSideWindows(building, width, height, depth, floorY, windowSize, windowMat);
+  }
+
+  /**
+   * Add simpler windows on building sides
+   */
+  addSideWindows(building, width, height, depth, floorY, windowSize, windowMat) {
+    const windowsPerSide = Math.max(1, Math.floor((depth - 1) / (windowSize + 0.6)));
+
+    for (let col = 0; col < windowsPerSide; col++) {
+      const localZ = (col - (windowsPerSide - 1) / 2) * (windowSize + 0.6);
+
+      // Left side window
+      const leftWindowGeo = new THREE.PlaneGeometry(windowSize * 0.8, windowSize * 1.1);
+      const leftWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+      leftWindow.position.set(-width / 2 - 0.02, floorY, localZ);
+      leftWindow.rotation.y = -Math.PI / 2;
+      leftWindow.userData.isDarkWindow = Math.random() < 0.4;
+      building.add(leftWindow);
+      this.windowMeshes.push(leftWindow);
+
+      // Right side window
+      const rightWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+      rightWindow.position.set(width / 2 + 0.02, floorY, localZ);
+      rightWindow.rotation.y = Math.PI / 2;
+      rightWindow.userData.isDarkWindow = Math.random() < 0.4;
+      building.add(rightWindow);
+      this.windowMeshes.push(rightWindow);
+    }
+  }
+
+  /**
+   * Add an AC unit below a window
+   */
+  addACUnit(building, x, y, depth, windowSize) {
+    const acGeo = new THREE.BoxGeometry(0.6, 0.35, 0.45);
+    const acMat = createToonMaterial({ color: 0x808080 });
     const acUnit = new THREE.Mesh(acGeo, acMat);
-    const acSide = Math.random() > 0.5 ? 1 : -1;
-    acUnit.position.set(acSide * (width / 2 + 0.3), 0, 0);
+    acUnit.position.set(x, y - windowSize * 0.6 - 0.35, depth / 2 + 0.25);
     acUnit.castShadow = true;
     building.add(acUnit);
     this.meshes.push(acUnit);
 
     // AC unit outline
-    const acOutline = createOutlineMesh(acUnit, 0.02);
+    const acOutline = createOutlineMesh(acUnit, 0.08);
     acOutline.position.copy(acUnit.position);
     building.add(acOutline);
     this.meshes.push(acOutline);
 
-    // Door frame
-    const doorFrameGeo = new THREE.BoxGeometry(1.4, 2.4, 0.08);
-    const doorFrameMat = createToonMaterial({ color: 0x3D3D3D });
-    const doorFrame = new THREE.Mesh(doorFrameGeo, doorFrameMat);
-    doorFrame.position.set(0, -height / 2 + 1.3, depth / 2 + 0.01);
-    building.add(doorFrame);
-    this.meshes.push(doorFrame);
-
-    // Door (slightly recessed)
-    const doorGeo = new THREE.BoxGeometry(1.2, 2.2, 0.06);
-    const doorMat = createToonMaterial({ color: 0x5D4037 }); // Brown door
-    const door = new THREE.Mesh(doorGeo, doorMat);
-    door.position.set(0, -height / 2 + 1.3, depth / 2 + 0.04);
-    building.add(door);
-    this.meshes.push(door);
-
-    // Chimney on roof (for shorter buildings)
-    if (height < 8) {
-      const chimneyGeo = new THREE.BoxGeometry(0.5, 1.2, 0.5);
-      const chimneyMat = createToonMaterial({ color: 0x8B4513 });
-      const chimney = new THREE.Mesh(chimneyGeo, chimneyMat);
-      chimney.position.set(width / 4, height / 2 + 0.6, -depth / 4);
-      chimney.castShadow = true;
-      building.add(chimney);
-      this.meshes.push(chimney);
-    }
-
-    // Fire escape on taller buildings (height > 8)
-    if (height > 8) {
-      this.addFireEscape(building, width, height, depth);
-    }
-
-    // Water tank on roof for taller buildings (height > 10)
-    if (height > 10) {
-      this.addWaterTank(building, width, height, depth);
-    }
-
-    // Window sills for visual depth
-    this.addWindowSills(building, width, height, depth);
+    // Vent grille
+    const ventGeo = new THREE.PlaneGeometry(0.5, 0.25);
+    const ventMat = createToonMaterial({ color: 0x4A4A4A });
+    const vent = new THREE.Mesh(ventGeo, ventMat);
+    vent.position.set(0, 0, 0.23);
+    acUnit.add(vent);
+    this.meshes.push(vent);
   }
 
   /**
-   * Add a fire escape to the side of a building (NYC brownstone style)
+   * Add a small balcony in front of a window
    */
-  addFireEscape(building, width, height, depth) {
-    const metalMat = createToonMaterial({ color: 0x2A2A2A }); // Dark metal
-    const platformCount = Math.floor((height - 3) / 3);
-    const side = -1; // Left side of building
+  addBalcony(building, x, y, depth, windowSize) {
+    const metalMat = createToonMaterial({ color: 0x2A2A2A });
 
-    for (let i = 0; i < platformCount; i++) {
-      const platformY = -height / 2 + 3 + i * 3;
+    // Balcony floor
+    const floorGeo = new THREE.BoxGeometry(windowSize + 0.4, 0.06, 0.8);
+    const balconyFloor = new THREE.Mesh(floorGeo, metalMat);
+    balconyFloor.position.set(x, y - windowSize * 0.5, depth / 2 + 0.4);
+    balconyFloor.castShadow = true;
+    building.add(balconyFloor);
+    this.meshes.push(balconyFloor);
 
-      // Platform
-      const platformGeo = new THREE.BoxGeometry(1.5, 0.06, 1.2);
-      const platform = new THREE.Mesh(platformGeo, metalMat);
-      platform.position.set(side * (width / 2 + 0.75), platformY, 0);
-      platform.castShadow = true;
-      building.add(platform);
-      this.meshes.push(platform);
+    // Balcony outline
+    const floorOutline = createOutlineMesh(balconyFloor, 0.08);
+    floorOutline.position.copy(balconyFloor.position);
+    building.add(floorOutline);
+    this.meshes.push(floorOutline);
 
-      // Railings - front
-      const railFrontGeo = new THREE.BoxGeometry(1.5, 0.5, 0.03);
-      const railFront = new THREE.Mesh(railFrontGeo, metalMat);
-      railFront.position.set(0, 0.28, 0.58);
-      platform.add(railFront);
-      this.meshes.push(railFront);
+    // Railing - front
+    const railFrontGeo = new THREE.BoxGeometry(windowSize + 0.4, 0.5, 0.04);
+    const railFront = new THREE.Mesh(railFrontGeo, metalMat);
+    railFront.position.set(0, 0.28, 0.38);
+    balconyFloor.add(railFront);
+    this.meshes.push(railFront);
 
-      // Railings - side
-      const railSideGeo = new THREE.BoxGeometry(0.03, 0.5, 1.2);
-      const railSide = new THREE.Mesh(railSideGeo, metalMat);
-      railSide.position.set(side * 0.73, 0.28, 0);
-      platform.add(railSide);
-      this.meshes.push(railSide);
+    // Railing - sides
+    const railSideGeo = new THREE.BoxGeometry(0.04, 0.5, 0.8);
+    const railLeft = new THREE.Mesh(railSideGeo, metalMat);
+    railLeft.position.set(-(windowSize + 0.4) / 2 + 0.02, 0.28, 0);
+    balconyFloor.add(railLeft);
+    this.meshes.push(railLeft);
 
-      // Ladder between platforms (except top)
-      if (i < platformCount - 1) {
-        const ladderGeo = new THREE.BoxGeometry(0.4, 2.8, 0.06);
-        const ladder = new THREE.Mesh(ladderGeo, metalMat);
-        ladder.position.set(side * (width / 2 + 0.9), platformY + 1.5, -0.4);
-        building.add(ladder);
-        this.meshes.push(ladder);
+    const railRight = new THREE.Mesh(railSideGeo, metalMat);
+    railRight.position.set((windowSize + 0.4) / 2 - 0.02, 0.28, 0);
+    balconyFloor.add(railRight);
+    this.meshes.push(railRight);
 
-        // Ladder rungs
-        for (let r = 0; r < 5; r++) {
-          const rungGeo = new THREE.BoxGeometry(0.4, 0.04, 0.08);
-          const rung = new THREE.Mesh(rungGeo, metalMat);
-          rung.position.set(0, -1.2 + r * 0.55, 0);
-          ladder.add(rung);
-          this.meshes.push(rung);
-        }
-      }
+    // Vertical bars
+    const barGeo = new THREE.BoxGeometry(0.03, 0.45, 0.03);
+    for (let i = 0; i < 5; i++) {
+      const barX = ((i / 4) - 0.5) * (windowSize + 0.2);
+      const bar = new THREE.Mesh(barGeo, metalMat);
+      bar.position.set(barX, 0.25, 0.38);
+      balconyFloor.add(bar);
+      this.meshes.push(bar);
     }
+  }
 
-    // Drop ladder at bottom (angled)
-    const dropLadderGeo = new THREE.BoxGeometry(0.4, 2.0, 0.06);
-    const dropLadder = new THREE.Mesh(dropLadderGeo, metalMat);
-    dropLadder.position.set(side * (width / 2 + 1.1), -height / 2 + 1.5, -0.4);
-    dropLadder.rotation.z = side * 0.3;
-    building.add(dropLadder);
-    this.meshes.push(dropLadder);
+  /**
+   * Add roof parapet and edge details
+   */
+  addRoofParapet(building, width, height, depth, baseColor) {
+    const parapetHeight = 0.4;
+    const parapetColor = this.darkenColor(baseColor, 0.1);
+    const parapetMat = createToonMaterial({ color: parapetColor });
+
+    // Front parapet
+    const frontGeo = new THREE.BoxGeometry(width + 0.3, parapetHeight, 0.15);
+    const front = new THREE.Mesh(frontGeo, parapetMat);
+    front.position.set(0, height / 2 + parapetHeight / 2, depth / 2 + 0.075);
+    front.castShadow = true;
+    building.add(front);
+    this.meshes.push(front);
+
+    // Front parapet outline
+    const frontOutline = createOutlineMesh(front, 0.08);
+    frontOutline.position.copy(front.position);
+    building.add(frontOutline);
+    this.meshes.push(frontOutline);
+
+    // Back parapet
+    const back = new THREE.Mesh(frontGeo, parapetMat);
+    back.position.set(0, height / 2 + parapetHeight / 2, -depth / 2 - 0.075);
+    back.castShadow = true;
+    building.add(back);
+    this.meshes.push(back);
+
+    // Side parapets
+    const sideGeo = new THREE.BoxGeometry(0.15, parapetHeight, depth + 0.3);
+    const left = new THREE.Mesh(sideGeo, parapetMat);
+    left.position.set(-width / 2 - 0.075, height / 2 + parapetHeight / 2, 0);
+    left.castShadow = true;
+    building.add(left);
+    this.meshes.push(left);
+
+    const right = new THREE.Mesh(sideGeo, parapetMat);
+    right.position.set(width / 2 + 0.075, height / 2 + parapetHeight / 2, 0);
+    right.castShadow = true;
+    building.add(right);
+    this.meshes.push(right);
+
+    // Parapet cap
+    const capGeo = new THREE.BoxGeometry(width + 0.5, 0.1, depth + 0.5);
+    const capMat = createToonMaterial({ color: 0x757575 });
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.set(0, height / 2 + parapetHeight + 0.05, 0);
+    building.add(cap);
+    this.meshes.push(cap);
+
+    // Cap outline
+    const capOutline = createOutlineMesh(cap, 0.08);
+    capOutline.position.copy(cap.position);
+    building.add(capOutline);
+    this.meshes.push(capOutline);
+  }
+
+  /**
+   * Add Japanese-style vertical signage to building side
+   */
+  addBuildingSign(building, width, height, depth, name) {
+    const signHeight = Math.min(height * 0.5, 6);
+    const signWidth = 0.8;
+    const signDepth = 0.15;
+
+    // Sign panel (white background)
+    const signGeo = new THREE.BoxGeometry(signWidth, signHeight, signDepth);
+    const signMat = createToonMaterial({ color: 0xF5F5F5 });
+    const sign = new THREE.Mesh(signGeo, signMat);
+
+    // Position on left or right side
+    const side = Math.random() > 0.5 ? 1 : -1;
+    sign.position.set(
+      side * (width / 2 + signDepth / 2 + 0.02),
+      height * 0.15,
+      depth / 4
+    );
+    sign.rotation.y = side * Math.PI / 2;
+    sign.castShadow = true;
+    building.add(sign);
+    this.meshes.push(sign);
+
+    // Sign outline
+    const signOutline = createOutlineMesh(sign, 0.08);
+    signOutline.position.copy(sign.position);
+    signOutline.rotation.copy(sign.rotation);
+    building.add(signOutline);
+    this.meshes.push(signOutline);
+
+    // Colored border
+    const borderColor = SIGN_BORDER_COLORS[Math.floor(Math.random() * SIGN_BORDER_COLORS.length)];
+    const borderMat = createToonMaterial({ color: borderColor });
+
+    // Top border
+    const topBorderGeo = new THREE.BoxGeometry(signWidth + 0.1, 0.12, signDepth + 0.05);
+    const topBorder = new THREE.Mesh(topBorderGeo, borderMat);
+    topBorder.position.set(0, signHeight / 2 + 0.06, 0);
+    sign.add(topBorder);
+    this.meshes.push(topBorder);
+
+    // Bottom border
+    const bottomBorder = new THREE.Mesh(topBorderGeo, borderMat);
+    bottomBorder.position.set(0, -signHeight / 2 - 0.06, 0);
+    sign.add(bottomBorder);
+    this.meshes.push(bottomBorder);
+
+    // Side borders
+    const sideBorderGeo = new THREE.BoxGeometry(0.1, signHeight, signDepth + 0.05);
+    const leftBorder = new THREE.Mesh(sideBorderGeo, borderMat);
+    leftBorder.position.set(-signWidth / 2 - 0.05, 0, 0);
+    sign.add(leftBorder);
+    this.meshes.push(leftBorder);
+
+    const rightBorder = new THREE.Mesh(sideBorderGeo, borderMat);
+    rightBorder.position.set(signWidth / 2 + 0.05, 0, 0);
+    sign.add(rightBorder);
+    this.meshes.push(rightBorder);
   }
 
   /**
    * Add a rooftop water tank (NYC iconic element)
    */
   addWaterTank(building, width, height, depth) {
-    const woodMat = createToonMaterial({ color: 0x6B4423 }); // Dark wood
+    const woodMat = createToonMaterial({ color: 0x6B4423 });
     const metalMat = createToonMaterial({ color: 0x3D3D3D });
 
-    // Tank body (cylinder)
+    // Tank body
     const tankGeo = new THREE.CylinderGeometry(0.8, 0.9, 1.8, 10);
     const tank = new THREE.Mesh(tankGeo, woodMat);
     tank.position.set(-width / 4, height / 2 + 1.8, -depth / 4);
@@ -576,7 +867,7 @@ export class Planet {
     tank.add(roof);
     this.meshes.push(roof);
 
-    // Metal bands around tank
+    // Metal bands
     const bandGeo = new THREE.TorusGeometry(0.85, 0.03, 6, 16);
     const band1 = new THREE.Mesh(bandGeo, metalMat);
     band1.position.set(0, 0.5, 0);
@@ -590,7 +881,7 @@ export class Planet {
     tank.add(band2);
     this.meshes.push(band2);
 
-    // Support legs (4)
+    // Support legs
     const legGeo = new THREE.BoxGeometry(0.1, 0.8, 0.1);
     const legPositions = [
       { x: 0.5, z: 0.5 },
@@ -607,38 +898,10 @@ export class Planet {
     });
 
     // Tank outline
-    const tankOutline = createOutlineMesh(tank, 0.03);
+    const tankOutline = createOutlineMesh(tank, 0.08);
     tankOutline.position.copy(tank.position);
     building.add(tankOutline);
     this.meshes.push(tankOutline);
-  }
-
-  /**
-   * Add window sills for visual depth
-   */
-  addWindowSills(building, width, height, depth) {
-    const sillMat = createToonMaterial({ color: 0x757575 }); // Gray stone
-
-    const windowSize = 1.0;
-    const windowGap = 0.6;
-    const windowsPerRow = Math.floor((width - 1) / (windowSize + windowGap));
-    const windowRows = Math.floor((height - 2) / (windowSize + windowGap));
-
-    for (let row = 0; row < windowRows; row++) {
-      for (let col = 0; col < windowsPerRow; col++) {
-        // Position relative to building
-        const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
-        const localY = height / 2 - 1 - row * (windowSize + windowGap) - 0.5;
-
-        // Window sill (small ledge under window)
-        const sillGeo = new THREE.BoxGeometry(windowSize + 0.2, 0.08, 0.12);
-        const sill = new THREE.Mesh(sillGeo, sillMat);
-        sill.position.set(localX, localY, depth / 2 + 0.05);
-        sill.castShadow = true;
-        building.add(sill);
-        this.meshes.push(sill);
-      }
-    }
   }
 
   /**
@@ -648,40 +911,6 @@ export class Planet {
     const color = new THREE.Color(hexColor);
     color.multiplyScalar(1 - factor);
     return color.getHex();
-  }
-
-  /**
-   * Add windows to a building oriented on the sphere
-   */
-  addWindowsToBuilding(building, width, height, depth, surfacePos, up) {
-    const windowMaterial = createToonMaterial({ color: 0x87CEEB });
-
-    const windowSize = 1.0;
-    const windowGap = 0.6;
-    const windowsPerRow = Math.floor((width - 1) / (windowSize + windowGap));
-    const windowRows = Math.floor((height - 2) / (windowSize + windowGap));
-
-    for (let row = 0; row < windowRows; row++) {
-      for (let col = 0; col < windowsPerRow; col++) {
-        const windowGeom = new THREE.PlaneGeometry(windowSize, windowSize);
-        const windowMesh = new THREE.Mesh(windowGeom, windowMaterial.clone());
-
-        // Position relative to building
-        const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
-        const localY = height / 2 - 1 - row * (windowSize + windowGap);
-        const localZ = depth / 2 + 0.01;
-
-        // Transform to building's coordinate system
-        windowMesh.position.set(localX, localY, localZ);
-
-        // Mark 30% of windows as "dark" - they stay unlit at night for realism
-        windowMesh.userData.isDarkWindow = Math.random() < 0.3;
-
-        // Add as child of building so it inherits orientation
-        building.add(windowMesh);
-        this.windowMeshes.push(windowMesh);
-      }
-    }
   }
 
   /**
