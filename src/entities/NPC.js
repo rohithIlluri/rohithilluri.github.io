@@ -9,6 +9,7 @@ import {
   createOutlineMesh,
 } from '../shaders/toon.js';
 import { getWaypoint, getAppearance } from './NPCData.js';
+import { MESSENGER_PALETTE } from '../constants/colors.js';
 
 // NPC states
 const NPC_STATES = {
@@ -267,10 +268,10 @@ export class NPC {
     rightFootOutline.position.copy(rightFoot.position);
     this.characterGroup.add(rightFootOutline);
 
-    // SHADOW
+    // SHADOW (blue-gray, never pure black per CLAUDE.md spec)
     const shadowGeo = new THREE.CircleGeometry(0.25, 16);
     const shadowMat = new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: MESSENGER_PALETTE.SHADOW_TINT,
       transparent: true,
       opacity: 0.25,
     });

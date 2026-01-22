@@ -1,136 +1,105 @@
+# Messenger Clone
 
-# Personal Portfolio Website
-
-A modern, responsive portfolio website built with React, featuring GitHub integration, project showcase, skills display, and an embedded YouTube music player.
-
-## Project Structure
-
-port/
-├── client/          # React frontend application
-│   ├── src/         # React source code
-│   │   ├── components/    # Reusable UI components
-│   │   │   ├── sections/ # Main page sections (Hero, Skills, Projects, Contact)
-│   │   │   ├── github/   # GitHub integration components
-│   │   │   ├── layout/   # Layout components (Sidebar, RightSidebar)
-│   │   │   └── ui/       # UI utilities (ErrorBoundary)
-│   │   ├── constants/    # Application constants (GitHub, YouTube configs)
-│   │   ├── utils/        # Helper functions (API utilities)
-│   │   └── assets/       # Static assets and images
-│   ├── public/          # Static assets (favicon, manifest, etc.)
-│   └── package.json     # Frontend dependencies
-└── package.json     # Root scripts and dev dependencies
+A **mail delivery game on a tiny planet** inspired by [messenger.abeto.co](https://messenger.abeto.co/). Walk around a spherical world, deliver mail to NPCs, and enjoy the cozy cel-shaded aesthetic.
 
 ## Features
 
-- 🎨 **Modern Design**: Glass-morphism aesthetic with smooth animations
-- 📱 **Responsive Layout**: Mobile-first design with tablet and desktop optimizations
-- 🐙 **GitHub Integration**: Real-time repository showcase and profile statistics
-- 🎵 **YouTube Music Player**: Embedded music player with playlist support
-- 📊 **Skills Display**: Interactive tech stack showcase with icons
-- 📧 **Contact Section**: Professional contact information
-- 🌟 **Achievement Badges**: Certification showcase with verification links
-- 🎯 **Performance Optimized**: Lazy loading and optimized components
+- **Tiny Planet**: Spherical world with gravity that always points toward the center
+- **Cel-Shaded Graphics**: 4-band toon shading with soft blue-gray shadows (never pure black)
+- **Procedural Characters**: Anime-styled characters with walking animations
+- **NPCs with Patrol Routes**: 6 unique NPCs that walk around and react to the player
+- **Day/Night Cycle**: Toggle between day and night with smooth lighting transitions
+- **Particle Effects**: Leaves during the day, fireflies at night
+- **Lo-Fi Audio**: Procedurally generated ambient music and sound effects
 
 ## Quick Start
 
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-
-### First Time Setup
 ```bash
-# Install all dependencies
-npm run setup
-# or
-npm install && cd client && npm install
-```
+# Install dependencies
+npm install
 
-### Development
-
-**Start the development server**
-```bash
+# Start development server (port 3000)
 npm run dev
-# or
-npm start
-# or
-cd client && npm start
-```
 
-### Access the Portfolio
-- **Portfolio**: http://localhost:3001
-
-## Building for Production
-
-### Create Production Build
-```bash
-# Build the React application
+# Build for production
 npm run build
-# or
-cd client && npm run build
+
+# Deploy to GitHub Pages
+npm run deploy
 ```
 
-### Deploy
-The `build` folder in `client/` contains all the static files needed for deployment. Deploy to any static hosting service like:
-- Vercel
-- Netlify
-- GitHub Pages
-- AWS S3 + CloudFront
+## Controls
 
-### Environment Variables
-Create a `.env.local` file in the client directory for any environment-specific variables:
-```env
-REACT_APP_GITHUB_USERNAME=your-github-username
-REACT_APP_YOUTUBE_PLAYLIST_ID=your-playlist-id
-```
+| Key | Action |
+|-----|--------|
+| WASD / Arrows | Move |
+| Shift | Run |
+| E | Interact |
+| N | Toggle Day/Night |
 
 ## Technology Stack
 
-### Frontend
-- **React 19** - Modern React with latest features
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Icons** - Icon library
-- **Simple Icons** - Tech stack icons
+- **3D Engine**: Three.js (WebGL)
+- **Physics/Collision**: three-mesh-bvh (BVH-based collision detection)
+- **Animation**: GSAP
+- **Build Tool**: Vite
+- **State Management**: Zustand
 
-### APIs & Integrations
-- **GitHub API** - Repository and profile data
-- **YouTube oEmbed API** - Video information
-- **YouTube iFrame Player API** - Embedded music player
+## Architecture
 
-## Troubleshooting
+```
+src/
+├── main.js              # App entry point
+├── World.js             # Scene orchestrator
+├── Player.js            # Character controller (spherical movement)
+├── Camera.js            # Third-person camera
+├── InputManager.js      # Keyboard/touch input
+├── audio/
+│   └── AudioManager.js  # Sound effects and music
+├── constants/
+│   └── colors.js        # Messenger-style color palette
+├── effects/
+│   ├── PostProcessing.js
+│   └── particles/       # Leaf and firefly effects
+├── entities/
+│   ├── NPC.js           # NPC character logic
+│   ├── NPCData.js       # NPC configuration
+│   └── NPCManager.js    # NPC spawning/management
+├── environment/
+│   ├── TinyPlanet.js    # Spherical gravity system
+│   └── Planet.js        # Planet environment
+├── optimization/
+│   └── LODManager.js    # Level of detail management
+├── shaders/
+│   ├── toon.js          # Cel-shading materials
+│   └── sky.js           # Sky gradient shader
+└── stores/
+    └── gameStore.js     # Zustand state
+```
 
-### Common Issues
+## Visual Style
 
-#### Port Conflicts
-- **React app** runs on port **3001** (configured to avoid conflicts with Create React App default)
-- To resolve conflicts: Close other React apps or change port in package.json scripts
+The visual style closely matches [messenger.abeto.co](https://messenger.abeto.co/):
 
-#### GitHub API Issues
-- **Rate Limiting**: GitHub API has rate limits for unauthenticated requests (60/hour)
-- **Missing Repos**: Ensure repositories are public and exist in the showcase list
-- **Network Issues**: Check internet connection and GitHub API status
+- **Cel-shading**: 4-band discrete color transitions (no smooth gradients)
+- **Shadows**: Blue-gray (#5A6B7A), never pure black
+- **Outlines**: 2px, color #1A1A2E
+- **Rim lighting**: White, intensity 0.3-0.4
+- **Sky**: Turquoise day (#5BBFBA) to deep blue night (#1B2838)
 
-#### YouTube Player Issues
-- **API Loading**: Ensure stable internet connection for YouTube API
-- **Playlist Errors**: Verify playlist ID is correct and public
-- **Mobile Issues**: Check if YouTube is blocked in your region
+## Performance Targets
 
-### Performance Issues
-- **Slow Loading**: Check network connection and GitHub API status
-- **Large Bundle Size**: Consider implementing code splitting (future optimization)
-- **Memory Issues**: Close unused browser tabs and restart development server
+| Metric | Target |
+|--------|--------|
+| Initial Load | < 6 MB |
+| Frame Rate | 60 FPS desktop, 30 FPS mobile |
+| Load Time (4G) | < 5 seconds |
 
-## Future Enhancements
+## Reference
 
-### Planned Features
-- **Blog Section** - Add personal blog with markdown support
-- **Dark Mode Toggle** - Theme switching capability
-- **Contact Form** - Functional contact form with email integration
-- **Project Filtering** - Advanced project categorization and search
-- **Analytics Integration** - Track visitor engagement and performance
+- **Live Reference**: https://messenger.abeto.co/
+- **Project Plan**: `.ralph/prompt.md`
 
-### Technical Improvements
-- **TypeScript Migration** - Add type safety and better development experience
-- **Testing Suite** - Add unit and integration tests
-- **Performance Monitoring** - Implement performance tracking and optimization
-- **Accessibility Audit** - Further improve accessibility compliance
-- **SEO Optimization** - Enhanced search engine visibility
+## License
+
+MIT
