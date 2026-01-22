@@ -1,7 +1,7 @@
 /**
  * PostProcessing.js - Full Post-Processing Pipeline
- * Implements bloom, vignette, SSAO, color grading, film grain, and FXAA
- * Using Three.js EffectComposer with custom passes
+ * Implements animated sketch outlines, color grading, and FXAA
+ * Style matching messenger.abeto.co
  */
 
 import * as THREE from 'three';
@@ -11,36 +11,37 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { MESSENGER_PALETTE } from '../constants/colors.js';
 
-// Visual quality constants - enhanced for messenger.abeto.co parity
-const BLOOM_THRESHOLD = 0.8;      // Lower threshold for more glow
-const BLOOM_INTENSITY = 0.25;     // Increased from 0.15
-const BLOOM_RADIUS = 0.5;         // Slightly wider bloom
-const VIGNETTE_INTENSITY = 0.18;  // Slightly stronger
-const VIGNETTE_COLOR = new THREE.Color(0x1A1A2E);
-const OUTLINE_COLOR = new THREE.Color(0x1A1A2E);
-const OUTLINE_THICKNESS = 1.8;    // Thicker outlines for visibility
+// Visual quality constants - messenger.abeto.co style
+const BLOOM_THRESHOLD = 0.95;     // Higher threshold - subtle bloom only
+const BLOOM_INTENSITY = 0.1;      // Reduced for cleaner look
+const BLOOM_RADIUS = 0.3;         // Tighter bloom
+const VIGNETTE_INTENSITY = 0.08;  // Very subtle vignette
+const VIGNETTE_COLOR = new THREE.Color(MESSENGER_PALETTE.SHADOW_TINT);
+const OUTLINE_COLOR = new THREE.Color(MESSENGER_PALETTE.OUTLINE_PRIMARY);
+const OUTLINE_THICKNESS = 2.0;    // Sketch-style outlines
 
-// SSAO settings - enhanced for visible ambient occlusion
-const SSAO_RADIUS = 0.6;          // Larger radius
-const SSAO_INTENSITY = 0.5;       // Increased from 0.3
-const SSAO_BIAS = 0.02;           // Slightly adjusted
-const SSAO_COLOR = new THREE.Color(0x4A4063); // Purple-tinted, not black
+// SSAO settings - subtle blue-gray shadows
+const SSAO_RADIUS = 0.4;          // Moderate radius
+const SSAO_INTENSITY = 0.2;       // Subtle, not aggressive
+const SSAO_BIAS = 0.02;
+const SSAO_COLOR = new THREE.Color(MESSENGER_PALETTE.SHADOW_TINT); // Blue-gray, never black
 
-// Color grading settings - enhanced for vibrant cel-shaded look
+// Color grading - messenger.abeto.co muted palette
 const COLOR_GRADE = {
-  saturation: 1.1,    // Slightly more saturated
-  contrast: 1.05,     // More contrast for cel-shading pop
-  shadowsLift: 0.015, // Slightly less lift for darker shadows
-  highlights: 0.97,   // Slightly reduced highlights
-  temperature: 0.015, // Warmer shift
-  tint: 0.008,        // Slight magenta for dreamy feel
+  saturation: 0.95,   // Slightly desaturated for muted look
+  contrast: 1.02,     // Very subtle contrast
+  shadowsLift: 0.02,  // Lifted shadows (no pure black)
+  highlights: 0.98,   // Soft highlights
+  temperature: 0.01,  // Very slight warmth
+  tint: 0.005,        // Minimal tint
 };
 
-// Film grain settings - subtle for lo-fi aesthetic
+// Film grain - removed for cleaner messenger style
 const FILM_GRAIN = {
-  intensity: 0.04,    // Slightly more visible
-  size: 1.2,          // Finer grain
+  intensity: 0.0,     // Disabled - messenger has clean look
+  size: 1.0,
 };
 
 /**
@@ -98,19 +99,20 @@ const VignetteShader = {
 };
 
 /**
- * Edge Detection Outline Shader (Sobel filter on depth/luminance)
- * Creates thick black outlines on all objects - messenger.abeto.co style
+ * Clean Static Outline Shader
+ * Creates crisp, graphic novel-style outlines matching messenger.abeto.co
+ * NO animation - clean, static lines
  */
 const OutlineShader = {
   uniforms: {
     tDiffuse: { value: null },
-    resolution: { value: new THREE.Vector2(1, 1) },
-    outlineColor: { value: OUTLINE_COLOR },
-    thickness: { value: OUTLINE_THICKNESS },
-    threshold: { value: 0.15 },
+    uResolution: { value: new THREE.Vector2(1, 1) },
+    uOutlineColor: { value: OUTLINE_COLOR },
+    uLineWidth: { value: OUTLINE_THICKNESS },
+    uThreshold: { value: 0.12 },
   },
 
-  vertexShader: `
+  vertexShader: /* glsl */ `
     varying vec2 vUv;
     void main() {
       vUv = uv;
@@ -118,12 +120,12 @@ const OutlineShader = {
     }
   `,
 
-  fragmentShader: `
+  fragmentShader: /* glsl */ `
     uniform sampler2D tDiffuse;
-    uniform vec2 resolution;
-    uniform vec3 outlineColor;
-    uniform float thickness;
-    uniform float threshold;
+    uniform vec2 uResolution;
+    uniform vec3 uOutlineColor;
+    uniform float uLineWidth;
+    uniform float uThreshold;
 
     varying vec2 vUv;
 
@@ -132,12 +134,10 @@ const OutlineShader = {
     }
 
     void main() {
-      vec2 texelSize = thickness / resolution;
+      vec2 texelSize = uLineWidth / uResolution;
       vec4 center = texture2D(tDiffuse, vUv);
-      float centerLum = getLuminance(center.rgb);
 
-      // Sobel edge detection kernel
-      // Sample 8 neighboring pixels
+      // Clean Sobel edge detection (no animation, no noise)
       float tl = getLuminance(texture2D(tDiffuse, vUv + vec2(-texelSize.x, -texelSize.y)).rgb);
       float t  = getLuminance(texture2D(tDiffuse, vUv + vec2(0.0, -texelSize.y)).rgb);
       float tr = getLuminance(texture2D(tDiffuse, vUv + vec2(texelSize.x, -texelSize.y)).rgb);
@@ -147,18 +147,16 @@ const OutlineShader = {
       float b  = getLuminance(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb);
       float br = getLuminance(texture2D(tDiffuse, vUv + vec2(texelSize.x, texelSize.y)).rgb);
 
-      // Sobel operators
+      // Sobel gradient calculation
       float gx = -tl - 2.0*l - bl + tr + 2.0*r + br;
       float gy = -tl - 2.0*t - tr + bl + 2.0*b + br;
-
-      // Edge magnitude
       float edge = sqrt(gx*gx + gy*gy);
 
-      // Apply threshold and create hard edge
-      float edgeFactor = step(threshold, edge);
+      // Clean threshold - no noise variation
+      float lineMask = smoothstep(uThreshold - 0.02, uThreshold + 0.02, edge);
 
-      // Mix outline color with original
-      vec3 finalColor = mix(center.rgb, outlineColor, edgeFactor);
+      // Mix outline color with original - clean, static result
+      vec3 finalColor = mix(center.rgb, uOutlineColor, lineMask);
 
       gl_FragColor = vec4(finalColor, center.a);
     }
@@ -444,11 +442,11 @@ export class PostProcessing {
         this.ssaoEnabled = false;
       }
 
-      // 3. Outline Pass - Thick black outlines (messenger.abeto.co style)
+      // 3. Outline Pass - Clean static outlines (graphic novel style)
       this.outlinePass = new ShaderPass(OutlineShader);
-      this.outlinePass.uniforms.resolution.value.set(size.x * pixelRatio, size.y * pixelRatio);
-      this.outlinePass.uniforms.thickness.value = this.outlineThickness;
-      this.outlinePass.uniforms.threshold.value = this.outlineThreshold;
+      this.outlinePass.uniforms.uResolution.value.set(size.x * pixelRatio, size.y * pixelRatio);
+      this.outlinePass.uniforms.uLineWidth.value = this.outlineThickness;
+      this.outlinePass.uniforms.uThreshold.value = this.outlineThreshold;
       this.outlinePass.enabled = this.outlineEnabled;
       this.composer.addPass(this.outlinePass);
 
@@ -628,20 +626,21 @@ export class PostProcessing {
     if (options.thickness !== undefined) {
       this.outlineThickness = options.thickness;
       if (this.outlinePass) {
-        this.outlinePass.uniforms.thickness.value = options.thickness;
+        this.outlinePass.uniforms.uLineWidth.value = options.thickness;
       }
     }
     if (options.threshold !== undefined) {
       this.outlineThreshold = options.threshold;
       if (this.outlinePass) {
-        this.outlinePass.uniforms.threshold.value = options.threshold;
+        this.outlinePass.uniforms.uThreshold.value = options.threshold;
       }
     }
     if (options.color !== undefined) {
       if (this.outlinePass) {
-        this.outlinePass.uniforms.outlineColor.value = new THREE.Color(options.color);
+        this.outlinePass.uniforms.uOutlineColor.value = new THREE.Color(options.color);
       }
     }
+    // Outline is now static - no animation options needed
   }
 
   /**
@@ -722,6 +721,8 @@ export class PostProcessing {
   update(deltaTime) {
     this.time += deltaTime;
 
+    // Outline is now static - no time update needed
+
     // Update film grain time uniform
     if (this.filmGrainPass && this.filmGrainEnabled) {
       this.filmGrainPass.uniforms.time.value = this.time;
@@ -758,7 +759,7 @@ export class PostProcessing {
 
     // Update outline pass resolution for consistent outline thickness
     if (this.outlinePass) {
-      this.outlinePass.uniforms.resolution.value.set(
+      this.outlinePass.uniforms.uResolution.value.set(
         width * pixelRatio,
         height * pixelRatio
       );

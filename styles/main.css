@@ -109,6 +109,19 @@ html, body {
   height: 100%;
   background: linear-gradient(90deg, var(--color-accent), #FFF176);
   transition: width 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 1.5s infinite;
 }
 
 .loading-text {
@@ -164,6 +177,17 @@ html, body {
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.control-item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.control-item.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .controls-hint span {
@@ -295,6 +319,15 @@ html, body {
 }
 
 /* Animations */
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;

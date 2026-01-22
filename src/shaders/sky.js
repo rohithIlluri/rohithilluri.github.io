@@ -1,10 +1,11 @@
 /**
- * sky.js - Enhanced Sky Gradient Shader
- * Creates a gradient sky with sun disc, glow effects, and day/night transitions
- * Colors from spec: Day #87CEEB, Night #1E3A5F
+ * sky.js - Messenger-Style Sky Shader
+ * Creates turquoise gradient sky with brush-stroke clouds
+ * Colors from messenger.abeto.co: Primary #5BBFBA (turquoise)
  */
 
 import * as THREE from 'three';
+import { MESSENGER_PALETTE } from '../constants/colors.js';
 
 export class SkyShader {
   constructor(scene) {
@@ -21,35 +22,44 @@ export class SkyShader {
     const geometry = new THREE.SphereGeometry(500, 64, 64);
 
     // Custom shader for gradient sky with sun disc
+    // Using messenger.abeto.co turquoise palette
     this.material = new THREE.ShaderMaterial({
       uniforms: {
-        // Day colors
-        topColor: { value: new THREE.Color(0x87CEEB) }, // Sky blue (day)
-        bottomColor: { value: new THREE.Color(0xE0F0FF) }, // Lighter horizon
+        // Day colors - messenger turquoise style
+        topColor: { value: new THREE.Color(MESSENGER_PALETTE.SKY_PRIMARY) }, // #5BBFBA turquoise
+        bottomColor: { value: new THREE.Color(MESSENGER_PALETTE.SKY_LIGHT) }, // #7DD1CD lighter teal
 
         // Night colors
-        nightTopColor: { value: new THREE.Color(0x1E3A5F) }, // Night sky
-        nightBottomColor: { value: new THREE.Color(0x0D1B2A) }, // Darker horizon at night
+        nightTopColor: { value: new THREE.Color(MESSENGER_PALETTE.NIGHT_ZENITH) }, // #1B2838
+        nightBottomColor: { value: new THREE.Color(MESSENGER_PALETTE.NIGHT_HORIZON) }, // #2A3848
 
-        // Sun properties
+        // Sun properties - subtle, not overwhelming
         sunDirection: { value: this.sunDirection },
-        sunColor: { value: new THREE.Color(0xFFE4B5) }, // Warm sun color
-        sunSize: { value: 0.04 }, // Sun disc size
-        sunGlowSize: { value: 0.2 }, // Glow around sun
-        sunGlowIntensity: { value: 0.5 },
+        sunColor: { value: new THREE.Color(0xFFF8E8) }, // Soft warm white
+        sunSize: { value: 0.03 }, // Smaller sun disc
+        sunGlowSize: { value: 0.15 }, // Smaller glow
+        sunGlowIntensity: { value: 0.3 }, // Subtle glow
 
         // Moon properties (for night)
         moonColor: { value: new THREE.Color(0xE8E8E8) },
-        moonSize: { value: 0.025 },
+        moonSize: { value: 0.02 },
 
         // Time and transitions
         timeOfDay: { value: 0.0 }, // 0 = day, 1 = night
         offset: { value: 33 },
-        exponent: { value: 0.6 },
+        exponent: { value: 0.4 }, // Flatter gradient for more solid turquoise
 
-        // Atmospheric scattering (subtle)
-        atmosphereColor: { value: new THREE.Color(0xFFD700) },
-        atmosphereIntensity: { value: 0.1 },
+        // Atmospheric scattering (very subtle)
+        atmosphereColor: { value: new THREE.Color(MESSENGER_PALETTE.YELLOW_ACCENT) },
+        atmosphereIntensity: { value: 0.05 }, // Very subtle
+
+        // Cloud properties - painterly brush-stroke style
+        uTime: { value: 0.0 },
+        cloudColor: { value: new THREE.Color(MESSENGER_PALETTE.CLOUD_WHITE) }, // Pure white
+        cloudShadowColor: { value: new THREE.Color(MESSENGER_PALETTE.CLOUD_SHADOW) }, // Light shadow
+        cloudDensity: { value: 0.5 }, // More visible clouds
+        cloudSpeed: { value: 0.015 }, // Slower drift
+        cloudScale: { value: 2.5 }, // Larger cloud forms
       },
       vertexShader: `
         varying vec3 vWorldPosition;
@@ -80,8 +90,121 @@ export class SkyShader {
         uniform vec3 atmosphereColor;
         uniform float atmosphereIntensity;
 
+        // Cloud uniforms
+        uniform float uTime;
+        uniform vec3 cloudColor;
+        uniform vec3 cloudShadowColor;
+        uniform float cloudDensity;
+        uniform float cloudSpeed;
+        uniform float cloudScale;
+
         varying vec3 vWorldPosition;
         varying vec3 vPosition;
+
+        // Simplex noise functions for brush-stroke clouds
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
+        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+        float snoise(vec3 v) {
+          const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+          const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+
+          vec3 i = floor(v + dot(v, C.yyy));
+          vec3 x0 = v - i + dot(i, C.xxx);
+
+          vec3 g = step(x0.yzx, x0.xyz);
+          vec3 l = 1.0 - g;
+          vec3 i1 = min(g.xyz, l.zxy);
+          vec3 i2 = max(g.xyz, l.zxy);
+
+          vec3 x1 = x0 - i1 + C.xxx;
+          vec3 x2 = x0 - i2 + C.yyy;
+          vec3 x3 = x0 - D.yyy;
+
+          i = mod289(i);
+          vec4 p = permute(permute(permute(
+            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+          float n_ = 0.142857142857;
+          vec3 ns = n_ * D.wyz - D.xzx;
+
+          vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+
+          vec4 x_ = floor(j * ns.z);
+          vec4 y_ = floor(j - 7.0 * x_);
+
+          vec4 x = x_ * ns.x + ns.yyyy;
+          vec4 y = y_ * ns.x + ns.yyyy;
+          vec4 h = 1.0 - abs(x) - abs(y);
+
+          vec4 b0 = vec4(x.xy, y.xy);
+          vec4 b1 = vec4(x.zw, y.zw);
+
+          vec4 s0 = floor(b0) * 2.0 + 1.0;
+          vec4 s1 = floor(b1) * 2.0 + 1.0;
+          vec4 sh = -step(h, vec4(0.0));
+
+          vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+          vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+
+          vec3 p0 = vec3(a0.xy, h.x);
+          vec3 p1 = vec3(a0.zw, h.y);
+          vec3 p2 = vec3(a1.xy, h.z);
+          vec3 p3 = vec3(a1.zw, h.w);
+
+          vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+          p0 *= norm.x;
+          p1 *= norm.y;
+          p2 *= norm.z;
+          p3 *= norm.w;
+
+          vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+          m = m * m;
+          return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
+        }
+
+        // Fractal Brownian Motion for painterly cloud texture
+        float fbm(vec3 p) {
+          float value = 0.0;
+          float amplitude = 0.5;
+          float frequency = 1.0;
+
+          for (int i = 0; i < 5; i++) {
+            value += amplitude * snoise(p * frequency);
+            amplitude *= 0.5;
+            frequency *= 2.0;
+          }
+          return value;
+        }
+
+        // Brush-stroke cloud function
+        float brushStrokeClouds(vec3 pos, float time) {
+          // Multiple layers for depth
+          vec3 cloudPos = pos * cloudScale;
+          cloudPos.x += time * cloudSpeed * 10.0;
+
+          // Main cloud shape with brush-stroke distortion
+          float cloud = fbm(cloudPos);
+
+          // Add brush-stroke texture with varying frequencies
+          float brushStroke = snoise(cloudPos * 2.5 + vec3(time * 0.1)) * 0.3;
+          brushStroke += snoise(cloudPos * 5.0 - vec3(time * 0.05)) * 0.15;
+
+          cloud += brushStroke;
+
+          // Shape the clouds to be more puffy and painterly
+          cloud = smoothstep(-0.2, 0.6, cloud);
+
+          // Add wispy edges
+          float wisp = snoise(cloudPos * 8.0 + vec3(0.0, time * 0.02, 0.0)) * 0.1;
+          cloud = mix(cloud, cloud + wisp, 0.5);
+
+          return cloud;
+        }
 
         void main() {
           // Calculate gradient based on height
@@ -107,7 +230,6 @@ export class SkyShader {
           float sunDist = distance(worldDir, currentSunDir);
 
           // Sun disc with sharp edge (per spec)
-          // float sun = smoothstep(0.05, 0.03, sunDist);
           float sun = smoothstep(sunSize + 0.01, sunSize - 0.01, sunDist);
 
           // Sun glow (soft halo around sun)
@@ -117,6 +239,31 @@ export class SkyShader {
           float sunVisibility = 1.0 - timeOfDay;
           vec3 sunContribution = sunColor * (sun + sunGlow) * sunVisibility;
           skyColor = mix(skyColor, sunColor, (sun + sunGlow) * sunVisibility);
+
+          // === BRUSH-STROKE CLOUDS ===
+          // Only show clouds above horizon and during day
+          float cloudHeight = smoothstep(0.1, 0.7, h); // Clouds in upper sky
+          float cloudVisibility = (1.0 - timeOfDay) * cloudHeight; // Fade at night
+
+          if (cloudVisibility > 0.01) {
+            // Calculate cloud value
+            float clouds = brushStrokeClouds(worldDir, uTime);
+            clouds *= cloudDensity * cloudVisibility;
+
+            // Create soft cloud shading (lit from sun direction)
+            float cloudLighting = dot(worldDir, currentSunDir) * 0.5 + 0.5;
+            cloudLighting = smoothstep(0.3, 0.8, cloudLighting);
+
+            // Mix cloud color with shadow color based on lighting
+            vec3 finalCloudColor = mix(cloudShadowColor, cloudColor, cloudLighting);
+
+            // Apply clouds with soft blending (painterly effect)
+            skyColor = mix(skyColor, finalCloudColor, clouds * 0.7);
+
+            // Add subtle cloud highlight near sun
+            float sunProximity = 1.0 - smoothstep(0.0, 0.5, sunDist);
+            skyColor += finalCloudColor * clouds * sunProximity * 0.15;
+          }
 
           // Moon at night (opposite direction)
           vec3 moonDir = -currentSunDir;
@@ -217,6 +364,40 @@ export class SkyShader {
    */
   getSunDirection() {
     return this.sunDirection.clone();
+  }
+
+  /**
+   * Update method for cloud animation
+   * @param {number} deltaTime Time since last frame in seconds
+   */
+  update(deltaTime) {
+    if (this.material && this.material.uniforms.uTime) {
+      this.material.uniforms.uTime.value += deltaTime;
+    }
+  }
+
+  /**
+   * Set cloud parameters
+   * @param {Object} params Cloud configuration
+   */
+  setCloudParams(params) {
+    if (this.material) {
+      if (params.density !== undefined) {
+        this.material.uniforms.cloudDensity.value = params.density;
+      }
+      if (params.speed !== undefined) {
+        this.material.uniforms.cloudSpeed.value = params.speed;
+      }
+      if (params.scale !== undefined) {
+        this.material.uniforms.cloudScale.value = params.scale;
+      }
+      if (params.color) {
+        this.material.uniforms.cloudColor.value = new THREE.Color(params.color);
+      }
+      if (params.shadowColor) {
+        this.material.uniforms.cloudShadowColor.value = new THREE.Color(params.shadowColor);
+      }
+    }
   }
 
   dispose() {

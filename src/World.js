@@ -15,6 +15,8 @@ import { ParticleManager } from './effects/particles/ParticleManager.js';
 import { createFireflyEmitter, createLeafEmitter } from './effects/particles/Emitters.js';
 import { LODManager } from './optimization/LODManager.js';
 import { useGameStore } from './stores/gameStore.js';
+import { createAudioManager, getAudioManager } from './audio/AudioManager.js';
+import { NPCManager } from './entities/NPCManager.js';
 
 // Quality presets - enhanced for messenger.abeto.co parity
 const QUALITY_PRESETS = {
@@ -70,6 +72,12 @@ export class World {
 
     // LOD system
     this.lodManager = null;
+
+    // Audio system
+    this.audioManager = null;
+
+    // NPC system
+    this.npcManager = null;
 
     // Lighting
     this.ambientLight = null;
@@ -169,6 +177,9 @@ export class World {
     this.reportProgress(0.6, 'Spawning player...');
     this.setupPlayer();
 
+    this.reportProgress(0.7, 'Spawning NPCs...');
+    this.setupNPCs();
+
     this.reportProgress(0.8, 'Setting up camera...');
     this.setupCamera();
 
@@ -178,6 +189,9 @@ export class World {
     this.reportProgress(0.9, 'Setting up particles and LOD...');
     this.setupParticles();
     this.setupLOD();
+
+    this.reportProgress(0.95, 'Initializing audio...');
+    await this.setupAudio();
 
     this.reportProgress(1.0, 'Ready!');
 
@@ -298,6 +312,21 @@ export class World {
     this.camera.init();
   }
 
+  setupNPCs() {
+    // Only spawn NPCs on planet mode
+    if (this.worldMode === 'planet' && this.tinyPlanet) {
+      this.npcManager = new NPCManager(this.scene, this.tinyPlanet, {
+        maxNPCs: 6, // Limit NPCs for performance
+        enabled: true,
+      });
+
+      // Sync light direction
+      if (this.lightDirection) {
+        this.npcManager.setLightDirection(this.lightDirection);
+      }
+    }
+  }
+
   setupPostProcessing(preset) {
     this.postProcessing = new PostProcessing(
       this.renderer,
@@ -351,6 +380,30 @@ export class World {
     // For now, the environment uses simple geometry that doesn't need LOD
   }
 
+  async setupAudio() {
+    // Create audio manager
+    this.audioManager = createAudioManager(this.camera);
+
+    // Set up first user interaction handler to initialize and start audio
+    // (Browser autoplay policy requires user interaction before playing audio)
+    const startAudioOnInteraction = async () => {
+      if (this.audioManager && !this.audioManager.initialized) {
+        await this.audioManager.init();
+        this.audioManager.startMusic();
+        useGameStore.getState().setAudioInitialized(true);
+      }
+      // Remove listeners after first interaction
+      window.removeEventListener('click', startAudioOnInteraction);
+      window.removeEventListener('keydown', startAudioOnInteraction);
+      window.removeEventListener('touchstart', startAudioOnInteraction);
+    };
+
+    // Listen for any user interaction to start audio
+    window.addEventListener('click', startAudioOnInteraction);
+    window.addEventListener('keydown', startAudioOnInteraction);
+    window.addEventListener('touchstart', startAudioOnInteraction);
+  }
+
   /**
    * Update light direction (syncs with sun)
    * @param {THREE.Vector3} direction
@@ -368,6 +421,11 @@ export class World {
     // Update player
     if (this.player) {
       this.player.setLightDirection(direction);
+    }
+
+    // Update NPCs
+    if (this.npcManager) {
+      this.npcManager.setLightDirection(direction);
     }
 
     // Update environment
@@ -495,6 +553,11 @@ export class World {
         intensity: THREE.MathUtils.lerp(bloomBase, bloomNight, this.timeOfDay),
       });
     }
+
+    // Update audio (music filter gets darker at night)
+    if (this.audioManager && this.audioManager.initialized) {
+      this.audioManager.setTimeOfDay(this.timeOfDay);
+    }
   }
 
   update(deltaTime) {
@@ -513,6 +576,15 @@ export class World {
       this.planetEnv.update(deltaTime);
     } else if (this.street) {
       this.street.update(deltaTime);
+    }
+
+    // Update NPCs
+    if (this.npcManager) {
+      // Sync player position for NPC look-at behavior
+      if (this.player) {
+        this.npcManager.setPlayerPosition(this.player.getPosition());
+      }
+      this.npcManager.update(deltaTime);
     }
 
     // Update particle systems
@@ -534,6 +606,16 @@ export class World {
     // Update post-processing (for film grain animation)
     if (this.postProcessing) {
       this.postProcessing.update(deltaTime);
+    }
+
+    // Update sky shader (for cloud animation)
+    if (this.sky) {
+      this.sky.update(deltaTime);
+    }
+
+    // Update audio
+    if (this.audioManager) {
+      this.audioManager.update(deltaTime);
     }
 
     // Render
@@ -579,6 +661,8 @@ export class World {
     if (this.sky) this.sky.dispose();
     if (this.particleManager) this.particleManager.dispose();
     if (this.lodManager) this.lodManager.dispose();
+    if (this.audioManager) this.audioManager.dispose();
+    if (this.npcManager) this.npcManager.dispose();
 
     // Dispose of Three.js resources
     this.scene.traverse((object) => {

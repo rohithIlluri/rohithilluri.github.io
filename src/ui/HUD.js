@@ -189,19 +189,45 @@ export class HUD {
       this.controlsHintEl = document.createElement('div');
       this.controlsHintEl.id = 'controls-hint';
       this.applyStyles(this.controlsHintEl, HUD_STYLES.controlsHint);
-      this.controlsHintEl.innerHTML = `
-        <div><strong>WASD</strong> - Move</div>
-        <div><strong>SHIFT</strong> - Run</div>
-        <div><strong>E</strong> - Interact</div>
-        <div><strong>N</strong> - Day/Night</div>
-      `;
+
+      // Create individual control items for staggered animation
+      const controls = [
+        { key: 'WASD', action: 'Move' },
+        { key: 'SHIFT', action: 'Run' },
+        { key: 'E', action: 'Interact' },
+        { key: 'N', action: 'Day/Night' },
+      ];
+
+      controls.forEach((control, index) => {
+        const item = document.createElement('div');
+        item.className = 'control-item';
+        item.innerHTML = `<strong>${control.key}</strong> - ${control.action}`;
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(10px)';
+        item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        this.controlsHintEl.appendChild(item);
+
+        // Staggered fade-in animation
+        setTimeout(() => {
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0)';
+        }, 200 + (index * 150)); // 150ms delay between each item
+      });
+
       this.container.appendChild(this.controlsHintEl);
 
       // Fade out after 5 seconds
       setTimeout(() => {
         if (this.controlsHintEl) {
-          this.controlsHintEl.style.opacity = '0';
-          this.controlsHintEl.style.transition = 'opacity 1s ease';
+          // Staggered fade-out
+          const items = this.controlsHintEl.querySelectorAll('.control-item');
+          items.forEach((item, index) => {
+            setTimeout(() => {
+              item.style.opacity = '0';
+              item.style.transform = 'translateY(-10px)';
+            }, index * 100);
+          });
+
           setTimeout(() => {
             if (this.controlsHintEl && this.controlsHintEl.parentNode) {
               this.controlsHintEl.parentNode.removeChild(this.controlsHintEl);
