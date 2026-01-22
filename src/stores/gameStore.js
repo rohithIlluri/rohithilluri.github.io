@@ -80,6 +80,17 @@ const store = createStore((set, get) => ({
   // Quality settings
   qualityLevel: 'high', // 'low', 'medium', 'high'
 
+  // Particle settings
+  particlesEnabled: true,
+  ambientParticlesEnabled: true,
+
+  // Audio settings
+  audioEnabled: true,
+  audioInitialized: false,
+  masterVolume: 0.7,
+  musicVolume: 0.5,
+  sfxVolume: 0.7,
+
   // Actions
   setLoaded: (loaded) => set({ isLoaded: loaded }),
   setLoadProgress: (progress) => set({ loadProgress: progress }),
@@ -99,6 +110,13 @@ const store = createStore((set, get) => ({
     set({ visitedBuildings: new Set(visited) });
   },
   setQualityLevel: (level) => set({ qualityLevel: level }),
+  setParticlesEnabled: (enabled) => set({ particlesEnabled: enabled }),
+  setAmbientParticlesEnabled: (enabled) => set({ ambientParticlesEnabled: enabled }),
+  setAudioEnabled: (enabled) => set({ audioEnabled: enabled }),
+  setAudioInitialized: (initialized) => set({ audioInitialized: initialized }),
+  setMasterVolume: (volume) => set({ masterVolume: Math.max(0, Math.min(1, volume)) }),
+  setMusicVolume: (volume) => set({ musicVolume: Math.max(0, Math.min(1, volume)) }),
+  setSFXVolume: (volume) => set({ sfxVolume: Math.max(0, Math.min(1, volume)) }),
 
   // Getters
   getBuildingById: (id) => get().buildings.find((b) => b.id === id),
