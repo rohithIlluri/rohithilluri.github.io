@@ -35,23 +35,30 @@ src/
 ├── Player.js            # Character controller (spherical movement)
 ├── Camera.js            # Third-person camera
 ├── InputManager.js      # Keyboard/touch input
-├── environment/
-│   ├── TinyPlanet.js    # Spherical gravity system
-│   ├── Planet.js        # Planet environment
-│   └── Street.js        # Legacy (being replaced)
+├── audio/
+│   └── AudioManager.js  # Sound effects and music
+├── constants/
+│   └── colors.js        # Color palette definitions
 ├── effects/
 │   ├── PostProcessing.js
 │   └── particles/
+│       ├── Emitters.js
+│       └── ParticleManager.js
+├── entities/
+│   ├── NPC.js           # NPC character logic
+│   ├── NPCData.js       # NPC configuration data
+│   └── NPCManager.js    # NPC spawning/management
+├── environment/
+│   ├── TinyPlanet.js    # Spherical gravity system
+│   ├── Planet.js        # Planet environment
+│   └── Street.js        # Legacy street mode (deprecated)
+├── optimization/
+│   └── LODManager.js    # Level of detail management
 ├── shaders/
 │   ├── toon.js          # Cel-shading
-│   ├── sky.js           # Sky gradient
-│   ├── water.js         # Water shader
-│   └── foliage.js       # Wind animation
-├── stores/
-│   └── gameStore.js     # Zustand state
-└── utils/
-    ├── loader.js        # Asset loading
-    └── collision.js     # BVH collision
+│   └── sky.js           # Sky gradient
+└── stores/
+    └── gameStore.js     # Zustand state
 ```
 
 ## Visual Style (Messenger-quality)

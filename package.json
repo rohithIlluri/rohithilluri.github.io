@@ -1,7 +1,7 @@
 {
-  "name": "nyc-street-portfolio",
+  "name": "messenger-clone",
   "version": "2.0.0",
-  "description": "Interactive 3D NYC street portfolio experience built with Three.js and Vite",
+  "description": "Messenger clone - a mail delivery game on a tiny planet inspired by Messenger by Abeto",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,11 +10,12 @@
     "deploy": "npm run build && gh-pages -d dist"
   },
   "keywords": [
-    "portfolio",
+    "game",
     "threejs",
     "3d",
     "webgl",
-    "nyc",
+    "messenger",
+    "tiny-planet",
     "vite"
   ],
   "author": "Rohith Illuri",

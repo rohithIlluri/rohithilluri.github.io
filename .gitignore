@@ -20,10 +20,16 @@ build/
 .env.test.local
 .env.production.local
 
+# logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firebase-debug.log
+
+# services
 .vercel
+.firebase/
 
 # IDE
 .vscode/
@@ -31,3 +37,12 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# AI tool configs (if not project-specific)
+.agent/
+.cursor/
+.gemini/
+.opencode/
+
+# Test screenshots (large files)
+.playwright-mcp/
