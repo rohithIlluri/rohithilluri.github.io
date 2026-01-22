@@ -543,86 +543,11 @@ export class Player {
   }
 
   /**
-   * Attempt to load a character model (optional - uses procedural character by default)
+   * Placeholder for loading external character models (uses procedural character by default)
+   * Can be extended in the future to load custom GLB models
    */
   async loadCharacterModel() {
-    // Skip model loading - we're using the procedural character
-    // This method is kept for future use if a custom GLB model is desired
     console.log('Using procedural character (no external model needed)');
-    return;
-
-    // NOTE: The code below can be uncommented to load an external character model
-    /*
-    const loader = new GLTFLoader();
-
-    try {
-      // Try to load character model from assets
-      const modelPath = '/assets/models/character.glb';
-
-      const gltf = await loader.loadAsync(modelPath);
-      this.characterModel = gltf.scene;
-
-      // Apply enhanced toon material to all meshes in the model
-      this.characterModel.traverse((child) => {
-        if (child.isMesh) {
-          // Get the original color if available
-          const originalColor = child.material.color
-            ? child.material.color.getHex()
-            : 0x4A90D9;
-
-          // Replace with enhanced toon material
-          child.material = createEnhancedToonMaterial({
-            color: originalColor,
-            isCharacter: true,
-            lightDirection: this.lightDirection,
-          });
-
-          child.castShadow = true;
-          child.receiveShadow = false;
-
-          // Create and add outline for this mesh
-          const outline = createOutlineMesh(child, 0.02);
-          child.parent.add(outline);
-        }
-      });
-
-      // Setup animation mixer if animations exist
-      if (gltf.animations && gltf.animations.length > 0) {
-        this.mixer = new THREE.AnimationMixer(this.characterModel);
-
-        gltf.animations.forEach((clip) => {
-          const name = clip.name.toLowerCase();
-          if (name.includes('idle')) {
-            this.animations[ANIM_STATES.IDLE] = this.mixer.clipAction(clip);
-          } else if (name.includes('walk')) {
-            this.animations[ANIM_STATES.WALK] = this.mixer.clipAction(clip);
-          } else if (name.includes('run')) {
-            this.animations[ANIM_STATES.RUN] = this.mixer.clipAction(clip);
-          }
-        });
-
-        // Start with idle animation
-        if (this.animations[ANIM_STATES.IDLE]) {
-          this.animations[ANIM_STATES.IDLE].play();
-        }
-      }
-
-      // Scale and position the model
-      this.characterModel.scale.set(1, 1, 1);
-      this.characterModel.position.y = -this.capsuleHeight / 2;
-
-      // Hide procedural character and show loaded model
-      if (this.characterGroup) {
-        this.characterGroup.visible = false;
-      }
-      this.container.add(this.characterModel);
-
-      console.log('Character model loaded successfully');
-    } catch (error) {
-      // Model not found, keep using procedural character
-      console.log('Character model not found, using procedural character');
-    }
-    */
   }
 
   /**
