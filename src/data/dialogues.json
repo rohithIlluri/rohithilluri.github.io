@@ -1,0 +1,227 @@
+{
+  "npcs": {
+    "npc_postmaster": {
+      "name": "Postmaster Pearl",
+      "portrait": "postmaster",
+      "defaultNode": "postmaster_greeting",
+      "nodes": {
+        "postmaster_greeting": {
+          "text": "Welcome to our little planet, new messenger! I'm Pearl, the Postmaster here.",
+          "responses": [
+            { "text": "Nice to meet you! I'm ready to work.", "next": "postmaster_explain", "effect": null },
+            { "text": "How does mail delivery work here?", "next": "postmaster_explain", "effect": null },
+            { "text": "Just looking around.", "next": null, "effect": null }
+          ]
+        },
+        "postmaster_explain": {
+          "text": "It's simple! Pick up mail from mailboxes around town, then deliver it to the right person. The faster you deliver, the happier everyone is!",
+          "responses": [
+            { "text": "Sounds easy enough!", "next": "postmaster_first_quest", "effect": null },
+            { "text": "What if I get lost?", "next": "postmaster_tips", "effect": null }
+          ]
+        },
+        "postmaster_tips": {
+          "text": "Don't worry! The planet is small - you can walk all the way around in just a few minutes. Look for the colored zones: Downtown is teal, the Harbor is blue, and Residential is green.",
+          "responses": [
+            { "text": "Got it, thanks!", "next": "postmaster_first_quest", "effect": null }
+          ]
+        },
+        "postmaster_first_quest": {
+          "text": "Your first job: take this Welcome Letter to the Mayor's office in Downtown. She's expecting it!",
+          "responses": [
+            { "text": "I'll deliver it right away!", "next": null, "effect": "accept_quest:quest_first_delivery" },
+            { "text": "I'll do it later.", "next": null, "effect": null }
+          ]
+        },
+        "postmaster_return": {
+          "text": "Back already? How can I help you today?",
+          "responses": [
+            { "text": "Any new deliveries?", "next": "postmaster_check_mail", "effect": null },
+            { "text": "Just passing through.", "next": null, "effect": null }
+          ]
+        },
+        "postmaster_check_mail": {
+          "text": "Let me check... Ah yes! There's a package for the Harbor dockworker. Interested?",
+          "responses": [
+            { "text": "I'll take it!", "next": null, "effect": "accept_quest:quest_harbor_run" },
+            { "text": "Maybe later.", "next": null, "effect": null }
+          ]
+        }
+      }
+    },
+    "npc_mayor": {
+      "name": "Mayor Marina",
+      "portrait": "mayor",
+      "defaultNode": "mayor_greeting",
+      "nodes": {
+        "mayor_greeting": {
+          "text": "Ah, you must be the new messenger! Welcome to our wonderful little world!",
+          "responses": [
+            { "text": "Thank you, Mayor!", "next": "mayor_about", "effect": null },
+            { "text": "I have a delivery for you.", "next": "mayor_delivery", "effect": null }
+          ]
+        },
+        "mayor_about": {
+          "text": "I've been mayor here for 20 years. This planet may be tiny, but our community is strong. Everyone helps each other out!",
+          "responses": [
+            { "text": "That's wonderful!", "next": null, "effect": null },
+            { "text": "I have mail for you.", "next": "mayor_delivery", "effect": null }
+          ]
+        },
+        "mayor_delivery": {
+          "text": "Oh, the Welcome Letter from Pearl! Thank you so much. Here's a little something for your trouble.",
+          "responses": [
+            { "text": "Happy to help!", "next": null, "effect": "complete_objective:quest_first_delivery:1" }
+          ]
+        },
+        "mayor_return": {
+          "text": "Hello again, messenger! How are the deliveries going?",
+          "responses": [
+            { "text": "Great! Everyone's been friendly.", "next": null, "effect": null },
+            { "text": "Any tips for a new messenger?", "next": "mayor_tips", "effect": null }
+          ]
+        },
+        "mayor_tips": {
+          "text": "Visit everyone in town! Getting to know people makes deliveries easier. And don't forget to explore - there are some lovely spots on this planet.",
+          "responses": [
+            { "text": "Thanks for the advice!", "next": null, "effect": null }
+          ]
+        }
+      }
+    },
+    "npc_cafe_owner": {
+      "name": "Barista Ben",
+      "portrait": "barista",
+      "defaultNode": "barista_greeting",
+      "nodes": {
+        "barista_greeting": {
+          "text": "Hey there! Welcome to the Cozy Cup Cafe. Best coffee on the whole planet... well, the ONLY coffee, but still the best!",
+          "responses": [
+            { "text": "Ha! I'll take your word for it.", "next": "barista_chat", "effect": null },
+            { "text": "Any deliveries I can help with?", "next": "barista_quest", "effect": null }
+          ]
+        },
+        "barista_chat": {
+          "text": "Just started as a messenger, huh? Good job! We really needed someone reliable. The last messenger... well, let's just say they weren't great with directions.",
+          "responses": [
+            { "text": "I'll do my best!", "next": null, "effect": null },
+            { "text": "What happened to them?", "next": "barista_story", "effect": null }
+          ]
+        },
+        "barista_story": {
+          "text": "They once delivered a birthday cake to the wrong house... three days late. The cake was fine, but the birthday had long passed. We don't talk about it.",
+          "responses": [
+            { "text": "Yikes! I'll be more careful.", "next": null, "effect": null }
+          ]
+        },
+        "barista_quest": {
+          "text": "Actually, yes! I need to send a supplies order to the General Store. Could you run it over for me?",
+          "responses": [
+            { "text": "Sure thing!", "next": null, "effect": "accept_quest:quest_cafe_order" },
+            { "text": "Maybe later.", "next": null, "effect": null }
+          ]
+        }
+      }
+    },
+    "npc_dockworker": {
+      "name": "Docker Dave",
+      "portrait": "dockworker",
+      "defaultNode": "docker_greeting",
+      "nodes": {
+        "docker_greeting": {
+          "text": "Ahoy there! You the new messenger? Been expecting a package!",
+          "responses": [
+            { "text": "I might have your package!", "next": "docker_delivery", "effect": null },
+            { "text": "Just exploring the harbor.", "next": "docker_harbor", "effect": null }
+          ]
+        },
+        "docker_harbor": {
+          "text": "Beautiful spot, isn't it? Ships come and go, bringing supplies from... somewhere. Nobody's quite sure where, actually. They just show up!",
+          "responses": [
+            { "text": "That's mysterious!", "next": null, "effect": null },
+            { "text": "I have a delivery for you.", "next": "docker_delivery", "effect": null }
+          ]
+        },
+        "docker_delivery": {
+          "text": "Finally! My new work gloves! These old ones are falling apart. Thanks, messenger!",
+          "responses": [
+            { "text": "Happy to help!", "next": null, "effect": "complete_objective:quest_harbor_run:1" }
+          ]
+        }
+      }
+    },
+    "npc_shopkeeper": {
+      "name": "Shopkeeper Sue",
+      "portrait": "shopkeeper",
+      "defaultNode": "shop_greeting",
+      "nodes": {
+        "shop_greeting": {
+          "text": "Welcome to the General Store! We've got everything you need. Well, most things. Some things. Actually, ask and I'll check.",
+          "responses": [
+            { "text": "I have an order from the Cafe.", "next": "shop_order", "effect": null },
+            { "text": "Just browsing, thanks.", "next": null, "effect": null }
+          ]
+        },
+        "shop_order": {
+          "text": "Ah, Ben's usual! Coffee beans, sugar, and... is that a request for a disco ball? I'll pretend I didn't see that. Here's the receipt!",
+          "responses": [
+            { "text": "I'll take it back to him.", "next": null, "effect": "give_mail:mail_cafe_receipt" }
+          ]
+        }
+      }
+    },
+    "npc_florist": {
+      "name": "Florist Fern",
+      "portrait": "florist",
+      "defaultNode": "florist_greeting",
+      "nodes": {
+        "florist_greeting": {
+          "text": "Oh hello! Welcome to my little garden. The flowers here bloom all year round - one of the perks of a tiny planet!",
+          "responses": [
+            { "text": "They're beautiful!", "next": "florist_chat", "effect": null },
+            { "text": "I have a letter for you.", "next": "florist_letter", "effect": null }
+          ]
+        },
+        "florist_chat": {
+          "text": "Thank you! I've been tending these gardens for years. They say talking to plants helps them grow, so I tell them all my secrets. They're very good listeners!",
+          "responses": [
+            { "text": "That's sweet!", "next": null, "effect": null }
+          ]
+        },
+        "florist_letter": {
+          "text": "*Opens letter* Oh my... it's a love letter! From... a secret admirer! How romantic! *blushes* Thank you for delivering this, messenger!",
+          "responses": [
+            { "text": "Glad I could help!", "next": null, "effect": "complete_objective:quest_love_letter:1" }
+          ]
+        }
+      }
+    },
+    "npc_factory_manager": {
+      "name": "Manager Marcus",
+      "portrait": "manager",
+      "defaultNode": "manager_greeting",
+      "nodes": {
+        "manager_greeting": {
+          "text": "Hmm? What is it? I'm very busy. Machines to maintain, schedules to keep!",
+          "responses": [
+            { "text": "Urgent telegram for you!", "next": "manager_telegram", "effect": null },
+            { "text": "Sorry to bother you.", "next": null, "effect": null }
+          ]
+        },
+        "manager_telegram": {
+          "text": "*Reads telegram* Good news! The parts we ordered are finally coming! Thank you for the quick delivery. Here's an extra tip for the rush.",
+          "responses": [
+            { "text": "Thank you!", "next": null, "effect": "complete_objective:quest_urgent_telegram:1" }
+          ]
+        }
+      }
+    }
+  },
+  "effects": {
+    "accept_quest": "Accepts the specified quest",
+    "complete_objective": "Completes quest objective (questId:objectiveIndex)",
+    "give_mail": "Gives player a mail item to deliver",
+    "give_coins": "Awards coins to player",
+    "unlock_zone": "Unlocks a new zone on the map"
+  }
+}

@@ -26,13 +26,16 @@ const NEON_COLORS = {
   red: 0xE88B8B,     // Muted from 0xFF3333
 };
 
-// Building color palette (messenger.abeto.co style)
+// Building color palette (messenger.abeto.co style - warm, muted tones)
 const BUILDING_COLORS = {
-  cream: 0xE8DFD0,     // Most common - warm cream
-  warmGray: 0xB8AFA0,  // Warm gray
-  coolGray: 0x8A9090,  // Cool gray
-  mint: 0x8ECAC6,      // Mint/teal accent
-  coral: 0xE8A8A0,     // Coral/peach accent
+  cream: 0xE8DFD0,      // Primary - warm cream (most common)
+  peach: 0xE8D0C0,      // Secondary - soft peach
+  sage: 0xC8D8C8,       // Accent - muted sage green
+  lavender: 0xD8D0E0,   // Accent - soft lavender
+  terracotta: 0xD8A888, // Accent - warm terracotta
+  warmGray: 0xB8AFA0,   // Neutral - warm gray
+  mint: 0xB8D8D0,       // Muted mint (softer than before)
+  coral: 0xE8C0B8,      // Soft coral/blush
 };
 
 // Awning colors for storefronts
@@ -70,7 +73,19 @@ const PLANET_COLORS = {
   rock: 0x757575,       // Mountain rock
   snow: 0xFAFAFA,       // Snow cap
   water: 0x4FC3F7,      // Shallow water
-  path: 0xBCAAA4,       // Walkway
+  path: 0xBCAAA4,       // Walkway (legacy)
+};
+
+// Street color palette (messenger.abeto.co style)
+const STREET_COLORS = {
+  asphalt: 0x5A6A6A,      // Blue-gray road
+  asphaltLight: 0x6B7B7B, // Lighter road variation
+  sidewalk: 0xD4CFC5,     // Warm cream sidewalk
+  sidewalkEdge: 0xB8AFA0, // Darker sidewalk edge/curb
+  curb: 0xA0A0A0,         // Concrete curb
+  centerLine: 0xE8B84A,   // Yellow center line
+  edgeLine: 0xE8E8E0,     // White edge line
+  crosswalk: 0xF5F5F0,    // Off-white crosswalk
 };
 
 export class Planet {
@@ -224,26 +239,214 @@ export class Planet {
     this.createPathRing(0, 2);    // Equator path
     this.createPathRing(30, 1.5); // Northern path
     this.createPathRing(-30, 1.5); // Southern path
+
+    // Add crosswalks near main buildings
+    this.addCrosswalks();
   }
 
   /**
-   * Create a path ring at given latitude
+   * Add crosswalks at key locations (messenger.abeto.co style)
    */
-  createPathRing(latitude, width) {
-    const pathGeometry = new THREE.TorusGeometry(
-      this.radius * Math.cos(THREE.MathUtils.degToRad(latitude)),
-      width / 2,
-      8,
-      64
-    );
-    const pathMaterial = createToonMaterial({ color: PLANET_COLORS.path });
+  addCrosswalks() {
+    const crosswalkMat = createToonMaterial({ color: STREET_COLORS.crosswalk });
 
-    const path = new THREE.Mesh(pathGeometry, pathMaterial);
-    path.position.y = this.radius * Math.sin(THREE.MathUtils.degToRad(latitude));
-    path.rotation.x = Math.PI / 2;
-    path.receiveShadow = true;
-    this.scene.add(path);
-    this.meshes.push(path);
+    // Crosswalk locations (lat, lon) - near main buildings
+    const crosswalkLocations = [
+      { lat: 0, lon: 85 },   // Near Skills Library (West)
+      { lat: 0, lon: 95 },
+      { lat: 0, lon: -85 },  // Near Music Shop (East)
+      { lat: 0, lon: -95 },
+      { lat: 40, lon: -5 },  // Near Projects Tower (North)
+      { lat: 40, lon: 5 },
+      { lat: -40, lon: -5 }, // Near Contact Cafe (South)
+      { lat: -40, lon: 5 },
+    ];
+
+    crosswalkLocations.forEach(loc => {
+      this.createCrosswalk(loc.lat, loc.lon, crosswalkMat);
+    });
+  }
+
+  /**
+   * Create a zebra crossing at specified position
+   */
+  createCrosswalk(lat, lon, material) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    const crosswalkGroup = new THREE.Group();
+    const stripeCount = 6;
+    const stripeWidth = 0.3;
+    const stripeLength = 1.8;
+    const stripeGap = 0.2;
+
+    for (let i = 0; i < stripeCount; i++) {
+      const stripeGeo = new THREE.BoxGeometry(stripeLength, 0.02, stripeWidth);
+      const stripe = new THREE.Mesh(stripeGeo, material);
+      stripe.position.z = (i - (stripeCount - 1) / 2) * (stripeWidth + stripeGap);
+      stripe.position.y = 0.02; // Slightly above road
+      crosswalkGroup.add(stripe);
+      this.meshes.push(stripe);
+    }
+
+    // Position and orient on planet surface
+    crosswalkGroup.position.copy(surfacePos).add(up.clone().multiplyScalar(0.01));
+    crosswalkGroup.quaternion.copy(orientation);
+
+    this.scene.add(crosswalkGroup);
+    this.meshes.push(crosswalkGroup);
+  }
+
+  /**
+   * Create a detailed street ring at given latitude (messenger.abeto.co style)
+   * Includes road, sidewalks, curbs, and road markings
+   */
+  createPathRing(latitude, totalWidth) {
+    const ringRadius = this.radius * Math.cos(THREE.MathUtils.degToRad(latitude));
+    const ringY = this.radius * Math.sin(THREE.MathUtils.degToRad(latitude));
+
+    const roadWidth = totalWidth * 0.5;      // 50% road
+    const sidewalkWidth = totalWidth * 0.22; // 22% each sidewalk
+    const curbWidth = 0.08;                  // Small curb
+
+    // === ROAD (center) ===
+    const roadGeo = new THREE.TorusGeometry(ringRadius, roadWidth / 2, 8, 96);
+    const roadMat = createToonMaterial({ color: STREET_COLORS.asphalt });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.position.y = ringY;
+    road.rotation.x = Math.PI / 2;
+    road.receiveShadow = true;
+    this.scene.add(road);
+    this.meshes.push(road);
+
+    // === OUTER SIDEWALK ===
+    const outerSidewalkGeo = new THREE.TorusGeometry(
+      ringRadius + roadWidth / 2 + sidewalkWidth / 2 + curbWidth,
+      sidewalkWidth / 2,
+      6,
+      96
+    );
+    const sidewalkMat = createToonMaterial({ color: STREET_COLORS.sidewalk });
+    const outerSidewalk = new THREE.Mesh(outerSidewalkGeo, sidewalkMat);
+    outerSidewalk.position.y = ringY + 0.02; // Slightly raised
+    outerSidewalk.rotation.x = Math.PI / 2;
+    outerSidewalk.receiveShadow = true;
+    this.scene.add(outerSidewalk);
+    this.meshes.push(outerSidewalk);
+
+    // === INNER SIDEWALK ===
+    const innerSidewalkGeo = new THREE.TorusGeometry(
+      ringRadius - roadWidth / 2 - sidewalkWidth / 2 - curbWidth,
+      sidewalkWidth / 2,
+      6,
+      96
+    );
+    const innerSidewalk = new THREE.Mesh(innerSidewalkGeo, sidewalkMat);
+    innerSidewalk.position.y = ringY + 0.02;
+    innerSidewalk.rotation.x = Math.PI / 2;
+    innerSidewalk.receiveShadow = true;
+    this.scene.add(innerSidewalk);
+    this.meshes.push(innerSidewalk);
+
+    // === CURBS (between road and sidewalk) ===
+    const curbMat = createToonMaterial({ color: STREET_COLORS.curb });
+
+    // Outer curb
+    const outerCurbGeo = new THREE.TorusGeometry(
+      ringRadius + roadWidth / 2 + curbWidth / 2,
+      curbWidth / 2 + 0.03,
+      4,
+      96
+    );
+    const outerCurb = new THREE.Mesh(outerCurbGeo, curbMat);
+    outerCurb.position.y = ringY + 0.04; // Raised curb
+    outerCurb.rotation.x = Math.PI / 2;
+    this.scene.add(outerCurb);
+    this.meshes.push(outerCurb);
+
+    // Inner curb
+    const innerCurbGeo = new THREE.TorusGeometry(
+      ringRadius - roadWidth / 2 - curbWidth / 2,
+      curbWidth / 2 + 0.03,
+      4,
+      96
+    );
+    const innerCurb = new THREE.Mesh(innerCurbGeo, curbMat);
+    innerCurb.position.y = ringY + 0.04;
+    innerCurb.rotation.x = Math.PI / 2;
+    this.scene.add(innerCurb);
+    this.meshes.push(innerCurb);
+
+    // === CENTER LINE (yellow dashed) ===
+    this.addCenterLine(ringRadius, ringY);
+
+    // === EDGE LINES (white solid) ===
+    this.addEdgeLines(ringRadius, ringY, roadWidth);
+  }
+
+  /**
+   * Add dashed yellow center line to road
+   */
+  addCenterLine(ringRadius, ringY) {
+    const lineMat = createToonMaterial({ color: STREET_COLORS.centerLine });
+    const dashCount = 48; // Number of dashes around the ring
+    const dashLength = 0.6;
+    const dashWidth = 0.08;
+    const dashHeight = 0.02;
+
+    for (let i = 0; i < dashCount; i++) {
+      const angle = (i / dashCount) * Math.PI * 2;
+
+      // Create dash as a small box
+      const dashGeo = new THREE.BoxGeometry(dashWidth, dashHeight, dashLength);
+      const dash = new THREE.Mesh(dashGeo, lineMat);
+
+      // Position on the ring
+      dash.position.x = Math.cos(angle) * ringRadius;
+      dash.position.z = Math.sin(angle) * ringRadius;
+      dash.position.y = ringY + 0.01;
+
+      // Rotate to follow the ring
+      dash.rotation.y = -angle + Math.PI / 2;
+
+      this.scene.add(dash);
+      this.meshes.push(dash);
+    }
+  }
+
+  /**
+   * Add white edge lines to road
+   */
+  addEdgeLines(ringRadius, ringY, roadWidth) {
+    const lineMat = createToonMaterial({ color: STREET_COLORS.edgeLine });
+    const lineWidth = 0.06;
+
+    // Outer edge line
+    const outerLineGeo = new THREE.TorusGeometry(
+      ringRadius + roadWidth / 2 - lineWidth,
+      lineWidth / 2,
+      4,
+      96
+    );
+    const outerLine = new THREE.Mesh(outerLineGeo, lineMat);
+    outerLine.position.y = ringY + 0.01;
+    outerLine.rotation.x = Math.PI / 2;
+    this.scene.add(outerLine);
+    this.meshes.push(outerLine);
+
+    // Inner edge line
+    const innerLineGeo = new THREE.TorusGeometry(
+      ringRadius - roadWidth / 2 + lineWidth,
+      lineWidth / 2,
+      4,
+      96
+    );
+    const innerLine = new THREE.Mesh(innerLineGeo, lineMat);
+    innerLine.position.y = ringY + 0.01;
+    innerLine.rotation.x = Math.PI / 2;
+    this.scene.add(innerLine);
+    this.meshes.push(innerLine);
   }
 
   /**
@@ -390,8 +593,24 @@ export class Planet {
     this.meshes.push(building);
     this.collisionMeshes.push(building);
 
-    // Create thick outline for the building (0.08 for visibility)
-    const outline = createOutlineMesh(building, 0.08);
+    // Add building base/plinth for grounded look
+    const plinthHeight = 0.4;
+    const plinthGeo = new THREE.BoxGeometry(width + 0.3, plinthHeight, depth + 0.3);
+    const plinthMat = createToonMaterial({ color: 0x5A5A5A });
+    const plinth = new THREE.Mesh(plinthGeo, plinthMat);
+    plinth.position.set(0, -height / 2 + plinthHeight / 2, 0);
+    plinth.castShadow = true;
+    building.add(plinth);
+    this.meshes.push(plinth);
+
+    // Plinth outline
+    const plinthOutline = createOutlineMesh(plinth, 0.1);
+    plinthOutline.position.copy(plinth.position);
+    building.add(plinthOutline);
+    this.meshes.push(plinthOutline);
+
+    // Create thick outline for the building (0.12 for better visibility)
+    const outline = createOutlineMesh(building, 0.12);
     outline.position.copy(building.position);
     outline.quaternion.copy(building.quaternion);
     this.scene.add(outline);
@@ -456,30 +675,82 @@ export class Planet {
     building.add(baseOutline);
     this.meshes.push(baseOutline);
 
-    // Large storefront windows
+    // Large storefront windows with depth
     const windowWidth = (width - 1.5) / 2;
     const windowHeight = storefrontHeight * 0.7;
+    const windowDepth = 0.2; // Deeper recess for storefront
     const windowMat = createToonMaterial({ color: 0x87CEEB });
     const frameMat = createToonMaterial({ color: 0x5A5A5A });
+    const mullionMat = createToonMaterial({ color: 0x4A4A4A });
 
-    // Left window
+    // Left window recess
+    const leftRecessGeo = new THREE.BoxGeometry(windowWidth + 0.15, windowHeight + 0.15, windowDepth);
+    const recessMat = createToonMaterial({ color: 0x2A2A2A });
+    const leftRecess = new THREE.Mesh(leftRecessGeo, recessMat);
+    leftRecess.position.set(-(windowWidth / 2 + 0.4), storefrontY, depth / 2 - windowDepth / 2 + 0.02);
+    building.add(leftRecess);
+    this.meshes.push(leftRecess);
+
+    // Left window glass
     const leftWindowGeo = new THREE.PlaneGeometry(windowWidth, windowHeight);
     const leftWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
-    leftWindow.position.set(-(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    leftWindow.position.set(-(windowWidth / 2 + 0.4), storefrontY, depth / 2 - windowDepth + 0.05);
     building.add(leftWindow);
     this.windowMeshes.push(leftWindow);
 
-    // Left window frame
-    this.addWindowFrame(building, -(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.01, windowWidth, windowHeight, frameMat);
+    // Left window mullions (2 vertical, 1 horizontal for 6 panes)
+    for (let i = 1; i <= 2; i++) {
+      const vMullion = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, windowHeight, 0.04),
+        mullionMat
+      );
+      vMullion.position.set(-(windowWidth / 2 + 0.4) + (i - 1.5) * (windowWidth / 3), storefrontY, depth / 2 + 0.02);
+      building.add(vMullion);
+      this.meshes.push(vMullion);
+    }
+    const hMullionLeft = new THREE.Mesh(
+      new THREE.BoxGeometry(windowWidth, 0.05, 0.04),
+      mullionMat
+    );
+    hMullionLeft.position.set(-(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    building.add(hMullionLeft);
+    this.meshes.push(hMullionLeft);
 
-    // Right window
+    // Left window frame
+    this.addWindowFrame(building, -(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.03, windowWidth, windowHeight, frameMat);
+
+    // Right window recess
+    const rightRecess = new THREE.Mesh(leftRecessGeo, recessMat);
+    rightRecess.position.set((windowWidth / 2 + 0.4), storefrontY, depth / 2 - windowDepth / 2 + 0.02);
+    building.add(rightRecess);
+    this.meshes.push(rightRecess);
+
+    // Right window glass
     const rightWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
-    rightWindow.position.set((windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    rightWindow.position.set((windowWidth / 2 + 0.4), storefrontY, depth / 2 - windowDepth + 0.05);
     building.add(rightWindow);
     this.windowMeshes.push(rightWindow);
 
+    // Right window mullions
+    for (let i = 1; i <= 2; i++) {
+      const vMullion = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, windowHeight, 0.04),
+        mullionMat
+      );
+      vMullion.position.set((windowWidth / 2 + 0.4) + (i - 1.5) * (windowWidth / 3), storefrontY, depth / 2 + 0.02);
+      building.add(vMullion);
+      this.meshes.push(vMullion);
+    }
+    const hMullionRight = new THREE.Mesh(
+      new THREE.BoxGeometry(windowWidth, 0.05, 0.04),
+      mullionMat
+    );
+    hMullionRight.position.set((windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    building.add(hMullionRight);
+    this.meshes.push(hMullionRight);
+
     // Right window frame
-    this.addWindowFrame(building, (windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.01, windowWidth, windowHeight, frameMat);
+    this.addWindowFrame(building, (windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.03, windowWidth, windowHeight, frameMat);
 
     // Door
     const doorGeo = new THREE.BoxGeometry(1.0, storefrontHeight * 0.85, 0.08);
@@ -578,17 +849,47 @@ export class Planet {
 
     for (let col = 0; col < windowsPerRow; col++) {
       const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
+      const windowHeight = windowSize * 1.2;
+      const windowDepth = 0.15; // Recessed window
 
-      // Window pane
-      const windowGeo = new THREE.PlaneGeometry(windowSize, windowSize * 1.2);
+      // Window recess (dark interior)
+      const recessGeo = new THREE.BoxGeometry(windowSize + 0.1, windowHeight + 0.1, windowDepth);
+      const recessMat = createToonMaterial({ color: 0x2A2A2A });
+      const recess = new THREE.Mesh(recessGeo, recessMat);
+      recess.position.set(localX, floorY, depth / 2 - windowDepth / 2 + 0.02);
+      building.add(recess);
+      this.meshes.push(recess);
+
+      // Window glass pane (inside recess)
+      const windowGeo = new THREE.PlaneGeometry(windowSize, windowHeight);
       const windowMesh = new THREE.Mesh(windowGeo, windowMat.clone());
-      windowMesh.position.set(localX, floorY, depth / 2 + 0.02);
+      windowMesh.position.set(localX, floorY, depth / 2 - windowDepth + 0.05);
       windowMesh.userData.isDarkWindow = Math.random() < 0.3;
       building.add(windowMesh);
       this.windowMeshes.push(windowMesh);
 
+      // Window mullions (cross-bars dividing panes)
+      const mullionMat = createToonMaterial({ color: 0x5A5A5A });
+      // Vertical mullion
+      const vMullionGeo = new THREE.BoxGeometry(0.04, windowHeight, 0.03);
+      const vMullion = new THREE.Mesh(vMullionGeo, mullionMat);
+      vMullion.position.set(localX, floorY, depth / 2 + 0.01);
+      building.add(vMullion);
+      this.meshes.push(vMullion);
+      // Horizontal mullion
+      const hMullionGeo = new THREE.BoxGeometry(windowSize, 0.04, 0.03);
+      const hMullion = new THREE.Mesh(hMullionGeo, mullionMat);
+      hMullion.position.set(localX, floorY, depth / 2 + 0.01);
+      building.add(hMullion);
+      this.meshes.push(hMullion);
+
       // Window frame
-      this.addWindowFrame(building, localX, floorY, depth / 2 + 0.01, windowSize, windowSize * 1.2, frameMat);
+      this.addWindowFrame(building, localX, floorY, depth / 2 + 0.02, windowSize, windowHeight, frameMat);
+
+      // 25% chance of decorative shutters (messenger.abeto.co European style)
+      if (Math.random() < 0.25) {
+        this.addWindowShutters(building, localX, floorY, depth, windowSize, windowHeight);
+      }
 
       // Window sill
       const sillGeo = new THREE.BoxGeometry(windowSize + 0.2, 0.08, 0.15);
@@ -605,7 +906,12 @@ export class Planet {
       building.add(sillOutline);
       this.meshes.push(sillOutline);
 
-      // 20% chance of AC unit
+      // 30% chance of flower box under window (messenger.abeto.co style)
+      if (Math.random() < 0.3 && floor >= 1) {
+        this.addFlowerBox(building, localX, floorY, depth, windowSize);
+      }
+
+      // 20% chance of AC unit (lower priority if flower box)
       if (Math.random() < 0.2 && floor > 1) {
         this.addACUnit(building, localX, floorY, depth, windowSize);
       }
@@ -726,12 +1032,153 @@ export class Planet {
   }
 
   /**
-   * Add roof parapet and edge details
+   * Add a decorative flower box under a window (messenger.abeto.co style)
+   */
+  addFlowerBox(building, x, y, depth, windowSize) {
+    // Terracotta planter box
+    const boxWidth = windowSize * 0.8;
+    const boxHeight = 0.18;
+    const boxDepth = 0.22;
+
+    const planterMat = createToonMaterial({ color: 0xB87A5A }); // Terracotta
+    const soilMat = createToonMaterial({ color: 0x5A4030 }); // Dark soil
+
+    // Planter box
+    const boxGeo = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+    const planter = new THREE.Mesh(boxGeo, planterMat);
+    planter.position.set(x, y - windowSize * 0.6 - 0.22, depth / 2 + boxDepth / 2 + 0.08);
+    planter.castShadow = true;
+    building.add(planter);
+    this.meshes.push(planter);
+
+    // Planter outline
+    const planterOutline = createOutlineMesh(planter, 0.06);
+    planterOutline.position.copy(planter.position);
+    building.add(planterOutline);
+    this.meshes.push(planterOutline);
+
+    // Soil top
+    const soilGeo = new THREE.BoxGeometry(boxWidth - 0.06, 0.04, boxDepth - 0.06);
+    const soil = new THREE.Mesh(soilGeo, soilMat);
+    soil.position.set(0, boxHeight / 2 - 0.02, 0);
+    planter.add(soil);
+    this.meshes.push(soil);
+
+    // Flowers - small colorful spheres (3-5 flowers)
+    const flowerColors = [0xFF6B8A, 0xFFD54F, 0xE87AA4, 0xFF8A65, 0xBA68C8]; // Pink, yellow, magenta, orange, purple
+    const flowerCount = 3 + Math.floor(Math.random() * 3);
+
+    for (let i = 0; i < flowerCount; i++) {
+      const flowerColor = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+      const flowerMat = createToonMaterial({ color: flowerColor });
+
+      // Flower blob (small sphere)
+      const flowerGeo = new THREE.SphereGeometry(0.06 + Math.random() * 0.03, 6, 6);
+      const flower = new THREE.Mesh(flowerGeo, flowerMat);
+
+      const flowerX = ((i + 0.5) / flowerCount - 0.5) * (boxWidth - 0.15);
+      const flowerY = boxHeight / 2 + 0.08 + Math.random() * 0.05;
+      const flowerZ = (Math.random() - 0.5) * (boxDepth - 0.1);
+
+      flower.position.set(flowerX, flowerY, flowerZ);
+      planter.add(flower);
+      this.meshes.push(flower);
+    }
+
+    // Leaves/foliage (small green spheres behind flowers)
+    const leafMat = createToonMaterial({ color: 0x4CAF50 });
+    for (let i = 0; i < flowerCount + 1; i++) {
+      const leafGeo = new THREE.SphereGeometry(0.05 + Math.random() * 0.02, 5, 5);
+      const leaf = new THREE.Mesh(leafGeo, leafMat);
+
+      const leafX = ((i + 0.3) / (flowerCount + 1) - 0.5) * (boxWidth - 0.1);
+      const leafY = boxHeight / 2 + 0.04 + Math.random() * 0.03;
+      const leafZ = (Math.random() - 0.5) * (boxDepth - 0.12);
+
+      leaf.position.set(leafX, leafY, leafZ);
+      leaf.scale.y = 0.7; // Flatten slightly
+      planter.add(leaf);
+      this.meshes.push(leaf);
+    }
+  }
+
+  /**
+   * Add decorative window shutters (European/messenger.abeto.co style)
+   */
+  addWindowShutters(building, x, y, depth, windowWidth, windowHeight) {
+    // Shutter colors - muted blue-gray or sage green
+    const shutterColors = [0x5A6B6A, 0x6B7B7A, 0x5B7B6B, 0x7B6B6A];
+    const shutterColor = shutterColors[Math.floor(Math.random() * shutterColors.length)];
+    const shutterMat = createToonMaterial({ color: shutterColor });
+
+    const shutterWidth = windowWidth * 0.3;
+    const shutterHeight = windowHeight + 0.1;
+    const shutterDepth = 0.06;
+
+    // Left shutter
+    const shutterGeo = new THREE.BoxGeometry(shutterWidth, shutterHeight, shutterDepth);
+    const leftShutter = new THREE.Mesh(shutterGeo, shutterMat);
+    leftShutter.position.set(
+      x - windowWidth / 2 - shutterWidth / 2 - 0.05,
+      y,
+      depth / 2 + 0.04
+    );
+    leftShutter.castShadow = true;
+    building.add(leftShutter);
+    this.meshes.push(leftShutter);
+
+    // Left shutter outline
+    const leftOutline = createOutlineMesh(leftShutter, 0.05);
+    leftOutline.position.copy(leftShutter.position);
+    building.add(leftOutline);
+    this.meshes.push(leftOutline);
+
+    // Right shutter
+    const rightShutter = new THREE.Mesh(shutterGeo, shutterMat);
+    rightShutter.position.set(
+      x + windowWidth / 2 + shutterWidth / 2 + 0.05,
+      y,
+      depth / 2 + 0.04
+    );
+    rightShutter.castShadow = true;
+    building.add(rightShutter);
+    this.meshes.push(rightShutter);
+
+    // Right shutter outline
+    const rightOutline = createOutlineMesh(rightShutter, 0.05);
+    rightOutline.position.copy(rightShutter.position);
+    building.add(rightOutline);
+    this.meshes.push(rightOutline);
+
+    // Horizontal slats on shutters (3 slats each) for detail
+    const slatMat = createToonMaterial({ color: this.darkenColor(shutterColor, 0.15) });
+    const slatGeo = new THREE.BoxGeometry(shutterWidth - 0.04, 0.02, shutterDepth + 0.02);
+
+    for (let i = 0; i < 3; i++) {
+      const slatY = ((i / 2) - 0.5) * (shutterHeight * 0.7);
+
+      // Left shutter slats
+      const leftSlat = new THREE.Mesh(slatGeo, slatMat);
+      leftSlat.position.set(0, slatY, 0.01);
+      leftShutter.add(leftSlat);
+      this.meshes.push(leftSlat);
+
+      // Right shutter slats
+      const rightSlat = new THREE.Mesh(slatGeo, slatMat);
+      rightSlat.position.set(0, slatY, 0.01);
+      rightShutter.add(rightSlat);
+      this.meshes.push(rightSlat);
+    }
+  }
+
+  /**
+   * Add roof parapet and edge details with decorative cornice
    */
   addRoofParapet(building, width, height, depth, baseColor) {
     const parapetHeight = 0.4;
     const parapetColor = this.darkenColor(baseColor, 0.1);
     const parapetMat = createToonMaterial({ color: parapetColor });
+    const trimMat = createToonMaterial({ color: 0xF5F0E8 }); // Off-white trim
 
     // Front parapet
     const frontGeo = new THREE.BoxGeometry(width + 0.3, parapetHeight, 0.15);
@@ -781,6 +1228,46 @@ export class Planet {
     capOutline.position.copy(cap.position);
     building.add(capOutline);
     this.meshes.push(capOutline);
+
+    // === DECORATIVE CORNICE (messenger.abeto.co style) ===
+    // Main cornice band (sits just below parapet)
+    const corniceHeight = 0.25;
+    const corniceGeo = new THREE.BoxGeometry(width + 0.4, corniceHeight, 0.25);
+    const cornice = new THREE.Mesh(corniceGeo, trimMat);
+    cornice.position.set(0, height / 2 - 0.1, depth / 2 + 0.12);
+    cornice.castShadow = true;
+    building.add(cornice);
+    this.meshes.push(cornice);
+
+    // Cornice outline
+    const corniceOutline = createOutlineMesh(cornice, 0.06);
+    corniceOutline.position.copy(cornice.position);
+    building.add(corniceOutline);
+    this.meshes.push(corniceOutline);
+
+    // Upper cornice lip (overhang)
+    const lipGeo = new THREE.BoxGeometry(width + 0.5, 0.08, 0.35);
+    const lip = new THREE.Mesh(lipGeo, trimMat);
+    lip.position.set(0, height / 2, depth / 2 + 0.17);
+    building.add(lip);
+    this.meshes.push(lip);
+
+    // Dentil molding (small blocks under cornice for detail)
+    const dentilCount = Math.floor(width / 0.4);
+    const dentilGeo = new THREE.BoxGeometry(0.15, 0.12, 0.08);
+    for (let i = 0; i < dentilCount; i++) {
+      const dentilX = ((i + 0.5) / dentilCount - 0.5) * width;
+      const dentil = new THREE.Mesh(dentilGeo, trimMat);
+      dentil.position.set(dentilX, height / 2 - 0.28, depth / 2 + 0.15);
+      building.add(dentil);
+      this.meshes.push(dentil);
+    }
+
+    // Back cornice (simpler)
+    const backCornice = new THREE.Mesh(corniceGeo, trimMat);
+    backCornice.position.set(0, height / 2 - 0.1, -depth / 2 - 0.12);
+    building.add(backCornice);
+    this.meshes.push(backCornice);
   }
 
   /**
@@ -1134,6 +1621,207 @@ export class Planet {
     streetSignPositions.forEach((pos) => {
       this.createStreetSign(pos.lat, pos.lon, pos.direction);
     });
+
+    // === NEW STREET FURNITURE (messenger.abeto.co style) ===
+
+    // Bollards (sidewalk corners and crossings)
+    const bollardPositions = [
+      { lat: 0, lon: 83 }, { lat: 0, lon: 87 },   // Near Skills Library
+      { lat: 0, lon: -83 }, { lat: 0, lon: -87 }, // Near Music Shop
+      { lat: 43, lon: -3 }, { lat: 43, lon: 3 },  // Near Projects Tower
+      { lat: -43, lon: -3 }, { lat: -43, lon: 3 }, // Near Contact Cafe
+    ];
+
+    bollardPositions.forEach((pos) => {
+      this.createBollard(pos.lat, pos.lon);
+    });
+
+    // Newspaper boxes
+    const newspaperBoxPositions = [
+      { lat: 2, lon: 80 },
+      { lat: -2, lon: -80 },
+      { lat: 38, lon: 8 },
+      { lat: -38, lon: -8 },
+    ];
+
+    newspaperBoxPositions.forEach((pos) => {
+      this.createNewspaperBox(pos.lat, pos.lon);
+    });
+
+    // Potted plants at store entrances
+    const pottedPlantPositions = [
+      { lat: 0, lon: 88 }, { lat: 0, lon: 92 },   // Skills Library entrance
+      { lat: 0, lon: -88 }, { lat: 0, lon: -92 }, // Music Shop entrance
+      { lat: 44, lon: -2 }, { lat: 44, lon: 2 },  // Projects Tower entrance
+      { lat: -44, lon: -2 }, { lat: -44, lon: 2 }, // Contact Cafe entrance
+    ];
+
+    pottedPlantPositions.forEach((pos) => {
+      this.createPottedPlant(pos.lat, pos.lon);
+    });
+  }
+
+  /**
+   * Create a bollard (short post for sidewalk protection)
+   */
+  createBollard(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    const bollardMat = createToonMaterial({ color: 0x5A5A5A }); // Gray
+    const capMat = createToonMaterial({ color: 0x8A8A8A }); // Lighter cap
+
+    // Bollard body
+    const bodyGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.6, 8);
+    const body = new THREE.Mesh(bodyGeo, bollardMat);
+    body.castShadow = true;
+
+    // Cap
+    const capGeo = new THREE.SphereGeometry(0.12, 8, 6);
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.y = 0.3;
+    cap.scale.y = 0.5;
+    body.add(cap);
+    this.meshes.push(cap);
+
+    // Position on planet
+    const bollardPos = surfacePos.clone().add(up.clone().multiplyScalar(0.3));
+    body.position.copy(bollardPos);
+    body.quaternion.copy(orientation);
+
+    this.scene.add(body);
+    this.meshes.push(body);
+
+    // Outline
+    const bodyOutline = createOutlineMesh(body, 0.03);
+    bodyOutline.position.copy(body.position);
+    bodyOutline.quaternion.copy(body.quaternion);
+    this.scene.add(bodyOutline);
+    this.meshes.push(bodyOutline);
+  }
+
+  /**
+   * Create a newspaper box (blue or red box)
+   */
+  createNewspaperBox(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    const boxColors = [0x5A7ABB, 0xC85A5A, 0x5AAB8A]; // Blue, red, teal
+    const boxColor = boxColors[Math.floor(Math.random() * boxColors.length)];
+    const boxMat = createToonMaterial({ color: boxColor });
+    const topMat = createToonMaterial({ color: 0x3A3A3A });
+
+    // Box body
+    const bodyGeo = new THREE.BoxGeometry(0.4, 0.8, 0.35);
+    const body = new THREE.Mesh(bodyGeo, boxMat);
+    body.castShadow = true;
+
+    // Top/lid
+    const topGeo = new THREE.BoxGeometry(0.42, 0.08, 0.37);
+    const top = new THREE.Mesh(topGeo, topMat);
+    top.position.y = 0.44;
+    body.add(top);
+    this.meshes.push(top);
+
+    // Window
+    const windowMat = createToonMaterial({ color: 0x1A1A1A });
+    const windowGeo = new THREE.BoxGeometry(0.28, 0.35, 0.02);
+    const window = new THREE.Mesh(windowGeo, windowMat);
+    window.position.set(0, 0.1, 0.18);
+    body.add(window);
+    this.meshes.push(window);
+
+    // Position on planet
+    const boxPos = surfacePos.clone().add(up.clone().multiplyScalar(0.4));
+    body.position.copy(boxPos);
+    body.quaternion.copy(orientation);
+
+    this.scene.add(body);
+    this.meshes.push(body);
+
+    // Outline
+    const bodyOutline = createOutlineMesh(body, 0.04);
+    bodyOutline.position.copy(body.position);
+    bodyOutline.quaternion.copy(body.quaternion);
+    this.scene.add(bodyOutline);
+    this.meshes.push(bodyOutline);
+  }
+
+  /**
+   * Create a potted plant for store entrances
+   */
+  createPottedPlant(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    const potMat = createToonMaterial({ color: 0xB87A5A }); // Terracotta
+    const soilMat = createToonMaterial({ color: 0x5A4030 });
+    const plantMat = createToonMaterial({ color: 0x4CAF50 });
+    const flowerMat = createToonMaterial({ color: 0xFF6B8A }); // Pink flowers
+
+    const group = new THREE.Group();
+
+    // Pot
+    const potGeo = new THREE.CylinderGeometry(0.2, 0.15, 0.3, 8);
+    const pot = new THREE.Mesh(potGeo, potMat);
+    pot.position.y = 0.15;
+    pot.castShadow = true;
+    group.add(pot);
+    this.meshes.push(pot);
+
+    // Pot rim
+    const rimGeo = new THREE.TorusGeometry(0.2, 0.03, 6, 16);
+    const rim = new THREE.Mesh(rimGeo, potMat);
+    rim.position.y = 0.3;
+    rim.rotation.x = Math.PI / 2;
+    group.add(rim);
+    this.meshes.push(rim);
+
+    // Soil
+    const soilGeo = new THREE.CylinderGeometry(0.17, 0.17, 0.05, 8);
+    const soil = new THREE.Mesh(soilGeo, soilMat);
+    soil.position.y = 0.28;
+    group.add(soil);
+    this.meshes.push(soil);
+
+    // Plant foliage (small bush blob)
+    const foliageGeo = new THREE.SphereGeometry(0.25, 8, 6);
+    const foliage = new THREE.Mesh(foliageGeo, plantMat);
+    foliage.position.y = 0.5;
+    foliage.scale.set(1, 0.8, 1);
+    group.add(foliage);
+    this.meshes.push(foliage);
+
+    // Small flowers on top
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2;
+      const flowerGeo = new THREE.SphereGeometry(0.06, 5, 4);
+      const flower = new THREE.Mesh(flowerGeo, flowerMat);
+      flower.position.set(
+        Math.cos(angle) * 0.15,
+        0.55 + Math.random() * 0.08,
+        Math.sin(angle) * 0.15
+      );
+      group.add(flower);
+      this.meshes.push(flower);
+    }
+
+    // Position on planet
+    group.position.copy(surfacePos);
+    group.quaternion.copy(orientation);
+
+    this.scene.add(group);
+    this.meshes.push(group);
+
+    // Outline for pot
+    const potOutline = createOutlineMesh(pot, 0.03);
+    potOutline.position.set(0, 0.15, 0);
+    group.add(potOutline);
+    this.meshes.push(potOutline);
   }
 
   /**
@@ -1144,48 +1832,80 @@ export class Planet {
     const up = this.planet.getUpVector(surfacePos);
     const orientation = this.planet.getSurfaceOrientation(surfacePos);
 
+    // Tree group for organic blob foliage
+    const treeGroup = new THREE.Group();
+
     // Tree trunk
-    const trunkGeom = new THREE.CylinderGeometry(0.3, 0.4, 2, 8);
+    const trunkGeom = new THREE.CylinderGeometry(0.25, 0.35, 2.5, 8);
     const trunkMaterial = createToonMaterial({ color: 0x5D4037 });
     const trunk = new THREE.Mesh(trunkGeom, trunkMaterial);
-
-    const trunkPos = surfacePos.clone().add(up.clone().multiplyScalar(1));
-    trunk.position.copy(trunkPos);
-    trunk.quaternion.copy(orientation);
+    trunk.position.y = 1.25;
     trunk.castShadow = true;
+    treeGroup.add(trunk);
 
-    this.scene.add(trunk);
-    this.meshes.push(trunk);
-    this.collisionMeshes.push(trunk);
-
-    // Outline for trunk
-    const trunkOutline = createOutlineMesh(trunk, 0.03);
+    // Trunk outline
+    const trunkOutline = createOutlineMesh(trunk, 0.04);
     trunkOutline.position.copy(trunk.position);
-    trunkOutline.quaternion.copy(trunk.quaternion);
-    this.scene.add(trunkOutline);
-    this.meshes.push(trunkOutline);
+    treeGroup.add(trunkOutline);
 
-    // Tree foliage (cone shape)
-    const foliageGeom = new THREE.ConeGeometry(1.5, 3, 8);
-    const foliageMaterial = createToonMaterial({ color: 0x388E3C });
-    const foliage = new THREE.Mesh(foliageGeom, foliageMaterial);
+    // ORGANIC BLOB FOLIAGE (messenger.abeto.co style)
+    // Multiple overlapping spheres for natural tree shape
+    const foliageMaterial = createToonMaterial({ color: 0x4CAF50 }); // Vibrant green
+    const foliageDarkMaterial = createToonMaterial({ color: 0x388E3C }); // Darker green
 
-    const foliagePos = surfacePos.clone().add(up.clone().multiplyScalar(3.5));
-    foliage.position.copy(foliagePos);
-    foliage.quaternion.copy(orientation);
-    foliage.castShadow = true;
+    // Main foliage blob positions (organic arrangement)
+    const blobConfigs = [
+      // Central large blob
+      { x: 0, y: 3.5, z: 0, r: 1.4, mat: foliageMaterial },
+      // Upper smaller blobs
+      { x: 0.5, y: 4.2, z: 0.3, r: 0.9, mat: foliageMaterial },
+      { x: -0.4, y: 4.0, z: -0.3, r: 0.8, mat: foliageMaterial },
+      { x: 0, y: 4.5, z: 0, r: 0.7, mat: foliageMaterial },
+      // Side blobs
+      { x: 1.0, y: 3.2, z: 0.2, r: 0.9, mat: foliageDarkMaterial },
+      { x: -0.9, y: 3.3, z: 0.3, r: 1.0, mat: foliageDarkMaterial },
+      { x: 0.3, y: 3.0, z: 0.9, r: 0.85, mat: foliageMaterial },
+      { x: -0.2, y: 3.1, z: -0.8, r: 0.9, mat: foliageDarkMaterial },
+      // Lower side blobs
+      { x: 0.7, y: 2.8, z: -0.5, r: 0.75, mat: foliageMaterial },
+      { x: -0.6, y: 2.7, z: 0.6, r: 0.8, mat: foliageDarkMaterial },
+    ];
 
-    this.scene.add(foliage);
-    this.meshes.push(foliage);
+    blobConfigs.forEach((cfg) => {
+      const blobGeo = new THREE.SphereGeometry(cfg.r, 12, 10);
+      const blob = new THREE.Mesh(blobGeo, cfg.mat);
+      blob.position.set(cfg.x, cfg.y, cfg.z);
+      // Slightly squash for more organic look
+      blob.scale.set(1, 0.85, 1);
+      blob.castShadow = true;
+      treeGroup.add(blob);
+    });
 
-    // Outline for foliage (increased for graphic novel style)
-    const foliageOutline = createOutlineMesh(foliage, 0.05);
-    foliageOutline.position.copy(foliage.position);
-    foliageOutline.quaternion.copy(foliage.quaternion);
-    this.scene.add(foliageOutline);
-    this.meshes.push(foliageOutline);
+    // Single outline for the main foliage mass (largest blob)
+    const mainFoliageGeo = new THREE.SphereGeometry(1.4, 12, 10);
+    const mainFoliageOutline = createOutlineMesh(
+      new THREE.Mesh(mainFoliageGeo),
+      0.06
+    );
+    mainFoliageOutline.position.set(0, 3.5, 0);
+    mainFoliageOutline.scale.set(1.3, 1.1, 1.3); // Encompass all blobs
+    treeGroup.add(mainFoliageOutline);
 
-    this.props.push({ mesh: trunk, type: 'tree', lat, lon });
+    // Position and orient tree group on planet surface
+    treeGroup.position.copy(surfacePos);
+    treeGroup.quaternion.copy(orientation);
+
+    this.scene.add(treeGroup);
+    this.meshes.push(treeGroup);
+
+    // Add collision for trunk
+    const collisionMesh = new THREE.Mesh(trunkGeom, trunkMaterial);
+    collisionMesh.position.copy(surfacePos.clone().add(up.clone().multiplyScalar(1.25)));
+    collisionMesh.quaternion.copy(orientation);
+    collisionMesh.visible = false;
+    this.collisionMeshes.push(collisionMesh);
+
+    this.props.push({ mesh: treeGroup, type: 'tree', lat, lon });
   }
 
   /**
@@ -2264,6 +2984,34 @@ export class Planet {
       // Flowers would need instance matrix updates for animation
       // Keeping simple for now
     }
+
+    // Animate vegetation sway (trees and bushes)
+    this.props.forEach((prop, index) => {
+      if (prop.type === 'tree' || prop.type === 'bush') {
+        const mesh = prop.mesh;
+        if (mesh) {
+          // Gentle swaying motion unique to each tree
+          const swaySpeed = 0.8 + (index % 5) * 0.1;
+          const swayAmount = 0.015 + (index % 3) * 0.005;
+
+          // Use position-based offset for natural variation
+          const offset = prop.lat * 0.1 + prop.lon * 0.1;
+
+          // Apply gentle rotation sway
+          const swayX = Math.sin(this.animationTime * swaySpeed + offset) * swayAmount;
+          const swayZ = Math.cos(this.animationTime * swaySpeed * 0.7 + offset) * swayAmount * 0.6;
+
+          // Store original rotation if not stored
+          if (!prop.originalRotation) {
+            prop.originalRotation = mesh.rotation.clone();
+          }
+
+          // Apply sway relative to original rotation
+          mesh.rotation.x = prop.originalRotation.x + swayX;
+          mesh.rotation.z = prop.originalRotation.z + swayZ;
+        }
+      }
+    });
   }
 
   /**
@@ -2281,10 +3029,11 @@ export class Planet {
   createGrassPatches() {
     // Grass blade geometry (thin triangle)
     const grassGeo = new THREE.ConeGeometry(0.08, 0.4, 4);
-    const grassColors = [0x558B2F, 0x689F38, 0x7CB342]; // Various green shades
+    // Muted green colors (messenger.abeto.co style - not bright)
+    const grassColors = [0x5A8B4A, 0x6B9B5A, 0x7AAB6A, 0x4A7B3A]; // More muted greens
 
     const dummy = new THREE.Object3D();
-    const grassCount = 300;
+    const grassCount = 800; // Increased density for lush look
 
     // Create instanced mesh for each color variation
     grassColors.forEach((color, colorIndex) => {
@@ -2379,15 +3128,17 @@ export class Planet {
    * Create instanced flowers scattered on the planet
    */
   createFlowers() {
-    // Flower colors
+    // Flower colors (messenger.abeto.co style - softer, more varied)
     const flowerColors = [
-      { petal: 0xFF69B4, center: 0xFFD700 }, // Pink with yellow center
-      { petal: 0xFFFFFF, center: 0xFFD700 }, // White daisy
-      { petal: 0x9370DB, center: 0xFFFF00 }, // Purple
-      { petal: 0xFF6347, center: 0xFFD700 }, // Red-orange
+      { petal: 0xFF6B8A, center: 0xFFD54F }, // Soft pink with gold center
+      { petal: 0xF5F5F0, center: 0xFFD54F }, // Cream daisy
+      { petal: 0xBA68C8, center: 0xFFEB3B }, // Lavender purple
+      { petal: 0xFF8A65, center: 0xFFD54F }, // Soft coral
+      { petal: 0xE88B8B, center: 0xFFEB3B }, // Muted red
+      { petal: 0xFFE082, center: 0xD4A03A }, // Yellow tulip style
     ];
 
-    const flowerCount = 80;
+    const flowerCount = 200; // Increased variety
     const dummy = new THREE.Object3D();
 
     // Create each flower type

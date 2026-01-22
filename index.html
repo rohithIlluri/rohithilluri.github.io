@@ -13,14 +13,36 @@
   </head>
   <body>
     <div id="app">
-      <!-- Loading Screen -->
+      <!-- Loading Screen with 3D Planet Preview -->
       <div id="loading-screen" class="loading-screen">
+        <!-- 3D Planet Preview Canvas -->
+        <canvas id="loading-planet-canvas"></canvas>
+
+        <!-- Floating Particles (CSS) -->
+        <div class="loading-particles">
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+        </div>
+
         <div class="loading-content">
           <h1 class="loading-title">MESSENGER</h1>
-          <div class="loading-bar-container">
-            <div class="loading-bar" id="loading-bar"></div>
+
+          <!-- Loading state (shown while loading) -->
+          <div id="loading-progress" class="loading-progress">
+            <div class="loading-bar-container">
+              <div class="loading-bar" id="loading-bar"></div>
+            </div>
+            <p class="loading-text" id="loading-text">Loading assets...</p>
           </div>
-          <p class="loading-text" id="loading-text">Loading assets...</p>
+
+          <!-- Begin button (shown when ready) -->
+          <button id="begin-button" class="begin-button hidden">
+            BEGIN
+          </button>
         </div>
       </div>
 

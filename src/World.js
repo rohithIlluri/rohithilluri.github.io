@@ -12,10 +12,11 @@ import { Planet } from './environment/Planet.js';
 import { SkyShader } from './shaders/sky.js';
 import { PostProcessing } from './effects/PostProcessing.js';
 import { ParticleManager } from './effects/particles/ParticleManager.js';
-import { createFireflyEmitter, createLeafEmitter } from './effects/particles/Emitters.js';
+import { createFireflyEmitter, createLeafEmitter, createBirdEmitter } from './effects/particles/Emitters.js';
 import { LODManager } from './optimization/LODManager.js';
 import { useGameStore } from './stores/gameStore.js';
-import { createAudioManager, getAudioManager } from './audio/AudioManager.js';
+// Audio disabled for now - keeping file for future use
+// import { createAudioManager, getAudioManager } from './audio/AudioManager.js';
 import { NPCManager } from './entities/NPCManager.js';
 
 // Quality presets - enhanced for messenger.abeto.co parity
@@ -73,8 +74,8 @@ export class World {
     // LOD system
     this.lodManager = null;
 
-    // Audio system
-    this.audioManager = null;
+    // Audio system (disabled)
+    // this.audioManager = null;
 
     // NPC system
     this.npcManager = null;
@@ -190,8 +191,9 @@ export class World {
     this.setupParticles();
     this.setupLOD();
 
-    this.reportProgress(0.95, 'Initializing audio...');
-    await this.setupAudio();
+    // Audio disabled
+    // this.reportProgress(0.95, 'Initializing audio...');
+    // await this.setupAudio();
 
     this.reportProgress(1.0, 'Ready!');
 
@@ -366,6 +368,12 @@ export class World {
       this.qualityLevel === 'low' ? 15 : 40
     );
 
+    // Create bird emitter (visible during day, flying around planet)
+    if (this.worldMode === 'planet') {
+      const birdCount = this.qualityLevel === 'low' ? 6 : 12;
+      this.birdEmitter = createBirdEmitter(this.scene, this.radius || 50, birdCount);
+    }
+
     // Store particle manager for player to access
     if (this.player) {
       this.player.particleManager = this.particleManager;
@@ -380,29 +388,30 @@ export class World {
     // For now, the environment uses simple geometry that doesn't need LOD
   }
 
-  async setupAudio() {
-    // Create audio manager
-    this.audioManager = createAudioManager(this.camera);
-
-    // Set up first user interaction handler to initialize and start audio
-    // (Browser autoplay policy requires user interaction before playing audio)
-    const startAudioOnInteraction = async () => {
-      if (this.audioManager && !this.audioManager.initialized) {
-        await this.audioManager.init();
-        this.audioManager.startMusic();
-        useGameStore.getState().setAudioInitialized(true);
-      }
-      // Remove listeners after first interaction
-      window.removeEventListener('click', startAudioOnInteraction);
-      window.removeEventListener('keydown', startAudioOnInteraction);
-      window.removeEventListener('touchstart', startAudioOnInteraction);
-    };
-
-    // Listen for any user interaction to start audio
-    window.addEventListener('click', startAudioOnInteraction);
-    window.addEventListener('keydown', startAudioOnInteraction);
-    window.addEventListener('touchstart', startAudioOnInteraction);
-  }
+  // Audio disabled - keeping for future use
+  // async setupAudio() {
+  //   // Create audio manager
+  //   this.audioManager = createAudioManager(this.camera);
+  //
+  //   // Set up first user interaction handler to initialize and start audio
+  //   // (Browser autoplay policy requires user interaction before playing audio)
+  //   const startAudioOnInteraction = async () => {
+  //     if (this.audioManager && !this.audioManager.initialized) {
+  //       await this.audioManager.init();
+  //       this.audioManager.startMusic();
+  //       useGameStore.getState().setAudioInitialized(true);
+  //     }
+  //     // Remove listeners after first interaction
+  //     window.removeEventListener('click', startAudioOnInteraction);
+  //     window.removeEventListener('keydown', startAudioOnInteraction);
+  //     window.removeEventListener('touchstart', startAudioOnInteraction);
+  //   };
+  //
+  //   // Listen for any user interaction to start audio
+  //   window.addEventListener('click', startAudioOnInteraction);
+  //   window.addEventListener('keydown', startAudioOnInteraction);
+  //   window.addEventListener('touchstart', startAudioOnInteraction);
+  // }
 
   /**
    * Update light direction (syncs with sun)
@@ -545,19 +554,29 @@ export class World {
       this.street.setTimeOfDay(this.timeOfDay);
     }
 
-    // Update bloom intensity (stronger at night for neon)
+    // Update bloom for neon glow (stronger at night)
     if (this.postProcessing) {
-      const bloomBase = 0.25;  // Increased from 0.15
-      const bloomNight = 0.4;  // Increased from 0.25
+      // Increase bloom intensity at night for dramatic neon effect
+      const bloomIntensityDay = 0.15;
+      const bloomIntensityNight = 0.6;  // Much stronger at night
+      // Lower threshold at night so more colors bloom
+      const bloomThresholdDay = 0.95;
+      const bloomThresholdNight = 0.7;  // Lower at night
+      // Wider bloom radius at night for softer glow
+      const bloomRadiusDay = 0.3;
+      const bloomRadiusNight = 0.6;
+
       this.postProcessing.setBloom({
-        intensity: THREE.MathUtils.lerp(bloomBase, bloomNight, this.timeOfDay),
+        intensity: THREE.MathUtils.lerp(bloomIntensityDay, bloomIntensityNight, this.timeOfDay),
+        threshold: THREE.MathUtils.lerp(bloomThresholdDay, bloomThresholdNight, this.timeOfDay),
+        radius: THREE.MathUtils.lerp(bloomRadiusDay, bloomRadiusNight, this.timeOfDay),
       });
     }
 
-    // Update audio (music filter gets darker at night)
-    if (this.audioManager && this.audioManager.initialized) {
-      this.audioManager.setTimeOfDay(this.timeOfDay);
-    }
+    // Audio disabled
+    // if (this.audioManager && this.audioManager.initialized) {
+    //   this.audioManager.setTimeOfDay(this.timeOfDay);
+    // }
   }
 
   update(deltaTime) {
@@ -598,6 +617,12 @@ export class World {
       this.fireflyEmitter.update(deltaTime, store.isNight);
     }
 
+    // Update birds (only during day)
+    if (this.birdEmitter) {
+      const store = useGameStore.getState();
+      this.birdEmitter.update(deltaTime, store.isNight);
+    }
+
     // Update LOD system
     if (this.lodManager) {
       this.lodManager.update(deltaTime);
@@ -613,10 +638,10 @@ export class World {
       this.sky.update(deltaTime);
     }
 
-    // Update audio
-    if (this.audioManager) {
-      this.audioManager.update(deltaTime);
-    }
+    // Audio disabled
+    // if (this.audioManager) {
+    //   this.audioManager.update(deltaTime);
+    // }
 
     // Render
     this.render();
@@ -661,8 +686,10 @@ export class World {
     if (this.sky) this.sky.dispose();
     if (this.particleManager) this.particleManager.dispose();
     if (this.lodManager) this.lodManager.dispose();
-    if (this.audioManager) this.audioManager.dispose();
+    // Audio disabled
+    // if (this.audioManager) this.audioManager.dispose();
     if (this.npcManager) this.npcManager.dispose();
+    if (this.birdEmitter) this.birdEmitter.dispose();
 
     // Dispose of Three.js resources
     this.scene.traverse((object) => {

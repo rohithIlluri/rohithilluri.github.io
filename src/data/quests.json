@@ -1,0 +1,159 @@
+{
+  "quests": [
+    {
+      "id": "quest_tutorial_01",
+      "type": "delivery",
+      "title": "First Steps",
+      "description": "Meet the Postmaster and learn how mail delivery works.",
+      "objectives": [
+        { "type": "talk", "target": "npc_postmaster", "description": "Talk to the Postmaster", "complete": false }
+      ],
+      "rewards": { "coins": 0, "reputation": 5 },
+      "unlocks": ["quest_first_delivery"],
+      "isStarter": true
+    },
+    {
+      "id": "quest_first_delivery",
+      "type": "delivery",
+      "title": "Your First Delivery",
+      "description": "Pick up mail from the Post Office and deliver it to the Mayor.",
+      "objectives": [
+        { "type": "collect", "target": "mail_welcome_letter", "description": "Pick up the Welcome Letter", "complete": false },
+        { "type": "deliver", "target": "npc_mayor", "description": "Deliver to the Mayor", "complete": false }
+      ],
+      "rewards": { "coins": 25, "reputation": 10 },
+      "unlocks": ["quest_harbor_run"],
+      "prerequisite": "quest_tutorial_01"
+    },
+    {
+      "id": "quest_harbor_run",
+      "type": "delivery",
+      "title": "Harbor Delivery",
+      "description": "The dockworker is waiting for an important package.",
+      "objectives": [
+        { "type": "collect", "target": "mail_harbor_package", "description": "Pick up the Harbor Package", "complete": false },
+        { "type": "deliver", "target": "npc_dockworker", "description": "Deliver to the Dockworker", "complete": false }
+      ],
+      "rewards": { "coins": 30, "reputation": 10 },
+      "unlocks": ["zone_harbor"],
+      "prerequisite": "quest_first_delivery"
+    },
+    {
+      "id": "quest_cafe_order",
+      "type": "delivery",
+      "title": "Special Order",
+      "description": "The Cafe Owner needs supplies from the General Store.",
+      "objectives": [
+        { "type": "collect", "target": "mail_cafe_supplies", "description": "Pick up supplies order form", "complete": false },
+        { "type": "deliver", "target": "npc_shopkeeper", "description": "Deliver to the Shopkeeper", "complete": false },
+        { "type": "collect", "target": "mail_cafe_receipt", "description": "Collect the receipt", "complete": false },
+        { "type": "deliver", "target": "npc_cafe_owner", "description": "Return receipt to Cafe Owner", "complete": false }
+      ],
+      "rewards": { "coins": 50, "reputation": 15 },
+      "unlocks": [],
+      "prerequisite": "quest_harbor_run"
+    },
+    {
+      "id": "quest_love_letter",
+      "type": "delivery",
+      "title": "Secret Admirer",
+      "description": "Someone has written a love letter. Handle with care!",
+      "objectives": [
+        { "type": "collect", "target": "mail_love_letter", "description": "Pick up the Love Letter", "complete": false },
+        { "type": "deliver", "target": "npc_florist", "description": "Deliver to the Florist", "complete": false }
+      ],
+      "rewards": { "coins": 35, "reputation": 20 },
+      "unlocks": [],
+      "prerequisite": "quest_first_delivery"
+    },
+    {
+      "id": "quest_urgent_telegram",
+      "type": "delivery",
+      "title": "Urgent News",
+      "description": "An urgent telegram needs immediate delivery!",
+      "objectives": [
+        { "type": "collect", "target": "mail_telegram", "description": "Pick up the Telegram", "complete": false },
+        { "type": "deliver", "target": "npc_factory_manager", "description": "Deliver to Factory Manager", "complete": false }
+      ],
+      "rewards": { "coins": 75, "reputation": 25 },
+      "unlocks": ["zone_industrial"],
+      "prerequisite": "quest_harbor_run",
+      "priority": "urgent",
+      "timeLimit": 180
+    },
+    {
+      "id": "quest_neighborhood_round",
+      "type": "collection",
+      "title": "Neighborhood Round",
+      "description": "Deliver mail to three residents in the Residential Zone.",
+      "objectives": [
+        { "type": "deliver", "target": "npc_resident_1", "description": "Deliver to House 1", "complete": false },
+        { "type": "deliver", "target": "npc_resident_2", "description": "Deliver to House 2", "complete": false },
+        { "type": "deliver", "target": "npc_resident_3", "description": "Deliver to House 3", "complete": false }
+      ],
+      "rewards": { "coins": 60, "reputation": 20 },
+      "unlocks": [],
+      "prerequisite": "quest_cafe_order"
+    },
+    {
+      "id": "quest_meet_everyone",
+      "type": "social",
+      "title": "Making Friends",
+      "description": "Introduce yourself to all the NPCs on the planet.",
+      "objectives": [
+        { "type": "talk", "target": "npc_postmaster", "description": "Meet the Postmaster", "complete": false },
+        { "type": "talk", "target": "npc_mayor", "description": "Meet the Mayor", "complete": false },
+        { "type": "talk", "target": "npc_cafe_owner", "description": "Meet the Cafe Owner", "complete": false },
+        { "type": "talk", "target": "npc_dockworker", "description": "Meet the Dockworker", "complete": false },
+        { "type": "talk", "target": "npc_shopkeeper", "description": "Meet the Shopkeeper", "complete": false }
+      ],
+      "rewards": { "coins": 100, "reputation": 50 },
+      "unlocks": ["achievement_social_butterfly"],
+      "prerequisite": null
+    }
+  ],
+  "mailItems": [
+    {
+      "id": "mail_welcome_letter",
+      "from": "Postmaster",
+      "to": "Mayor",
+      "priority": "normal",
+      "description": "An official welcome letter"
+    },
+    {
+      "id": "mail_harbor_package",
+      "from": "Post Office",
+      "to": "Dockworker",
+      "priority": "normal",
+      "description": "A sturdy brown package"
+    },
+    {
+      "id": "mail_cafe_supplies",
+      "from": "Cafe Owner",
+      "to": "Shopkeeper",
+      "priority": "normal",
+      "description": "A supplies order form"
+    },
+    {
+      "id": "mail_cafe_receipt",
+      "from": "Shopkeeper",
+      "to": "Cafe Owner",
+      "priority": "normal",
+      "description": "A receipt for supplies"
+    },
+    {
+      "id": "mail_love_letter",
+      "from": "Anonymous",
+      "to": "Florist",
+      "priority": "normal",
+      "description": "A pink envelope with a heart seal"
+    },
+    {
+      "id": "mail_telegram",
+      "from": "Central Office",
+      "to": "Factory Manager",
+      "priority": "urgent",
+      "description": "An urgent yellow telegram"
+    }
+  ]
+}

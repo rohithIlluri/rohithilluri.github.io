@@ -1,0 +1,115 @@
+{
+  "hairStyles": [
+    { "id": "bob", "name": "Bob Cut", "description": "Classic shoulder-length bob" },
+    { "id": "ponytail", "name": "Ponytail", "description": "High ponytail with bangs" },
+    { "id": "short", "name": "Short", "description": "Cropped short style" },
+    { "id": "long", "name": "Long", "description": "Long flowing hair" },
+    { "id": "twin", "name": "Twin Tails", "description": "Two cute pigtails" },
+    { "id": "messy", "name": "Messy", "description": "Casual messy style" },
+    { "id": "bun", "name": "Bun", "description": "Neat top bun" },
+    { "id": "wavy", "name": "Wavy", "description": "Soft wavy layers" }
+  ],
+  "hairColors": [
+    { "id": "black", "name": "Black", "hex": "0x2A2A2A" },
+    { "id": "brown", "name": "Brown", "hex": "0x5A4030" },
+    { "id": "blonde", "name": "Blonde", "hex": "0xD4A850" },
+    { "id": "red", "name": "Red", "hex": "0x8B3A3A" },
+    { "id": "auburn", "name": "Auburn", "hex": "0x6B3020" },
+    { "id": "gray", "name": "Gray", "hex": "0x8A8A8A" },
+    { "id": "blue", "name": "Blue", "hex": "0x3A5A8A" },
+    { "id": "pink", "name": "Pink", "hex": "0xC87A8A" },
+    { "id": "purple", "name": "Purple", "hex": "0x6A4A7A" },
+    { "id": "green", "name": "Green", "hex": "0x4A6A4A" },
+    { "id": "orange", "name": "Orange", "hex": "0xC86A30" },
+    { "id": "white", "name": "White", "hex": "0xE8E8E8" }
+  ],
+  "skinTones": [
+    { "id": "fair", "name": "Fair", "hex": "0xFFE0D0" },
+    { "id": "light", "name": "Light", "hex": "0xF5E1D0" },
+    { "id": "medium_light", "name": "Medium Light", "hex": "0xE5C5A5" },
+    { "id": "medium", "name": "Medium", "hex": "0xD0A080" },
+    { "id": "olive", "name": "Olive", "hex": "0xC09060" },
+    { "id": "tan", "name": "Tan", "hex": "0xA07050" },
+    { "id": "brown", "name": "Brown", "hex": "0x806040" },
+    { "id": "dark", "name": "Dark", "hex": "0x604030" }
+  ],
+  "shirtStyles": [
+    { "id": "collared", "name": "Collared", "description": "Button-up with collar" },
+    { "id": "tshirt", "name": "T-Shirt", "description": "Simple crew neck" },
+    { "id": "vneck", "name": "V-Neck", "description": "V-neck pullover" },
+    { "id": "hoodie", "name": "Hoodie", "description": "Casual hoodie" },
+    { "id": "cardigan", "name": "Cardigan", "description": "Open cardigan" },
+    { "id": "uniform", "name": "Uniform", "description": "Messenger uniform" }
+  ],
+  "shirtColors": [
+    { "id": "black", "hex": "0x2A2A2A" },
+    { "id": "white", "hex": "0xF5F5F5" },
+    { "id": "navy", "hex": "0x2A3A5A" },
+    { "id": "gray", "hex": "0x6A6A6A" },
+    { "id": "red", "hex": "0xB84040" },
+    { "id": "blue", "hex": "0x4080B8" },
+    { "id": "green", "hex": "0x408050" },
+    { "id": "yellow", "hex": "0xC8B040" },
+    { "id": "pink", "hex": "0xC880A0" },
+    { "id": "teal", "hex": "0x40A0A0" }
+  ],
+  "bottomStyles": [
+    { "id": "pleated", "name": "Pleated Skirt", "description": "Classic pleated skirt" },
+    { "id": "aline", "name": "A-Line Skirt", "description": "Simple A-line skirt" },
+    { "id": "shorts", "name": "Shorts", "description": "Casual shorts" },
+    { "id": "pants", "name": "Pants", "description": "Straight leg pants" }
+  ],
+  "bottomColors": [
+    { "id": "maroon", "hex": "0xB84A5A" },
+    { "id": "navy", "hex": "0x2A3A5A" },
+    { "id": "black", "hex": "0x2A2A2A" },
+    { "id": "khaki", "hex": "0xC8B890" },
+    { "id": "blue", "hex": "0x4070A0" },
+    { "id": "gray", "hex": "0x6A6A6A" },
+    { "id": "green", "hex": "0x4A6A4A" },
+    { "id": "plaid_red", "hex": "0xA84040" },
+    { "id": "plaid_blue", "hex": "0x406080" },
+    { "id": "white", "hex": "0xF0F0F0" }
+  ],
+  "shoeStyles": [
+    { "id": "chunky", "name": "Chunky Sneakers", "description": "Platform sneakers" },
+    { "id": "loafers", "name": "Loafers", "description": "Classic loafers" },
+    { "id": "boots", "name": "Boots", "description": "Ankle boots" },
+    { "id": "flats", "name": "Flats", "description": "Simple flat shoes" }
+  ],
+  "shoeColors": [
+    { "id": "yellow", "hex": "0xE8B84A" },
+    { "id": "black", "hex": "0x2A2A2A" },
+    { "id": "white", "hex": "0xF5F5F5" },
+    { "id": "brown", "hex": "0x6A4A30" },
+    { "id": "red", "hex": "0xB84040" },
+    { "id": "pink", "hex": "0xD090A0" },
+    { "id": "blue", "hex": "0x4070A0" },
+    { "id": "green", "hex": "0x508050" }
+  ],
+  "bagStyles": [
+    { "id": "messenger", "name": "Messenger Bag", "description": "Classic diagonal strap" },
+    { "id": "backpack", "name": "Backpack", "description": "Two-strap backpack" },
+    { "id": "satchel", "name": "Satchel", "description": "Leather satchel" }
+  ],
+  "bagColors": [
+    { "id": "yellow", "hex": "0xE8B84A" },
+    { "id": "brown", "hex": "0x8B7355" },
+    { "id": "black", "hex": "0x3A3A3A" },
+    { "id": "red", "hex": "0xB85050" },
+    { "id": "blue", "hex": "0x5080B0" },
+    { "id": "green", "hex": "0x608060" }
+  ],
+  "accessories": [
+    { "id": "none", "name": "None", "description": "No accessory" },
+    { "id": "glasses_round", "name": "Round Glasses", "description": "Round frame glasses" },
+    { "id": "glasses_square", "name": "Square Glasses", "description": "Square frame glasses" },
+    { "id": "sunglasses", "name": "Sunglasses", "description": "Cool shades" },
+    { "id": "hat_cap", "name": "Cap", "description": "Baseball cap" },
+    { "id": "hat_beanie", "name": "Beanie", "description": "Cozy beanie" },
+    { "id": "earrings_stud", "name": "Stud Earrings", "description": "Simple studs" },
+    { "id": "earrings_hoop", "name": "Hoop Earrings", "description": "Small hoops" },
+    { "id": "headphones", "name": "Headphones", "description": "Over-ear headphones" },
+    { "id": "scarf", "name": "Scarf", "description": "Light scarf" }
+  ]
+}

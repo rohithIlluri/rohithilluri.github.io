@@ -60,9 +60,9 @@ export const MESSENGER_PALETTE = {
   CHAR_SHIRT_COLLAR: 0xF5E8D8, // Shirt collar accent (cream)
   CHAR_SKIRT: 0xB84A5A,       // Red/maroon skirt (signature look)
   CHAR_SOCKS: 0xF5F5F5,       // White socks
-  CHAR_SHOES: 0x2A2A2A,       // Black shoes
-  CHAR_BAG: 0x3A3A3A,         // Dark messenger bag
-  CHAR_STRAP: 0x3A3A3A,       // Dark bag strap
+  CHAR_SHOES: 0xE8B84A,       // YELLOW chunky sneakers (messenger style)
+  CHAR_BAG: 0xE8B84A,         // YELLOW messenger bag (iconic)
+  CHAR_STRAP: 0xD87A4A,       // ORANGE bag strap
 
   // === UI ===
   UI_WHITE: 0xFFFFFF,         // UI backgrounds

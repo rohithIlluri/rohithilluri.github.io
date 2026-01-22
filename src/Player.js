@@ -13,7 +13,8 @@ import {
   createOutlineMesh,
   TOON_CONSTANTS,
 } from './shaders/toon.js';
-import { getAudioManager } from './audio/AudioManager.js';
+// Audio disabled
+// import { getAudioManager } from './audio/AudioManager.js';
 import { MESSENGER_PALETTE, CHARACTER_COLORS } from './constants/colors.js';
 
 // Animation states
@@ -216,102 +217,167 @@ export class Player {
     });
 
     // =====================================================
-    // HEAD (0.3 units height, positioned at top)
+    // HEAD (larger anime-style head - key for cute look)
     // =====================================================
-    // Rounded head, slightly wider at cheeks
-    const headGeo = new THREE.SphereGeometry(0.125, 16, 16);
+    // Rounded head, bigger for anime proportions
+    const headGeo = new THREE.SphereGeometry(0.18, 24, 24);
     const head = new THREE.Mesh(headGeo, skinMaterial);
-    head.position.y = 1.65; // Near top of 1.8 unit height
-    head.scale.set(1, 1.2, 1.0); // Taller head shape
+    head.position.y = 1.62; // Adjusted for larger head
+    head.scale.set(1.0, 1.15, 0.95); // Slightly taller, flatter face
     head.castShadow = true;
     this.characterGroup.add(head);
 
-    const headOutline = createOutlineMesh(head, 0.015);
+    const headOutline = createOutlineMesh(head, 0.05);
     headOutline.position.copy(head.position);
     headOutline.scale.copy(head.scale);
     this.characterGroup.add(headOutline);
 
     // =====================================================
-    // HAIR - Messy anime style
+    // HAIR - Messy anime style (larger to match bigger head)
     // =====================================================
     // Main hair volume
-    const hairGeo = new THREE.SphereGeometry(0.14, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.65);
+    const hairGeo = new THREE.SphereGeometry(0.20, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.6);
     const hair = new THREE.Mesh(hairGeo, hairMaterial);
     hair.position.y = 1.72;
-    hair.scale.set(1.05, 1.0, 1.05);
+    hair.scale.set(1.05, 1.0, 1.0);
     hair.castShadow = true;
     this.characterGroup.add(hair);
 
-    // Hair bangs (messy front fringe)
-    const bangsGeo = new THREE.BoxGeometry(0.22, 0.06, 0.08);
+    // Hair bangs (messy front fringe - larger)
+    const bangsGeo = new THREE.BoxGeometry(0.28, 0.07, 0.10);
     const bangs = new THREE.Mesh(bangsGeo, hairMaterial);
-    bangs.position.set(0, 1.72, 0.1);
-    bangs.rotation.x = -0.2;
+    bangs.position.set(0, 1.70, 0.13);
+    bangs.rotation.x = -0.15;
     this.characterGroup.add(bangs);
 
-    // Side strands (messy look)
-    const strandGeo = new THREE.SphereGeometry(0.04, 8, 8);
+    // Side strands (messy look - larger)
+    const strandGeo = new THREE.SphereGeometry(0.055, 8, 8);
     const leftStrand = new THREE.Mesh(strandGeo, hairMaterial);
-    leftStrand.position.set(-0.12, 1.58, 0.06);
-    leftStrand.scale.set(1, 1.5, 0.8);
+    leftStrand.position.set(-0.16, 1.55, 0.08);
+    leftStrand.scale.set(1, 1.6, 0.8);
     this.characterGroup.add(leftStrand);
 
     const rightStrand = new THREE.Mesh(strandGeo, hairMaterial);
-    rightStrand.position.set(0.12, 1.58, 0.06);
-    rightStrand.scale.set(1, 1.5, 0.8);
+    rightStrand.position.set(0.16, 1.55, 0.08);
+    rightStrand.scale.set(1, 1.6, 0.8);
     this.characterGroup.add(rightStrand);
 
-    // Back of hair
-    const backHairGeo = new THREE.SphereGeometry(0.13, 12, 12, 0, Math.PI * 2, Math.PI * 0.3, Math.PI * 0.5);
+    // Back of hair (larger)
+    const backHairGeo = new THREE.SphereGeometry(0.18, 12, 12, 0, Math.PI * 2, Math.PI * 0.25, Math.PI * 0.55);
     const backHair = new THREE.Mesh(backHairGeo, hairMaterial);
-    backHair.position.set(0, 1.58, -0.06);
+    backHair.position.set(0, 1.55, -0.08);
     backHair.rotation.x = Math.PI;
     this.characterGroup.add(backHair);
 
-    const hairOutline = createOutlineMesh(hair, 0.012);
+    const hairOutline = createOutlineMesh(hair, 0.045);
     hairOutline.position.copy(hair.position);
     hairOutline.scale.copy(hair.scale);
     this.characterGroup.add(hairOutline);
 
     // =====================================================
-    // FACE - Simple dots (messenger.abeto.co style)
+    // FACE - BIG expressive eyes (anime style - CRITICAL)
     // =====================================================
-    // Eyes - simple black dots (CRITICAL for authentic look)
+    // Eyes - MUCH LARGER for anime/messenger look
     const eyeMaterial = new THREE.MeshBasicMaterial({ color: MESSENGER_PALETTE.OUTLINE_PRIMARY });
-    const eyeGeo = new THREE.SphereGeometry(0.02, 8, 8);
+    const eyeGeo = new THREE.SphereGeometry(0.085, 16, 16); // BIG anime eyes!
 
     const leftEye = new THREE.Mesh(eyeGeo, eyeMaterial);
-    leftEye.position.set(-0.04, 1.64, 0.11);
+    leftEye.position.set(-0.065, 1.60, 0.14);
+    leftEye.scale.set(0.9, 1.15, 0.5); // Tall oval shape
     this.characterGroup.add(leftEye);
 
     const rightEye = new THREE.Mesh(eyeGeo, eyeMaterial);
-    rightEye.position.set(0.04, 1.64, 0.11);
+    rightEye.position.set(0.065, 1.60, 0.14);
+    rightEye.scale.set(0.9, 1.15, 0.5); // Tall oval shape
     this.characterGroup.add(rightEye);
 
-    // Eye highlights (tiny white dots - anime style)
+    // Eye whites (behind pupils for depth)
+    const eyeWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const eyeWhiteGeo = new THREE.SphereGeometry(0.09, 16, 16);
+
+    const leftEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMaterial);
+    leftEyeWhite.position.set(-0.065, 1.60, 0.12);
+    leftEyeWhite.scale.set(0.85, 1.1, 0.4);
+    this.characterGroup.add(leftEyeWhite);
+
+    const rightEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMaterial);
+    rightEyeWhite.position.set(0.065, 1.60, 0.12);
+    rightEyeWhite.scale.set(0.85, 1.1, 0.4);
+    this.characterGroup.add(rightEyeWhite);
+
+    // Eye highlights - BIG and prominent (anime sparkle)
     const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-    const highlightGeo = new THREE.SphereGeometry(0.005, 6, 6);
+    const highlightGeo = new THREE.SphereGeometry(0.035, 10, 10);
 
     const leftHighlight = new THREE.Mesh(highlightGeo, highlightMaterial);
-    leftHighlight.position.set(-0.035, 1.65, 0.125);
+    leftHighlight.position.set(-0.045, 1.64, 0.16);
     this.characterGroup.add(leftHighlight);
 
     const rightHighlight = new THREE.Mesh(highlightGeo, highlightMaterial);
-    rightHighlight.position.set(0.045, 1.65, 0.125);
+    rightHighlight.position.set(0.085, 1.64, 0.16);
     this.characterGroup.add(rightHighlight);
 
-    // Eyebrows (thin lines)
+    // Secondary smaller highlights for extra sparkle
+    const highlight2Geo = new THREE.SphereGeometry(0.018, 8, 8);
+    const leftHighlight2 = new THREE.Mesh(highlight2Geo, highlightMaterial);
+    leftHighlight2.position.set(-0.08, 1.58, 0.155);
+    this.characterGroup.add(leftHighlight2);
+
+    const rightHighlight2 = new THREE.Mesh(highlight2Geo, highlightMaterial);
+    rightHighlight2.position.set(0.05, 1.58, 0.155);
+    this.characterGroup.add(rightHighlight2);
+
+    // Blush marks (cute anime cheeks)
+    const blushMaterial = new THREE.MeshBasicMaterial({
+      color: 0xFFB6C1,
+      transparent: true,
+      opacity: 0.4
+    });
+    const blushGeo = new THREE.SphereGeometry(0.04, 8, 8);
+
+    const leftBlush = new THREE.Mesh(blushGeo, blushMaterial);
+    leftBlush.position.set(-0.11, 1.55, 0.12);
+    leftBlush.scale.set(1.2, 0.6, 0.3);
+    this.characterGroup.add(leftBlush);
+
+    const rightBlush = new THREE.Mesh(blushGeo, blushMaterial);
+    rightBlush.position.set(0.11, 1.55, 0.12);
+    rightBlush.scale.set(1.2, 0.6, 0.3);
+    this.characterGroup.add(rightBlush);
+
+    // Small cute nose
+    const noseMaterial = createEnhancedToonMaterial({
+      color: 0xE8C8B8, // Slightly darker than skin
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+    const noseGeo = new THREE.SphereGeometry(0.015, 8, 8);
+    const nose = new THREE.Mesh(noseGeo, noseMaterial);
+    nose.position.set(0, 1.56, 0.165);
+    nose.scale.set(1, 0.8, 0.5);
+    this.characterGroup.add(nose);
+
+    // Small smile
+    const smileMaterial = new THREE.MeshBasicMaterial({ color: 0xC88080 });
+    const smileGeo = new THREE.TorusGeometry(0.025, 0.004, 8, 12, Math.PI);
+    const smile = new THREE.Mesh(smileGeo, smileMaterial);
+    smile.position.set(0, 1.52, 0.155);
+    smile.rotation.x = -0.1;
+    smile.rotation.z = Math.PI;
+    this.characterGroup.add(smile);
+
+    // Eyebrows (thicker, more expressive)
     const browMaterial = new THREE.MeshBasicMaterial({ color: hairColor });
-    const browGeo = new THREE.BoxGeometry(0.03, 0.004, 0.004);
+    const browGeo = new THREE.BoxGeometry(0.055, 0.008, 0.008);
 
     const leftBrow = new THREE.Mesh(browGeo, browMaterial);
-    leftBrow.position.set(-0.04, 1.68, 0.11);
-    leftBrow.rotation.z = 0.1;
+    leftBrow.position.set(-0.055, 1.70, 0.13);
+    leftBrow.rotation.z = 0.12;
     this.characterGroup.add(leftBrow);
 
     const rightBrow = new THREE.Mesh(browGeo, browMaterial);
-    rightBrow.position.set(0.04, 1.68, 0.11);
-    rightBrow.rotation.z = -0.1;
+    rightBrow.position.set(0.055, 1.70, 0.13);
+    rightBrow.rotation.z = -0.12;
     this.characterGroup.add(rightBrow);
 
     // =====================================================
@@ -339,7 +405,7 @@ export class Player {
     collar.position.set(0, 1.43, 0.01);
     this.characterGroup.add(collar);
 
-    const torsoOutline = createOutlineMesh(upperTorso, 0.015);
+    const torsoOutline = createOutlineMesh(upperTorso, 0.04);
     torsoOutline.position.copy(upperTorso.position);
     this.characterGroup.add(torsoOutline);
 
@@ -351,84 +417,98 @@ export class Player {
     skirt.castShadow = true;
     this.characterGroup.add(skirt);
 
-    const skirtOutline = createOutlineMesh(skirt, 0.012);
+    const skirtOutline = createOutlineMesh(skirt, 0.04);
     skirtOutline.position.copy(skirt.position);
     this.characterGroup.add(skirtOutline);
 
     // =====================================================
-    // MESSENGER BAG (iconic yellow bag)
+    // MESSENGER BAG (iconic YELLOW bag - signature look!)
     // =====================================================
-    // Strap (orange, diagonal across body)
-    const strapGeo = new THREE.BoxGeometry(0.03, 0.5, 0.015);
-    const strap = new THREE.Mesh(strapGeo, strapMaterial);
-    strap.position.set(0.04, 1.25, 0.04);
-    strap.rotation.z = Math.PI / 5;
+    // Strap (bright yellow, diagonal across body)
+    const strapGeo = new THREE.BoxGeometry(0.035, 0.55, 0.018);
+    const strap = new THREE.Mesh(strapGeo, bagMaterial); // Yellow strap
+    strap.position.set(0.05, 1.22, 0.06);
+    strap.rotation.z = Math.PI / 4.5;
     strap.rotation.x = 0.1;
     this.characterGroup.add(strap);
 
-    // Bag body (on right hip)
-    const bagBodyGeo = new THREE.BoxGeometry(0.15, 0.12, 0.05);
+    // Bag body - LARGER and clearly yellow (on right hip)
+    const bagBodyGeo = new THREE.BoxGeometry(0.20, 0.15, 0.07);
     const bagBody = new THREE.Mesh(bagBodyGeo, bagMaterial);
-    bagBody.position.set(0.16, 0.95, 0.08);
-    bagBody.rotation.y = -0.15;
+    bagBody.position.set(0.18, 0.92, 0.10);
+    bagBody.rotation.y = -0.12;
     bagBody.castShadow = true;
     this.characterGroup.add(bagBody);
 
-    const bagOutline = createOutlineMesh(bagBody, 0.01);
+    const bagOutline = createOutlineMesh(bagBody, 0.04);
     bagOutline.position.copy(bagBody.position);
     bagOutline.rotation.copy(bagBody.rotation);
     this.characterGroup.add(bagOutline);
 
-    // Bag flap
-    const flapGeo = new THREE.BoxGeometry(0.15, 0.04, 0.055);
+    // Bag flap (larger)
+    const flapGeo = new THREE.BoxGeometry(0.20, 0.05, 0.075);
     const flap = new THREE.Mesh(flapGeo, bagMaterial);
-    flap.position.set(0.16, 1.0, 0.1);
-    flap.rotation.y = -0.15;
-    flap.rotation.x = 0.05;
+    flap.position.set(0.18, 0.98, 0.12);
+    flap.rotation.y = -0.12;
+    flap.rotation.x = 0.08;
     this.characterGroup.add(flap);
 
+    // Bag buckle (small dark accent)
+    const buckleMaterial = createEnhancedToonMaterial({
+      color: MESSENGER_PALETTE.OUTLINE_PRIMARY,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+    const buckleGeo = new THREE.BoxGeometry(0.04, 0.025, 0.02);
+    const buckle = new THREE.Mesh(buckleGeo, buckleMaterial);
+    buckle.position.set(0.18, 0.96, 0.145);
+    buckle.rotation.y = -0.12;
+    this.characterGroup.add(buckle);
+
     // =====================================================
-    // ARMS (skin colored, hang naturally)
+    // ARMS (thinner for anime proportions)
     // =====================================================
-    // Upper arm
-    const upperArmGeo = new THREE.CylinderGeometry(0.035, 0.03, 0.2, 8);
+    // Upper arm - thinner
+    const upperArmGeo = new THREE.CylinderGeometry(0.028, 0.024, 0.22, 8);
 
     this.leftUpperArm = new THREE.Mesh(upperArmGeo, skinMaterial);
-    this.leftUpperArm.position.set(-0.17, 1.3, 0);
-    this.leftUpperArm.rotation.z = 0.15;
+    this.leftUpperArm.position.set(-0.17, 1.28, 0);
+    this.leftUpperArm.rotation.z = 0.12;
     this.leftUpperArm.castShadow = true;
     this.characterGroup.add(this.leftUpperArm);
 
     this.rightUpperArm = new THREE.Mesh(upperArmGeo, skinMaterial);
-    this.rightUpperArm.position.set(0.17, 1.3, 0);
-    this.rightUpperArm.rotation.z = -0.15;
+    this.rightUpperArm.position.set(0.17, 1.28, 0);
+    this.rightUpperArm.rotation.z = -0.12;
     this.rightUpperArm.castShadow = true;
     this.characterGroup.add(this.rightUpperArm);
 
-    // Forearm
-    const forearmGeo = new THREE.CylinderGeometry(0.03, 0.025, 0.18, 8);
+    // Forearm - thinner
+    const forearmGeo = new THREE.CylinderGeometry(0.024, 0.020, 0.20, 8);
 
     this.leftForearm = new THREE.Mesh(forearmGeo, skinMaterial);
-    this.leftForearm.position.set(-0.2, 1.12, 0);
-    this.leftForearm.rotation.z = 0.1;
+    this.leftForearm.position.set(-0.19, 1.08, 0);
+    this.leftForearm.rotation.z = 0.08;
     this.leftForearm.castShadow = true;
     this.characterGroup.add(this.leftForearm);
 
     this.rightForearm = new THREE.Mesh(forearmGeo, skinMaterial);
-    this.rightForearm.position.set(0.2, 1.12, 0);
-    this.rightForearm.rotation.z = -0.1;
+    this.rightForearm.position.set(0.19, 1.08, 0);
+    this.rightForearm.rotation.z = -0.08;
     this.rightForearm.castShadow = true;
     this.characterGroup.add(this.rightForearm);
 
-    // Hands (simplified box)
-    const handGeo = new THREE.BoxGeometry(0.05, 0.06, 0.025);
+    // Hands (smaller, rounder)
+    const handGeo = new THREE.SphereGeometry(0.028, 8, 8);
 
     const leftHand = new THREE.Mesh(handGeo, skinMaterial);
-    leftHand.position.set(-0.21, 1.0, 0);
+    leftHand.position.set(-0.20, 0.96, 0);
+    leftHand.scale.set(1, 1.2, 0.8);
     this.characterGroup.add(leftHand);
 
     const rightHand = new THREE.Mesh(handGeo, skinMaterial);
-    rightHand.position.set(0.21, 1.0, 0);
+    rightHand.position.set(0.20, 0.96, 0);
+    rightHand.scale.set(1, 1.2, 0.8);
     this.characterGroup.add(rightHand);
 
     // Store arm references for animation
@@ -436,31 +516,31 @@ export class Player {
     this.rightArm = this.rightUpperArm;
 
     // =====================================================
-    // LEGS (0.9 units total: thigh 0.35 + shin 0.35 + foot 0.2)
+    // LEGS (thinner for anime proportions)
     // =====================================================
-    // Thigh (shorts material - visible as shorts extend)
-    const thighGeo = new THREE.CylinderGeometry(0.055, 0.05, 0.3, 8);
+    // Thigh (skin colored - visible below skirt)
+    const thighGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.28, 8);
 
-    this.leftThigh = new THREE.Mesh(thighGeo, shortsMaterial);
-    this.leftThigh.position.set(-0.07, 0.75, 0);
+    this.leftThigh = new THREE.Mesh(thighGeo, skinMaterial); // Skin colored!
+    this.leftThigh.position.set(-0.065, 0.72, 0);
     this.leftThigh.castShadow = true;
     this.characterGroup.add(this.leftThigh);
 
-    this.rightThigh = new THREE.Mesh(thighGeo, shortsMaterial);
-    this.rightThigh.position.set(0.07, 0.75, 0);
+    this.rightThigh = new THREE.Mesh(thighGeo, skinMaterial); // Skin colored!
+    this.rightThigh.position.set(0.065, 0.72, 0);
     this.rightThigh.castShadow = true;
     this.characterGroup.add(this.rightThigh);
 
-    // Lower leg (skin)
-    const shinGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.35, 8);
+    // Lower leg (skin) - thinner
+    const shinGeo = new THREE.CylinderGeometry(0.038, 0.032, 0.32, 8);
 
     this.leftShin = new THREE.Mesh(shinGeo, skinMaterial);
-    this.leftShin.position.set(-0.07, 0.42, 0);
+    this.leftShin.position.set(-0.065, 0.42, 0);
     this.leftShin.castShadow = true;
     this.characterGroup.add(this.leftShin);
 
     this.rightShin = new THREE.Mesh(shinGeo, skinMaterial);
-    this.rightShin.position.set(0.07, 0.42, 0);
+    this.rightShin.position.set(0.065, 0.42, 0);
     this.rightShin.castShadow = true;
     this.characterGroup.add(this.rightShin);
 
@@ -468,55 +548,67 @@ export class Player {
     this.leftLeg = this.leftThigh;
     this.rightLeg = this.rightThigh;
 
-    // Ankle socks (black)
-    const sockGeo = new THREE.CylinderGeometry(0.042, 0.045, 0.04, 8);
+    // Ankle socks (white)
+    const sockGeo = new THREE.CylinderGeometry(0.035, 0.038, 0.05, 8);
 
     const leftSock = new THREE.Mesh(sockGeo, sockMaterial);
-    leftSock.position.set(-0.07, 0.23, 0);
+    leftSock.position.set(-0.065, 0.24, 0);
     this.characterGroup.add(leftSock);
 
     const rightSock = new THREE.Mesh(sockGeo, sockMaterial);
-    rightSock.position.set(0.07, 0.23, 0);
+    rightSock.position.set(0.065, 0.24, 0);
     this.characterGroup.add(rightSock);
 
     // =====================================================
-    // FEET/SHOES (yellow chunky sneakers)
+    // FEET/SHOES - CHUNKY YELLOW SNEAKERS (signature!)
     // =====================================================
-    const footGeo = new THREE.BoxGeometry(0.08, 0.06, 0.14);
+    // Main shoe body - chunky and yellow
+    const footGeo = new THREE.BoxGeometry(0.09, 0.08, 0.16);
 
     const leftFoot = new THREE.Mesh(footGeo, shoeMaterial);
-    leftFoot.position.set(-0.07, 0.17, 0.02);
+    leftFoot.position.set(-0.065, 0.17, 0.025);
     leftFoot.castShadow = true;
     this.characterGroup.add(leftFoot);
 
-    const leftFootOutline = createOutlineMesh(leftFoot, 0.008);
+    const leftFootOutline = createOutlineMesh(leftFoot, 0.035);
     leftFootOutline.position.copy(leftFoot.position);
     this.characterGroup.add(leftFootOutline);
 
     const rightFoot = new THREE.Mesh(footGeo, shoeMaterial);
-    rightFoot.position.set(0.07, 0.17, 0.02);
+    rightFoot.position.set(0.065, 0.17, 0.025);
     rightFoot.castShadow = true;
     this.characterGroup.add(rightFoot);
 
-    const rightFootOutline = createOutlineMesh(rightFoot, 0.008);
+    const rightFootOutline = createOutlineMesh(rightFoot, 0.035);
     rightFootOutline.position.copy(rightFoot.position);
     this.characterGroup.add(rightFootOutline);
 
-    // Shoe details (black accents)
-    const shoeAccentMaterial = createEnhancedToonMaterial({
-      color: MESSENGER_PALETTE.OUTLINE_PRIMARY,
+    // Shoe sole (white for chunky sneaker look)
+    const soleMaterial = createEnhancedToonMaterial({
+      color: 0xF5F5F5,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
+    const soleGeo = new THREE.BoxGeometry(0.095, 0.025, 0.165);
 
-    const accentGeo = new THREE.BoxGeometry(0.082, 0.015, 0.142);
-    const leftAccent = new THREE.Mesh(accentGeo, shoeAccentMaterial);
-    leftAccent.position.set(-0.07, 0.13, 0.02);
-    this.characterGroup.add(leftAccent);
+    const leftSole = new THREE.Mesh(soleGeo, soleMaterial);
+    leftSole.position.set(-0.065, 0.125, 0.025);
+    this.characterGroup.add(leftSole);
 
-    const rightAccent = new THREE.Mesh(accentGeo, shoeAccentMaterial);
-    rightAccent.position.set(0.07, 0.13, 0.02);
-    this.characterGroup.add(rightAccent);
+    const rightSole = new THREE.Mesh(soleGeo, soleMaterial);
+    rightSole.position.set(0.065, 0.125, 0.025);
+    this.characterGroup.add(rightSole);
+
+    // Shoe toe cap (white accent)
+    const toeGeo = new THREE.BoxGeometry(0.07, 0.04, 0.04);
+
+    const leftToe = new THREE.Mesh(toeGeo, soleMaterial);
+    leftToe.position.set(-0.065, 0.16, 0.09);
+    this.characterGroup.add(leftToe);
+
+    const rightToe = new THREE.Mesh(toeGeo, soleMaterial);
+    rightToe.position.set(0.065, 0.16, 0.09);
+    this.characterGroup.add(rightToe);
 
     // =====================================================
     // SHADOW BLOB (soft blue-gray, not black)
@@ -623,11 +715,11 @@ export class Player {
     if (isMoving) {
       this.setAnimationState(isRunning ? ANIM_STATES.RUN : ANIM_STATES.WALK);
 
-      // Play footstep sounds
-      const audioManager = getAudioManager();
-      if (audioManager && audioManager.initialized) {
-        audioManager.playFootstep(isRunning, 'grass');
-      }
+      // Audio disabled
+      // const audioManager = getAudioManager();
+      // if (audioManager && audioManager.initialized) {
+      //   audioManager.playFootstep(isRunning, 'grass');
+      // }
     } else {
       this.setAnimationState(ANIM_STATES.IDLE);
     }

@@ -12,8 +12,8 @@ import { MESSENGER_PALETTE } from '../constants/colors.js';
 const SHADOW_COLOR = MESSENGER_PALETTE.SHADOW_TINT; // #5A6B7A blue-gray
 const OUTLINE_COLOR = MESSENGER_PALETTE.OUTLINE_PRIMARY; // #2A2A2A near-black
 const RIM_COLOR = 0xFFFFFF;
-const RIM_INTENSITY_CHARACTER = 0.3; // Slightly reduced for softer look
-const RIM_INTENSITY_ENVIRONMENT = 0.15; // Very subtle on environment
+const RIM_INTENSITY_CHARACTER = 0.5; // Stronger rim for character pop
+const RIM_INTENSITY_ENVIRONMENT = 0.25; // More visible on environment
 
 /**
  * Create a basic toon material with cel-shading (for simple objects)
@@ -253,19 +253,18 @@ export function createEnhancedToonMaterial(options = {}) {
 
         // ============================================
         // DISCRETE 4-BAND CEL-SHADING (messenger.abeto.co style)
-        // Uses hard step() functions - NO smoothstep interpolation
-        // Sharper band transitions for more visible cel-shading
+        // Wider highlight band and stronger contrast for anime look
         // ============================================
         float intensity;
 
-        if (NdotL > 0.6) {
-          intensity = 1.0;      // Highlight band (narrower for more contrast)
-        } else if (NdotL > 0.3) {
-          intensity = 0.7;      // Light band
-        } else if (NdotL > 0.0) {
-          intensity = 0.4;      // Mid band (darker for more contrast)
+        if (NdotL > 0.4) {
+          intensity = 1.0;      // Highlight band (wider for anime style)
+        } else if (NdotL > 0.15) {
+          intensity = 0.65;     // Light band
+        } else if (NdotL > -0.1) {
+          intensity = 0.35;     // Mid band (stronger contrast)
         } else {
-          intensity = 0.15;     // Shadow band (deeper purple-tinted shadow)
+          intensity = 0.12;     // Shadow band (deeper for drama)
         }
 
         // Lower ambient for darker shadows - allows cel-shading to show
@@ -274,9 +273,9 @@ export function createEnhancedToonMaterial(options = {}) {
         // Mix base color with purple shadow color (never pure black per spec)
         vec3 shadedColor = mix(shadowColor, baseColor, intensity);
 
-        // Rim lighting (Fresnel effect) - kept smooth for visual appeal
+        // Rim lighting (Fresnel effect) - wider range for more visible glow
         float fresnel = 1.0 - max(dot(viewDir, normal), 0.0);
-        float rimAmount = smoothstep(0.5, 0.7, fresnel);
+        float rimAmount = smoothstep(0.4, 0.65, fresnel);
 
         // Only apply rim in lit areas
         rimAmount *= step(0.0, NdotL);
@@ -344,13 +343,12 @@ export function createEnhancedToonMaterialLit(options = {}) {
       vec3 quantizedColor = gl_FragColor.rgb;
       float luminance = dot(quantizedColor, vec3(0.299, 0.587, 0.114));
 
-      // 4-band DISCRETE quantization (no interpolation)
-      // Higher contrast values for visible cel-shading
+      // 4-band DISCRETE quantization - wider bands, stronger contrast
       float band;
-      if (luminance > 0.6) band = 1.0;       // Highlight (narrower)
-      else if (luminance > 0.35) band = 0.7;  // Light
-      else if (luminance > 0.12) band = 0.4;  // Mid (more contrast)
-      else band = 0.15;                        // Shadow (deeper)
+      if (luminance > 0.45) band = 1.0;       // Highlight (wider)
+      else if (luminance > 0.25) band = 0.65; // Light
+      else if (luminance > 0.1) band = 0.35;  // Mid (stronger contrast)
+      else band = 0.12;                        // Shadow (deeper)
 
       // Mix with purple shadow (never pure black)
       quantizedColor = mix(shadowColor, quantizedColor, band);
@@ -414,14 +412,13 @@ export const ToonShaderMaterial = {
       float NdotL = dot(normal, lightDirection);
 
       // ============================================
-      // DISCRETE 4-band cel-shading (no smoothstep)
-      // Sharper transitions for messenger.abeto.co style
+      // DISCRETE 4-band cel-shading - wider bands, anime style
       // ============================================
       float intensity;
-      if (NdotL > 0.6) intensity = 1.0;       // Highlight (narrower)
-      else if (NdotL > 0.3) intensity = 0.7;   // Light
-      else if (NdotL > 0.0) intensity = 0.4;   // Mid (more contrast)
-      else intensity = 0.15;                    // Shadow (deeper)
+      if (NdotL > 0.4) intensity = 1.0;        // Highlight (wider)
+      else if (NdotL > 0.15) intensity = 0.65;  // Light
+      else if (NdotL > -0.1) intensity = 0.35;  // Mid (stronger contrast)
+      else intensity = 0.12;                     // Shadow (deeper)
 
       // Very low ambient for dramatic shadows
       intensity = max(intensity, 0.08);
@@ -429,10 +426,10 @@ export const ToonShaderMaterial = {
       // Mix base color with shadow color (purple undertone per spec)
       vec3 shadedColor = mix(shadowColor, color, intensity);
 
-      // Rim lighting
+      // Rim lighting - wider range for more visible glow
       float rimDot = 1.0 - max(dot(viewDir, normal), 0.0);
-      float rimAmount = smoothstep(0.55, 0.7, rimDot);
-      rimAmount *= smoothstep(0.0, 0.2, NdotL);
+      float rimAmount = smoothstep(0.4, 0.65, rimDot);
+      rimAmount *= smoothstep(-0.1, 0.15, NdotL);
       vec3 rim = rimColor * rimAmount * rimIntensity;
 
       gl_FragColor = vec4(shadedColor + rim, 1.0);

@@ -357,4 +357,144 @@ export function createRainEmitter(particleManager, bounds, intensity = 1.0) {
   };
 }
 
+/**
+ * Flying Birds Emitter
+ * Daytime ambient birds flying around the planet in flocking patterns
+ * Creates a sense of life and motion in the world
+ */
+export function createBirdEmitter(scene, planetRadius = 50, count = 12) {
+  const birds = [];
+  const birdGroup = new THREE.Group();
+  scene.add(birdGroup);
+
+  // Create bird geometry (simple V-shape)
+  const createBirdMesh = () => {
+    const birdShape = new THREE.Group();
+
+    // Body
+    const bodyGeo = new THREE.ConeGeometry(0.15, 0.6, 4);
+    const bodyMat = new THREE.MeshBasicMaterial({ color: 0x2A2A2A });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.rotation.x = Math.PI / 2;
+    birdShape.add(body);
+
+    // Left wing
+    const wingGeo = new THREE.PlaneGeometry(0.8, 0.25);
+    const wingMat = new THREE.MeshBasicMaterial({
+      color: 0x3A3A3A,
+      side: THREE.DoubleSide,
+    });
+    const leftWing = new THREE.Mesh(wingGeo, wingMat);
+    leftWing.position.set(-0.35, 0, 0);
+    leftWing.rotation.z = 0.3;
+    birdShape.add(leftWing);
+    birdShape.userData.leftWing = leftWing;
+
+    // Right wing
+    const rightWing = new THREE.Mesh(wingGeo, wingMat);
+    rightWing.position.set(0.35, 0, 0);
+    rightWing.rotation.z = -0.3;
+    birdShape.add(rightWing);
+    birdShape.userData.rightWing = rightWing;
+
+    return birdShape;
+  };
+
+  // Create flocks (groups of 3-4 birds)
+  const flockCount = Math.ceil(count / 3);
+
+  for (let f = 0; f < flockCount; f++) {
+    // Flock parameters
+    const flockLat = (Math.random() - 0.5) * 60; // -30 to 30 degrees
+    const flockLon = Math.random() * 360;
+    const flockHeight = planetRadius + 8 + Math.random() * 12; // 8-20 units above surface
+    const flockSpeed = 0.3 + Math.random() * 0.2; // Orbital speed
+    const flockDirection = Math.random() > 0.5 ? 1 : -1;
+
+    // Birds in this flock
+    const birdsInFlock = 2 + Math.floor(Math.random() * 3); // 2-4 birds
+
+    for (let i = 0; i < birdsInFlock; i++) {
+      const mesh = createBirdMesh();
+      birdGroup.add(mesh);
+
+      birds.push({
+        mesh,
+        // Orbital parameters
+        lat: flockLat + (Math.random() - 0.5) * 5, // Slight variation within flock
+        lon: flockLon + (Math.random() - 0.5) * 10,
+        height: flockHeight + (Math.random() - 0.5) * 2,
+        speed: flockSpeed + (Math.random() - 0.5) * 0.05,
+        direction: flockDirection,
+        // Wing flap animation
+        flapPhase: Math.random() * Math.PI * 2,
+        flapSpeed: 8 + Math.random() * 4,
+        // Vertical bob
+        bobPhase: Math.random() * Math.PI * 2,
+        bobAmount: 0.3 + Math.random() * 0.3,
+      });
+    }
+  }
+
+  // Return update function
+  return {
+    birds,
+    group: birdGroup,
+    update: (deltaTime, isNight) => {
+      // Hide birds at night
+      birdGroup.visible = !isNight;
+      if (isNight) return;
+
+      birds.forEach((bird) => {
+        // Update orbital position
+        bird.lon += bird.speed * bird.direction * deltaTime * 10;
+
+        // Convert lat/lon to 3D position
+        const latRad = THREE.MathUtils.degToRad(bird.lat);
+        const lonRad = THREE.MathUtils.degToRad(bird.lon);
+
+        // Vertical bob
+        bird.bobPhase += deltaTime * 2;
+        const bob = Math.sin(bird.bobPhase) * bird.bobAmount;
+
+        const r = bird.height + bob;
+        const x = r * Math.cos(latRad) * Math.cos(lonRad);
+        const y = r * Math.sin(latRad);
+        const z = r * Math.cos(latRad) * Math.sin(lonRad);
+
+        bird.mesh.position.set(x, y, z);
+
+        // Orient bird to face movement direction
+        const forwardLon = bird.lon + bird.direction * 5;
+        const forwardLonRad = THREE.MathUtils.degToRad(forwardLon);
+        const fx = r * Math.cos(latRad) * Math.cos(forwardLonRad);
+        const fy = r * Math.sin(latRad);
+        const fz = r * Math.cos(latRad) * Math.sin(forwardLonRad);
+
+        bird.mesh.lookAt(fx, fy, fz);
+
+        // Wing flap animation
+        bird.flapPhase += deltaTime * bird.flapSpeed;
+        const flapAngle = Math.sin(bird.flapPhase) * 0.4;
+
+        if (bird.mesh.userData.leftWing) {
+          bird.mesh.userData.leftWing.rotation.z = 0.3 + flapAngle;
+        }
+        if (bird.mesh.userData.rightWing) {
+          bird.mesh.userData.rightWing.rotation.z = -0.3 - flapAngle;
+        }
+      });
+    },
+    dispose: () => {
+      birds.forEach((bird) => {
+        bird.mesh.traverse((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      });
+      scene.remove(birdGroup);
+    },
+  };
+}
+
 export { GROUND_COLORS, LEAF_COLORS };
