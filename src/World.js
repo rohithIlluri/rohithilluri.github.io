@@ -50,6 +50,10 @@ export class World {
     // World mode: 'planet' (tiny planet) or 'street' (flat street - legacy)
     this.worldMode = options.worldMode || 'planet';
 
+    // Character type: 'robot', 'soldier', 'fox', or 'procedural'
+    // Can be overridden via URL: ?character=soldier
+    this.characterType = this.getCharacterTypeFromURL() || options.characterType || 'robot';
+
     // Three.js core
     this.scene = null;
     this.renderer = null;
@@ -88,6 +92,21 @@ export class World {
 
     // Quality preset
     this.qualityLevel = this.detectQuality();
+  }
+
+  /**
+   * Get character type from URL parameter
+   * Usage: ?character=robot or ?character=soldier or ?character=fox
+   * @returns {string|null}
+   */
+  getCharacterTypeFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const character = params.get('character');
+    if (character && ['robot', 'soldier', 'fox', 'procedural'].includes(character)) {
+      console.log(`[World] Character type from URL: ${character}`);
+      return character;
+    }
+    return null;
   }
 
   /**
@@ -275,18 +294,24 @@ export class World {
   }
 
   setupPlayer() {
+    const playerOptions = {
+      characterType: this.characterType,
+    };
+
     if (this.worldMode === 'planet') {
       // Spawn on planet surface at front/center
       const spawnPosition = this.tinyPlanet.latLonToPosition(0, 0);
-      this.player = new Player(this.scene, this.inputManager, spawnPosition, this.tinyPlanet);
+      this.player = new Player(this.scene, this.inputManager, spawnPosition, this.tinyPlanet, playerOptions);
     } else {
       // Spawn position at the south end of the street (legacy)
       const spawnPosition = new THREE.Vector3(0, 0, 20);
-      this.player = new Player(this.scene, this.inputManager, spawnPosition, null);
+      this.player = new Player(this.scene, this.inputManager, spawnPosition, null, playerOptions);
     }
 
     this.player.setCollisionMeshes(this.collisionMeshes);
     this.player.setLightDirection(this.lightDirection);
+
+    console.log(`[World] Player created with character type: ${this.characterType}`);
   }
 
   setupCamera() {

@@ -3,6 +3,11 @@
  * Handles player movement on a tiny planet sphere with proper orientation
  * Player always stands perpendicular to the sphere surface (local "up")
  * With enhanced toon material, outline mesh, and character model support
+ *
+ * Supports loading animated 3D models from Three.js examples:
+ * - RobotExpressive (default)
+ * - Soldier
+ * - Fox
  */
 
 import * as THREE from 'three';
@@ -13,6 +18,28 @@ import {
   createOutlineMesh,
   TOON_CONSTANTS,
 } from './shaders/toon.js';
+
+// Available character models (from Three.js examples - free to use)
+const CHARACTER_MODELS = {
+  robot: {
+    url: 'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+    scale: 0.5,
+    yOffset: 0,
+    animations: { idle: 'Idle', walk: 'Walking', run: 'Running', jump: 'Jump' },
+  },
+  soldier: {
+    url: 'https://threejs.org/examples/models/gltf/Soldier.glb',
+    scale: 1.0,
+    yOffset: 0,
+    animations: { idle: 'Idle', walk: 'Walk', run: 'Run' },
+  },
+  fox: {
+    url: 'https://threejs.org/examples/models/gltf/Fox/glTF/Fox.gltf',
+    scale: 0.015,
+    yOffset: 0,
+    animations: { idle: 'Survey', walk: 'Walk', run: 'Run' },
+  },
+};
 
 // Animation states
 const ANIM_STATES = {
@@ -29,10 +56,14 @@ const BLEND_TIMES = {
 };
 
 export class Player {
-  constructor(scene, inputManager, spawnPosition, planet = null) {
+  constructor(scene, inputManager, spawnPosition, planet = null, options = {}) {
     this.scene = scene;
     this.inputManager = inputManager;
     this.planet = planet; // TinyPlanet instance (null for flat world fallback)
+
+    // Character model options
+    this.characterType = options.characterType || 'robot'; // 'robot', 'soldier', 'fox', or 'procedural'
+    this.useExternalModel = this.characterType !== 'procedural';
 
     // Player settings
     this.walkSpeed = 5;
@@ -316,26 +347,35 @@ export class Player {
   }
 
   /**
-   * Attempt to load a character model (optional - uses procedural character by default)
+   * Attempt to load a character model from Three.js examples
+   * Falls back to procedural character if loading fails
    */
   async loadCharacterModel() {
-    // Skip model loading - we're using the procedural character
-    // This method is kept for future use if a custom GLB model is desired
-    console.log('Using procedural character (no external model needed)');
-    return;
+    // Skip if explicitly using procedural
+    if (!this.useExternalModel) {
+      console.log('[Player] Using procedural character');
+      return;
+    }
 
-    // NOTE: The code below can be uncommented to load an external character model
-    /*
+    const modelConfig = CHARACTER_MODELS[this.characterType];
+    if (!modelConfig) {
+      console.warn(`[Player] Unknown character type: ${this.characterType}, using procedural`);
+      return;
+    }
+
+    console.log(`[Player] Loading ${this.characterType} model from Three.js examples...`);
+
     const loader = new GLTFLoader();
 
     try {
-      // Try to load character model from assets
-      const modelPath = '/assets/models/character.glb';
-
-      const gltf = await loader.loadAsync(modelPath);
+      const gltf = await loader.loadAsync(modelConfig.url);
       this.characterModel = gltf.scene;
 
-      // Apply enhanced toon material to all meshes in the model
+      // Apply scale and offset
+      this.characterModel.scale.setScalar(modelConfig.scale);
+      this.characterModel.position.y = modelConfig.yOffset;
+
+      // Apply enhanced toon material to all meshes
       this.characterModel.traverse((child) => {
         if (child.isMesh) {
           // Get the original color if available
@@ -354,8 +394,10 @@ export class Player {
           child.receiveShadow = false;
 
           // Create and add outline for this mesh
-          const outline = createOutlineMesh(child, 0.02);
-          child.parent.add(outline);
+          const outline = createOutlineMesh(child, 0.015);
+          if (outline) {
+            child.parent.add(outline);
+          }
         }
       });
 
@@ -363,15 +405,20 @@ export class Player {
       if (gltf.animations && gltf.animations.length > 0) {
         this.mixer = new THREE.AnimationMixer(this.characterModel);
 
+        // Map animations based on config
         gltf.animations.forEach((clip) => {
-          const name = clip.name.toLowerCase();
-          if (name.includes('idle')) {
+          const clipName = clip.name;
+
+          if (clipName === modelConfig.animations.idle) {
             this.animations[ANIM_STATES.IDLE] = this.mixer.clipAction(clip);
-          } else if (name.includes('walk')) {
+          } else if (clipName === modelConfig.animations.walk) {
             this.animations[ANIM_STATES.WALK] = this.mixer.clipAction(clip);
-          } else if (name.includes('run')) {
+          } else if (clipName === modelConfig.animations.run) {
             this.animations[ANIM_STATES.RUN] = this.mixer.clipAction(clip);
           }
+
+          // Store all animations for debugging
+          console.log(`[Player] Found animation: ${clipName}`);
         });
 
         // Start with idle animation
@@ -380,22 +427,18 @@ export class Player {
         }
       }
 
-      // Scale and position the model
-      this.characterModel.scale.set(1, 1, 1);
-      this.characterModel.position.y = -this.capsuleHeight / 2;
-
       // Hide procedural character and show loaded model
       if (this.characterGroup) {
         this.characterGroup.visible = false;
       }
       this.container.add(this.characterModel);
 
-      console.log('Character model loaded successfully');
+      console.log(`[Player] ${this.characterType} model loaded successfully!`);
     } catch (error) {
-      // Model not found, keep using procedural character
-      console.log('Character model not found, using procedural character');
+      console.warn('[Player] Failed to load character model:', error.message);
+      console.log('[Player] Falling back to procedural character');
+      // Keep using the procedural character (already created)
     }
-    */
   }
 
   /**

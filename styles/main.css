@@ -150,6 +150,57 @@ html, body {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
+.subtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: var(--spacing-xs);
+}
+
+/* Character Selector */
+.character-selector {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background-color: var(--color-bg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  pointer-events: auto;
+}
+
+.selector-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#character-select {
+  background-color: var(--color-dark);
+  color: var(--color-accent);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+#character-select:hover,
+#character-select:focus {
+  border-color: var(--color-accent);
+}
+
+#character-select option {
+  background-color: var(--color-dark);
+  color: var(--color-text);
+}
+
 .hud-bottom {
   position: absolute;
   bottom: var(--spacing-lg);

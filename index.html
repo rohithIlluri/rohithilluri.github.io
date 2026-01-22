@@ -27,8 +27,21 @@
       <!-- HUD Overlay -->
       <div id="hud" class="hud hidden">
         <div class="hud-top">
-          <h2 class="location-name" id="location-name">Spawn Point</h2>
+          <h2 class="location-name" id="location-name">Messenger Clone</h2>
+          <p class="subtitle">Inspired by messenger.abeto.co</p>
         </div>
+
+        <!-- Character Selector -->
+        <div class="character-selector" id="character-selector">
+          <span class="selector-label">Character:</span>
+          <select id="character-select">
+            <option value="robot">Robot</option>
+            <option value="soldier">Soldier</option>
+            <option value="fox">Fox</option>
+            <option value="procedural">Procedural</option>
+          </select>
+        </div>
+
         <div class="hud-bottom">
           <div class="controls-hint">
             <span>WASD</span> Move
@@ -63,5 +76,26 @@
     </div>
 
     <script type="module" src="/src/main.js"></script>
+
+    <!-- Character selector logic -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const select = document.getElementById('character-select');
+        if (!select) return;
+
+        // Set current value from URL
+        const params = new URLSearchParams(window.location.search);
+        const currentCharacter = params.get('character') || 'robot';
+        select.value = currentCharacter;
+
+        // Handle change
+        select.addEventListener('change', (e) => {
+          const newChar = e.target.value;
+          const url = new URL(window.location);
+          url.searchParams.set('character', newChar);
+          window.location.href = url.toString();
+        });
+      });
+    </script>
   </body>
 </html>
