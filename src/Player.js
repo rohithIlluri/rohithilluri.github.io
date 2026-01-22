@@ -431,15 +431,15 @@ export class Player {
     // =====================================================
     // LEGS (0.9 units total: thigh 0.35 + shin 0.35 + foot 0.2)
     // =====================================================
-    // Thigh (shorts material - visible as shorts extend)
+    // Thigh (skin - visible below skirt)
     const thighGeo = new THREE.CylinderGeometry(0.055, 0.05, 0.3, 8);
 
-    this.leftThigh = new THREE.Mesh(thighGeo, shortsMaterial);
+    this.leftThigh = new THREE.Mesh(thighGeo, skinMaterial);
     this.leftThigh.position.set(-0.07, 0.75, 0);
     this.leftThigh.castShadow = true;
     this.characterGroup.add(this.leftThigh);
 
-    this.rightThigh = new THREE.Mesh(thighGeo, shortsMaterial);
+    this.rightThigh = new THREE.Mesh(thighGeo, skinMaterial);
     this.rightThigh.position.set(0.07, 0.75, 0);
     this.rightThigh.castShadow = true;
     this.characterGroup.add(this.rightThigh);
