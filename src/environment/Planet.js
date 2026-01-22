@@ -11,6 +11,7 @@ import {
   createEnhancedToonMaterial,
   createGlowMaterial,
   createOutlineMesh,
+  createThickOutlineMesh,
   TOON_CONSTANTS,
 } from '../shaders/toon.js';
 
@@ -24,6 +25,31 @@ const NEON_COLORS = {
   purple: 0x9B89B3,  // Muted from 0x9B59B6
   red: 0xE88B8B,     // Muted from 0xFF3333
 };
+
+// Building color palette (messenger.abeto.co style)
+const BUILDING_COLORS = {
+  cream: 0xE8DFD0,     // Most common - warm cream
+  warmGray: 0xB8AFA0,  // Warm gray
+  coolGray: 0x8A9090,  // Cool gray
+  mint: 0x8ECAC6,      // Mint/teal accent
+  coral: 0xE8A8A0,     // Coral/peach accent
+};
+
+// Awning colors for storefronts
+const AWNING_COLORS = [
+  0xC44536, // Red
+  0x2A9D8F, // Teal
+  0xE9C46A, // Yellow/gold
+  0x264653, // Dark teal
+  0xE76F51, // Orange/coral
+];
+
+// Sign border colors (Japanese style)
+const SIGN_BORDER_COLORS = [
+  0xC44536, // Red
+  0x2A9D8F, // Teal
+  0xE9C46A, // Yellow
+];
 
 // NYC prop colors
 const NYC_COLORS = {
@@ -181,10 +207,10 @@ export class Planet {
     this.scene.add(planetMesh);
     this.meshes.push(planetMesh);
 
-    // Create an outline for the planet
-    const outlineMesh = createOutlineMesh(planetMesh, 0.1);
-    this.scene.add(outlineMesh);
-    this.meshes.push(outlineMesh);
+    // Create an outline for the planet (thick for silhouette effect)
+    const planetOutline = createThickOutlineMesh(planetMesh, 0.15);
+    this.scene.add(planetOutline);
+    this.meshes.push(planetOutline);
 
     // Add zone accents (paths, colored areas)
     this.createZoneAccents();
@@ -224,17 +250,19 @@ export class Planet {
    * Create portfolio buildings on the planet surface
    */
   createPortfolioBuildings() {
+    // Main portfolio buildings with detailed facades
     // Skills Building - Forest Grove (West)
     this.createBuilding({
       lat: 0,
       lon: 90,
       name: 'Skills Library',
-      type: 'tower',
-      color: 0x8B4513,
+      type: 'apartment',
+      color: BUILDING_COLORS.cream,
       neonColor: NEON_COLORS.blue,
-      width: 6,
-      height: 10,
+      width: 7,
+      height: 12,
       depth: 6,
+      floors: 4,
     });
 
     // Projects Building - Mountain Peak (North)
@@ -242,12 +270,13 @@ export class Planet {
       lat: 45,
       lon: 0,
       name: 'Projects Tower',
-      type: 'tower',
-      color: 0x4A4A4A,
+      type: 'apartment',
+      color: BUILDING_COLORS.warmGray,
       neonColor: NEON_COLORS.pink,
       width: 8,
-      height: 15,
-      depth: 8,
+      height: 16,
+      depth: 7,
+      floors: 5,
     });
 
     // Music Shop - Beach (East)
@@ -256,11 +285,12 @@ export class Planet {
       lon: -90,
       name: 'Vinyl Records',
       type: 'shop',
-      color: 0xB22222,
+      color: BUILDING_COLORS.coral,
       neonColor: NEON_COLORS.green,
-      width: 5,
-      height: 5,
+      width: 6,
+      height: 8,
       depth: 5,
+      floors: 3,
     });
 
     // Contact Building - Harbor (South)
@@ -269,11 +299,47 @@ export class Planet {
       lon: 0,
       name: 'Contact Cafe',
       type: 'shop',
-      color: 0x8B4513,
+      color: BUILDING_COLORS.mint,
       neonColor: NEON_COLORS.orange,
-      width: 5,
-      height: 4,
+      width: 6,
+      height: 7,
       depth: 5,
+      floors: 3,
+    });
+
+    // Additional background buildings for density (messenger.abeto.co style)
+    const backgroundBuildings = [
+      { lat: 15, lon: 70, color: BUILDING_COLORS.cream, floors: 4 },
+      { lat: -15, lon: 70, color: BUILDING_COLORS.warmGray, floors: 3 },
+      { lat: 15, lon: 110, color: BUILDING_COLORS.coolGray, floors: 5 },
+      { lat: -15, lon: 110, color: BUILDING_COLORS.coral, floors: 3 },
+      { lat: 30, lon: -30, color: BUILDING_COLORS.cream, floors: 4 },
+      { lat: -30, lon: -30, color: BUILDING_COLORS.mint, floors: 3 },
+      { lat: 30, lon: 30, color: BUILDING_COLORS.warmGray, floors: 5 },
+      { lat: -30, lon: 30, color: BUILDING_COLORS.coolGray, floors: 4 },
+      { lat: 20, lon: 150, color: BUILDING_COLORS.cream, floors: 3 },
+      { lat: -20, lon: 150, color: BUILDING_COLORS.coral, floors: 4 },
+      { lat: 25, lon: -120, color: BUILDING_COLORS.mint, floors: 3 },
+      { lat: -25, lon: -120, color: BUILDING_COLORS.warmGray, floors: 5 },
+    ];
+
+    backgroundBuildings.forEach((bldg, index) => {
+      const width = 5 + Math.random() * 3;
+      const height = 6 + bldg.floors * 2.5;
+      const depth = 4 + Math.random() * 2;
+
+      this.createBuilding({
+        lat: bldg.lat,
+        lon: bldg.lon,
+        name: `Building ${index + 1}`,
+        type: 'apartment',
+        color: bldg.color,
+        neonColor: Object.values(NEON_COLORS)[index % Object.values(NEON_COLORS).length],
+        width,
+        height,
+        depth,
+        floors: bldg.floors,
+      });
     });
   }
 
@@ -809,6 +875,13 @@ export class Planet {
     this.meshes.push(trunk);
     this.collisionMeshes.push(trunk);
 
+    // Outline for trunk
+    const trunkOutline = createOutlineMesh(trunk, 0.03);
+    trunkOutline.position.copy(trunk.position);
+    trunkOutline.quaternion.copy(trunk.quaternion);
+    this.scene.add(trunkOutline);
+    this.meshes.push(trunkOutline);
+
     // Tree foliage (cone shape)
     const foliageGeom = new THREE.ConeGeometry(1.5, 3, 8);
     const foliageMaterial = createToonMaterial({ color: 0x388E3C });
@@ -822,8 +895,8 @@ export class Planet {
     this.scene.add(foliage);
     this.meshes.push(foliage);
 
-    // Outline for foliage
-    const foliageOutline = createOutlineMesh(foliage, 0.04);
+    // Outline for foliage (increased for graphic novel style)
+    const foliageOutline = createOutlineMesh(foliage, 0.05);
     foliageOutline.position.copy(foliage.position);
     foliageOutline.quaternion.copy(foliage.quaternion);
     this.scene.add(foliageOutline);
@@ -854,6 +927,13 @@ export class Planet {
     this.meshes.push(seat);
     this.collisionMeshes.push(seat);
 
+    // Outline for bench seat
+    const seatOutline = createOutlineMesh(seat, 0.025);
+    seatOutline.position.copy(seat.position);
+    seatOutline.quaternion.copy(seat.quaternion);
+    this.scene.add(seatOutline);
+    this.meshes.push(seatOutline);
+
     // Bench back
     const backGeom = new THREE.BoxGeometry(1.5, 0.5, 0.1);
     const back = new THREE.Mesh(backGeom, woodMaterial);
@@ -883,6 +963,13 @@ export class Planet {
 
     this.scene.add(pole);
     this.meshes.push(pole);
+
+    // Outline for street light pole
+    const poleOutline = createOutlineMesh(pole, 0.02);
+    poleOutline.position.copy(pole.position);
+    poleOutline.quaternion.copy(pole.quaternion);
+    this.scene.add(poleOutline);
+    this.meshes.push(poleOutline);
 
     // Light fixture
     const fixtureGeom = new THREE.BoxGeometry(0.5, 0.2, 0.3);

@@ -219,7 +219,7 @@ export class Player {
     head.castShadow = true;
     this.characterGroup.add(head);
 
-    const headOutline = createOutlineMesh(head, 0.012);
+    const headOutline = createOutlineMesh(head, 0.015);
     headOutline.position.copy(head.position);
     headOutline.scale.copy(head.scale);
     this.characterGroup.add(headOutline);
@@ -261,7 +261,7 @@ export class Player {
     backHair.rotation.x = Math.PI;
     this.characterGroup.add(backHair);
 
-    const hairOutline = createOutlineMesh(hair, 0.01);
+    const hairOutline = createOutlineMesh(hair, 0.012);
     hairOutline.position.copy(hair.position);
     hairOutline.scale.copy(hair.scale);
     this.characterGroup.add(hairOutline);
@@ -332,7 +332,7 @@ export class Player {
     collar.position.set(0, 1.43, 0.01);
     this.characterGroup.add(collar);
 
-    const torsoOutline = createOutlineMesh(upperTorso, 0.012);
+    const torsoOutline = createOutlineMesh(upperTorso, 0.015);
     torsoOutline.position.copy(upperTorso.position);
     this.characterGroup.add(torsoOutline);
 
@@ -344,7 +344,7 @@ export class Player {
     skirt.castShadow = true;
     this.characterGroup.add(skirt);
 
-    const skirtOutline = createOutlineMesh(skirt, 0.01);
+    const skirtOutline = createOutlineMesh(skirt, 0.012);
     skirtOutline.position.copy(skirt.position);
     this.characterGroup.add(skirtOutline);
 
@@ -367,7 +367,7 @@ export class Player {
     bagBody.castShadow = true;
     this.characterGroup.add(bagBody);
 
-    const bagOutline = createOutlineMesh(bagBody, 0.008);
+    const bagOutline = createOutlineMesh(bagBody, 0.01);
     bagOutline.position.copy(bagBody.position);
     bagOutline.rotation.copy(bagBody.rotation);
     this.characterGroup.add(bagOutline);
@@ -482,7 +482,7 @@ export class Player {
     leftFoot.castShadow = true;
     this.characterGroup.add(leftFoot);
 
-    const leftFootOutline = createOutlineMesh(leftFoot, 0.006);
+    const leftFootOutline = createOutlineMesh(leftFoot, 0.008);
     leftFootOutline.position.copy(leftFoot.position);
     this.characterGroup.add(leftFootOutline);
 
@@ -491,7 +491,7 @@ export class Player {
     rightFoot.castShadow = true;
     this.characterGroup.add(rightFoot);
 
-    const rightFootOutline = createOutlineMesh(rightFoot, 0.006);
+    const rightFootOutline = createOutlineMesh(rightFoot, 0.008);
     rightFootOutline.position.copy(rightFoot.position);
     this.characterGroup.add(rightFootOutline);
 
