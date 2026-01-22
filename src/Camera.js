@@ -16,8 +16,8 @@ export class Camera {
     this.distance = 8; // Distance from player
     this.height = 4; // Height above player (in local "up" direction)
     this.angle = 0; // Current rotation angle (follows player)
-    this.smoothness = 0.1; // Camera lag (0 = instant, 1 = very slow)
-    this.orientationSmoothness = 0.08; // How fast camera reorients on sphere
+    this.smoothness = 0.25; // Camera lag - increased for floaty follow
+    this.orientationSmoothness = 0.15; // Smoother sphere orientation transitions
 
     // Look at offset (slightly above player in local up direction)
     this.lookAtOffset = new THREE.Vector3(0, 1.5, 0);

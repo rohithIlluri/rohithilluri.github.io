@@ -13,6 +13,8 @@ import {
   createOutlineMesh,
   TOON_CONSTANTS,
 } from './shaders/toon.js';
+import { getAudioManager } from './audio/AudioManager.js';
+import { MESSENGER_PALETTE, CHARACTER_COLORS } from './constants/colors.js';
 
 // Animation states
 const ANIM_STATES = {
@@ -34,10 +36,12 @@ export class Player {
     this.inputManager = inputManager;
     this.planet = planet; // TinyPlanet instance (null for flat world fallback)
 
-    // Player settings
-    this.walkSpeed = 5;
-    this.runSpeed = 10;
-    this.turnSpeed = 8;
+    // Player settings (tuned for messenger.abeto.co floaty feel)
+    this.walkSpeed = 4;
+    this.runSpeed = 8;
+    this.turnSpeed = 3.5; // Reduced from 8 for gradual turning
+    this.currentSpeed = 0; // For velocity smoothing
+    this.speedAcceleration = 8; // How fast speed changes
 
     // Capsule collision dimensions
     this.capsuleRadius = 0.4;
@@ -125,19 +129,31 @@ export class Player {
   }
 
   /**
-   * Create the player mesh - stylized procedural character
+   * Create the player mesh - Messenger-style anime proportioned character
+   * Based on messenger.abeto.co analysis
+   *
+   * PROPORTIONS (6 heads tall, 1.8 units total):
+   * - Head: 0.3 units
+   * - Neck: 0.05 units
+   * - Torso: 0.55 units (upper + lower)
+   * - Legs: 0.9 units (thigh + shin + foot)
    */
   createMesh() {
     // Create procedural character (no external model needed)
     this.characterGroup = new THREE.Group();
 
-    // Character colors
-    const skinColor = 0xFFD1AA; // Warm skin tone
-    const shirtColor = 0x4FC3F7; // Light blue shirt
-    const pantsColor = 0x3D5A80; // Dark blue pants
-    const hairColor = 0x5D4037; // Brown hair
+    // Messenger-style character colors from the palette
+    const skinColor = CHARACTER_COLORS.skin;        // #E8D8C8 warm beige
+    const shirtBaseColor = CHARACTER_COLORS.shirtWhite;  // #F5F0E8 off-white
+    const shirtDesignColor = CHARACTER_COLORS.shirtBlue; // #5ABBB8 teal
+    const shortsColor = CHARACTER_COLORS.shorts;    // #6A7A7A gray/blue
+    const hairColor = CHARACTER_COLORS.hair;        // #3A3A3A dark charcoal
+    const sockColor = CHARACTER_COLORS.socks;       // #2A2A2A black
+    const shoeColor = CHARACTER_COLORS.shoes;       // #E8B84A yellow
+    const bagColor = CHARACTER_COLORS.bag;          // #E8B84A yellow
+    const strapColor = CHARACTER_COLORS.strap;      // #D88A4A orange
 
-    // Create materials
+    // Create materials with messenger blue-gray shadows
     const skinMaterial = createEnhancedToonMaterial({
       color: skinColor,
       isCharacter: true,
@@ -145,13 +161,19 @@ export class Player {
     });
 
     const shirtMaterial = createEnhancedToonMaterial({
-      color: shirtColor,
+      color: shirtBaseColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
 
-    const pantsMaterial = createEnhancedToonMaterial({
-      color: pantsColor,
+    const shirtDesignMaterial = createEnhancedToonMaterial({
+      color: shirtDesignColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    const shortsMaterial = createEnhancedToonMaterial({
+      color: shortsColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
@@ -162,142 +184,352 @@ export class Player {
       lightDirection: this.lightDirection,
     });
 
-    // HEAD
-    const headGeo = new THREE.SphereGeometry(0.25, 16, 16);
-    const head = new THREE.Mesh(headGeo, skinMaterial);
-    head.position.y = 1.45;
-    head.castShadow = true;
-    this.characterGroup.add(head);
-
-    // Head outline
-    const headOutline = createOutlineMesh(head, 0.015);
-    headOutline.position.copy(head.position);
-    this.characterGroup.add(headOutline);
-
-    // HAIR (half-sphere on top of head)
-    const hairGeo = new THREE.SphereGeometry(0.27, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-    const hair = new THREE.Mesh(hairGeo, hairMaterial);
-    hair.position.y = 1.5;
-    hair.castShadow = true;
-    this.characterGroup.add(hair);
-
-    const hairOutline = createOutlineMesh(hair, 0.012);
-    hairOutline.position.copy(hair.position);
-    this.characterGroup.add(hairOutline);
-
-    // EYES (black dots)
-    const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x1A1A2E });
-    const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
-
-    const leftEye = new THREE.Mesh(eyeGeo, eyeMaterial);
-    leftEye.position.set(-0.08, 1.48, 0.2);
-    this.characterGroup.add(leftEye);
-
-    const rightEye = new THREE.Mesh(eyeGeo, eyeMaterial);
-    rightEye.position.set(0.08, 1.48, 0.2);
-    this.characterGroup.add(rightEye);
-
-    // EYE WHITES (slightly larger, behind black dots)
-    const eyeWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-    const eyeWhiteGeo = new THREE.SphereGeometry(0.055, 8, 8);
-
-    const leftEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMaterial);
-    leftEyeWhite.position.set(-0.08, 1.48, 0.18);
-    this.characterGroup.add(leftEyeWhite);
-
-    const rightEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMaterial);
-    rightEyeWhite.position.set(0.08, 1.48, 0.18);
-    this.characterGroup.add(rightEyeWhite);
-
-    // BODY (torso)
-    const bodyGeo = new THREE.BoxGeometry(0.4, 0.5, 0.22);
-    const body = new THREE.Mesh(bodyGeo, shirtMaterial);
-    body.position.y = 1.0;
-    body.castShadow = true;
-    this.characterGroup.add(body);
-
-    const bodyOutline = createOutlineMesh(body, 0.015);
-    bodyOutline.position.copy(body.position);
-    this.characterGroup.add(bodyOutline);
-
-    // ARMS
-    const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8);
-
-    // Left arm
-    this.leftArm = new THREE.Mesh(armGeo, skinMaterial);
-    this.leftArm.position.set(-0.28, 1.0, 0);
-    this.leftArm.rotation.z = Math.PI / 12;
-    this.leftArm.castShadow = true;
-    this.characterGroup.add(this.leftArm);
-
-    const leftArmOutline = createOutlineMesh(this.leftArm, 0.012);
-    leftArmOutline.position.copy(this.leftArm.position);
-    leftArmOutline.rotation.copy(this.leftArm.rotation);
-    this.characterGroup.add(leftArmOutline);
-
-    // Right arm
-    this.rightArm = new THREE.Mesh(armGeo, skinMaterial);
-    this.rightArm.position.set(0.28, 1.0, 0);
-    this.rightArm.rotation.z = -Math.PI / 12;
-    this.rightArm.castShadow = true;
-    this.characterGroup.add(this.rightArm);
-
-    const rightArmOutline = createOutlineMesh(this.rightArm, 0.012);
-    rightArmOutline.position.copy(this.rightArm.position);
-    rightArmOutline.rotation.copy(this.rightArm.rotation);
-    this.characterGroup.add(rightArmOutline);
-
-    // LEGS
-    const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
-
-    // Left leg
-    this.leftLeg = new THREE.Mesh(legGeo, pantsMaterial);
-    this.leftLeg.position.set(-0.1, 0.5, 0);
-    this.leftLeg.castShadow = true;
-    this.characterGroup.add(this.leftLeg);
-
-    const leftLegOutline = createOutlineMesh(this.leftLeg, 0.012);
-    leftLegOutline.position.copy(this.leftLeg.position);
-    this.characterGroup.add(leftLegOutline);
-
-    // Right leg
-    this.rightLeg = new THREE.Mesh(legGeo, pantsMaterial);
-    this.rightLeg.position.set(0.1, 0.5, 0);
-    this.rightLeg.castShadow = true;
-    this.characterGroup.add(this.rightLeg);
-
-    const rightLegOutline = createOutlineMesh(this.rightLeg, 0.012);
-    rightLegOutline.position.copy(this.rightLeg.position);
-    this.characterGroup.add(rightLegOutline);
-
-    // FEET (small boxes)
-    const footGeo = new THREE.BoxGeometry(0.1, 0.08, 0.16);
-    const footMaterial = createEnhancedToonMaterial({
-      color: 0x3D3D3D, // Dark shoes
+    const bagMaterial = createEnhancedToonMaterial({
+      color: bagColor,
       isCharacter: true,
       lightDirection: this.lightDirection,
     });
 
-    const leftFoot = new THREE.Mesh(footGeo, footMaterial);
-    leftFoot.position.set(-0.1, 0.2, 0.02);
+    const strapMaterial = createEnhancedToonMaterial({
+      color: strapColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    const sockMaterial = createEnhancedToonMaterial({
+      color: sockColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    const shoeMaterial = createEnhancedToonMaterial({
+      color: shoeColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    // =====================================================
+    // HEAD (0.3 units height, positioned at top)
+    // =====================================================
+    // Rounded head, slightly wider at cheeks
+    const headGeo = new THREE.SphereGeometry(0.125, 16, 16);
+    const head = new THREE.Mesh(headGeo, skinMaterial);
+    head.position.y = 1.65; // Near top of 1.8 unit height
+    head.scale.set(1, 1.2, 1.0); // Taller head shape
+    head.castShadow = true;
+    this.characterGroup.add(head);
+
+    const headOutline = createOutlineMesh(head, 0.012);
+    headOutline.position.copy(head.position);
+    headOutline.scale.copy(head.scale);
+    this.characterGroup.add(headOutline);
+
+    // =====================================================
+    // HAIR - Messy anime style
+    // =====================================================
+    // Main hair volume
+    const hairGeo = new THREE.SphereGeometry(0.14, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.65);
+    const hair = new THREE.Mesh(hairGeo, hairMaterial);
+    hair.position.y = 1.72;
+    hair.scale.set(1.05, 1.0, 1.05);
+    hair.castShadow = true;
+    this.characterGroup.add(hair);
+
+    // Hair bangs (messy front fringe)
+    const bangsGeo = new THREE.BoxGeometry(0.22, 0.06, 0.08);
+    const bangs = new THREE.Mesh(bangsGeo, hairMaterial);
+    bangs.position.set(0, 1.72, 0.1);
+    bangs.rotation.x = -0.2;
+    this.characterGroup.add(bangs);
+
+    // Side strands (messy look)
+    const strandGeo = new THREE.SphereGeometry(0.04, 8, 8);
+    const leftStrand = new THREE.Mesh(strandGeo, hairMaterial);
+    leftStrand.position.set(-0.12, 1.58, 0.06);
+    leftStrand.scale.set(1, 1.5, 0.8);
+    this.characterGroup.add(leftStrand);
+
+    const rightStrand = new THREE.Mesh(strandGeo, hairMaterial);
+    rightStrand.position.set(0.12, 1.58, 0.06);
+    rightStrand.scale.set(1, 1.5, 0.8);
+    this.characterGroup.add(rightStrand);
+
+    // Back of hair
+    const backHairGeo = new THREE.SphereGeometry(0.13, 12, 12, 0, Math.PI * 2, Math.PI * 0.3, Math.PI * 0.5);
+    const backHair = new THREE.Mesh(backHairGeo, hairMaterial);
+    backHair.position.set(0, 1.58, -0.06);
+    backHair.rotation.x = Math.PI;
+    this.characterGroup.add(backHair);
+
+    const hairOutline = createOutlineMesh(hair, 0.01);
+    hairOutline.position.copy(hair.position);
+    hairOutline.scale.copy(hair.scale);
+    this.characterGroup.add(hairOutline);
+
+    // =====================================================
+    // FACE - Simple dots (messenger.abeto.co style)
+    // =====================================================
+    // Eyes - simple black dots (CRITICAL for authentic look)
+    const eyeMaterial = new THREE.MeshBasicMaterial({ color: MESSENGER_PALETTE.OUTLINE_PRIMARY });
+    const eyeGeo = new THREE.SphereGeometry(0.02, 8, 8);
+
+    const leftEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+    leftEye.position.set(-0.04, 1.64, 0.11);
+    this.characterGroup.add(leftEye);
+
+    const rightEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+    rightEye.position.set(0.04, 1.64, 0.11);
+    this.characterGroup.add(rightEye);
+
+    // Eye highlights (tiny white dots - anime style)
+    const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const highlightGeo = new THREE.SphereGeometry(0.005, 6, 6);
+
+    const leftHighlight = new THREE.Mesh(highlightGeo, highlightMaterial);
+    leftHighlight.position.set(-0.035, 1.65, 0.125);
+    this.characterGroup.add(leftHighlight);
+
+    const rightHighlight = new THREE.Mesh(highlightGeo, highlightMaterial);
+    rightHighlight.position.set(0.045, 1.65, 0.125);
+    this.characterGroup.add(rightHighlight);
+
+    // Eyebrows (thin lines)
+    const browMaterial = new THREE.MeshBasicMaterial({ color: hairColor });
+    const browGeo = new THREE.BoxGeometry(0.03, 0.004, 0.004);
+
+    const leftBrow = new THREE.Mesh(browGeo, browMaterial);
+    leftBrow.position.set(-0.04, 1.68, 0.11);
+    leftBrow.rotation.z = 0.1;
+    this.characterGroup.add(leftBrow);
+
+    const rightBrow = new THREE.Mesh(browGeo, browMaterial);
+    rightBrow.position.set(0.04, 1.68, 0.11);
+    rightBrow.rotation.z = -0.1;
+    this.characterGroup.add(rightBrow);
+
+    // =====================================================
+    // NECK (0.05 units)
+    // =====================================================
+    const neckGeo = new THREE.CylinderGeometry(0.04, 0.045, 0.05, 8);
+    const neck = new THREE.Mesh(neckGeo, skinMaterial);
+    neck.position.y = 1.475;
+    neck.castShadow = true;
+    this.characterGroup.add(neck);
+
+    // =====================================================
+    // TORSO - Upper (0.35 units) + Lower (0.2 units) = 0.55 units
+    // =====================================================
+    // Upper torso (t-shirt)
+    const upperTorsoGeo = new THREE.BoxGeometry(0.28, 0.35, 0.14);
+    const upperTorso = new THREE.Mesh(upperTorsoGeo, shirtMaterial);
+    upperTorso.position.y = 1.275;
+    // Taper at bottom
+    upperTorso.scale.set(1, 1, 1);
+    upperTorso.castShadow = true;
+    this.characterGroup.add(upperTorso);
+
+    // T-shirt triangle design (teal)
+    const triangleShape = new THREE.Shape();
+    triangleShape.moveTo(0, 0.12);
+    triangleShape.lineTo(-0.1, -0.08);
+    triangleShape.lineTo(0.1, -0.08);
+    triangleShape.lineTo(0, 0.12);
+
+    const triangleGeo = new THREE.ShapeGeometry(triangleShape);
+    const triangleDecal = new THREE.Mesh(triangleGeo, shirtDesignMaterial);
+    triangleDecal.position.set(0, 1.28, 0.072);
+    this.characterGroup.add(triangleDecal);
+
+    const torsoOutline = createOutlineMesh(upperTorso, 0.01);
+    torsoOutline.position.copy(upperTorso.position);
+    this.characterGroup.add(torsoOutline);
+
+    // Lower torso (shorts - higher waist)
+    const shortsTorsoGeo = new THREE.BoxGeometry(0.26, 0.2, 0.13);
+    const shortsTorso = new THREE.Mesh(shortsTorsoGeo, shortsMaterial);
+    shortsTorso.position.y = 1.0;
+    shortsTorso.castShadow = true;
+    this.characterGroup.add(shortsTorso);
+
+    const shortsOutline = createOutlineMesh(shortsTorso, 0.008);
+    shortsOutline.position.copy(shortsTorso.position);
+    this.characterGroup.add(shortsOutline);
+
+    // =====================================================
+    // MESSENGER BAG (iconic yellow bag)
+    // =====================================================
+    // Strap (orange, diagonal across body)
+    const strapGeo = new THREE.BoxGeometry(0.03, 0.5, 0.015);
+    const strap = new THREE.Mesh(strapGeo, strapMaterial);
+    strap.position.set(0.04, 1.25, 0.04);
+    strap.rotation.z = Math.PI / 5;
+    strap.rotation.x = 0.1;
+    this.characterGroup.add(strap);
+
+    // Bag body (on right hip)
+    const bagBodyGeo = new THREE.BoxGeometry(0.15, 0.12, 0.05);
+    const bagBody = new THREE.Mesh(bagBodyGeo, bagMaterial);
+    bagBody.position.set(0.16, 0.95, 0.08);
+    bagBody.rotation.y = -0.15;
+    bagBody.castShadow = true;
+    this.characterGroup.add(bagBody);
+
+    const bagOutline = createOutlineMesh(bagBody, 0.008);
+    bagOutline.position.copy(bagBody.position);
+    bagOutline.rotation.copy(bagBody.rotation);
+    this.characterGroup.add(bagOutline);
+
+    // Bag flap
+    const flapGeo = new THREE.BoxGeometry(0.15, 0.04, 0.055);
+    const flap = new THREE.Mesh(flapGeo, bagMaterial);
+    flap.position.set(0.16, 1.0, 0.1);
+    flap.rotation.y = -0.15;
+    flap.rotation.x = 0.05;
+    this.characterGroup.add(flap);
+
+    // =====================================================
+    // ARMS (skin colored, hang naturally)
+    // =====================================================
+    // Upper arm
+    const upperArmGeo = new THREE.CylinderGeometry(0.035, 0.03, 0.2, 8);
+
+    this.leftUpperArm = new THREE.Mesh(upperArmGeo, skinMaterial);
+    this.leftUpperArm.position.set(-0.17, 1.3, 0);
+    this.leftUpperArm.rotation.z = 0.15;
+    this.leftUpperArm.castShadow = true;
+    this.characterGroup.add(this.leftUpperArm);
+
+    this.rightUpperArm = new THREE.Mesh(upperArmGeo, skinMaterial);
+    this.rightUpperArm.position.set(0.17, 1.3, 0);
+    this.rightUpperArm.rotation.z = -0.15;
+    this.rightUpperArm.castShadow = true;
+    this.characterGroup.add(this.rightUpperArm);
+
+    // Forearm
+    const forearmGeo = new THREE.CylinderGeometry(0.03, 0.025, 0.18, 8);
+
+    this.leftForearm = new THREE.Mesh(forearmGeo, skinMaterial);
+    this.leftForearm.position.set(-0.2, 1.12, 0);
+    this.leftForearm.rotation.z = 0.1;
+    this.leftForearm.castShadow = true;
+    this.characterGroup.add(this.leftForearm);
+
+    this.rightForearm = new THREE.Mesh(forearmGeo, skinMaterial);
+    this.rightForearm.position.set(0.2, 1.12, 0);
+    this.rightForearm.rotation.z = -0.1;
+    this.rightForearm.castShadow = true;
+    this.characterGroup.add(this.rightForearm);
+
+    // Hands (simplified box)
+    const handGeo = new THREE.BoxGeometry(0.05, 0.06, 0.025);
+
+    const leftHand = new THREE.Mesh(handGeo, skinMaterial);
+    leftHand.position.set(-0.21, 1.0, 0);
+    this.characterGroup.add(leftHand);
+
+    const rightHand = new THREE.Mesh(handGeo, skinMaterial);
+    rightHand.position.set(0.21, 1.0, 0);
+    this.characterGroup.add(rightHand);
+
+    // Store arm references for animation
+    this.leftArm = this.leftUpperArm;
+    this.rightArm = this.rightUpperArm;
+
+    // =====================================================
+    // LEGS (0.9 units total: thigh 0.35 + shin 0.35 + foot 0.2)
+    // =====================================================
+    // Thigh (shorts material - visible as shorts extend)
+    const thighGeo = new THREE.CylinderGeometry(0.055, 0.05, 0.3, 8);
+
+    this.leftThigh = new THREE.Mesh(thighGeo, shortsMaterial);
+    this.leftThigh.position.set(-0.07, 0.75, 0);
+    this.leftThigh.castShadow = true;
+    this.characterGroup.add(this.leftThigh);
+
+    this.rightThigh = new THREE.Mesh(thighGeo, shortsMaterial);
+    this.rightThigh.position.set(0.07, 0.75, 0);
+    this.rightThigh.castShadow = true;
+    this.characterGroup.add(this.rightThigh);
+
+    // Lower leg (skin)
+    const shinGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.35, 8);
+
+    this.leftShin = new THREE.Mesh(shinGeo, skinMaterial);
+    this.leftShin.position.set(-0.07, 0.42, 0);
+    this.leftShin.castShadow = true;
+    this.characterGroup.add(this.leftShin);
+
+    this.rightShin = new THREE.Mesh(shinGeo, skinMaterial);
+    this.rightShin.position.set(0.07, 0.42, 0);
+    this.rightShin.castShadow = true;
+    this.characterGroup.add(this.rightShin);
+
+    // Store leg references for animation
+    this.leftLeg = this.leftThigh;
+    this.rightLeg = this.rightThigh;
+
+    // Ankle socks (black)
+    const sockGeo = new THREE.CylinderGeometry(0.042, 0.045, 0.04, 8);
+
+    const leftSock = new THREE.Mesh(sockGeo, sockMaterial);
+    leftSock.position.set(-0.07, 0.23, 0);
+    this.characterGroup.add(leftSock);
+
+    const rightSock = new THREE.Mesh(sockGeo, sockMaterial);
+    rightSock.position.set(0.07, 0.23, 0);
+    this.characterGroup.add(rightSock);
+
+    // =====================================================
+    // FEET/SHOES (yellow chunky sneakers)
+    // =====================================================
+    const footGeo = new THREE.BoxGeometry(0.08, 0.06, 0.14);
+
+    const leftFoot = new THREE.Mesh(footGeo, shoeMaterial);
+    leftFoot.position.set(-0.07, 0.17, 0.02);
     leftFoot.castShadow = true;
     this.characterGroup.add(leftFoot);
 
-    const rightFoot = new THREE.Mesh(footGeo, footMaterial);
-    rightFoot.position.set(0.1, 0.2, 0.02);
+    const leftFootOutline = createOutlineMesh(leftFoot, 0.006);
+    leftFootOutline.position.copy(leftFoot.position);
+    this.characterGroup.add(leftFootOutline);
+
+    const rightFoot = new THREE.Mesh(footGeo, shoeMaterial);
+    rightFoot.position.set(0.07, 0.17, 0.02);
     rightFoot.castShadow = true;
     this.characterGroup.add(rightFoot);
 
-    // SHADOW BLOB (circle under character)
-    const shadowGeo = new THREE.CircleGeometry(0.3, 16);
+    const rightFootOutline = createOutlineMesh(rightFoot, 0.006);
+    rightFootOutline.position.copy(rightFoot.position);
+    this.characterGroup.add(rightFootOutline);
+
+    // Shoe details (black accents)
+    const shoeAccentMaterial = createEnhancedToonMaterial({
+      color: MESSENGER_PALETTE.OUTLINE_PRIMARY,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
+    const accentGeo = new THREE.BoxGeometry(0.082, 0.015, 0.142);
+    const leftAccent = new THREE.Mesh(accentGeo, shoeAccentMaterial);
+    leftAccent.position.set(-0.07, 0.13, 0.02);
+    this.characterGroup.add(leftAccent);
+
+    const rightAccent = new THREE.Mesh(accentGeo, shoeAccentMaterial);
+    rightAccent.position.set(0.07, 0.13, 0.02);
+    this.characterGroup.add(rightAccent);
+
+    // =====================================================
+    // SHADOW BLOB (soft blue-gray, not black)
+    // =====================================================
+    const shadowGeo = new THREE.CircleGeometry(0.22, 16);
     const shadowMat = new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: MESSENGER_PALETTE.SHADOW_TINT, // Blue-gray shadow
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.25,
     });
     this.shadowBlob = new THREE.Mesh(shadowGeo, shadowMat);
     this.shadowBlob.rotation.x = -Math.PI / 2;
-    this.shadowBlob.position.y = 0.02;
+    this.shadowBlob.position.y = 0.01;
     this.characterGroup.add(this.shadowBlob);
 
     // Animation state
@@ -305,10 +537,12 @@ export class Player {
     this.walkCycle = 0;
 
     // Store references for legacy compatibility
-    this.mesh = body; // Main mesh reference
-    this.outlineMesh = bodyOutline;
+    this.mesh = upperTorso; // Main mesh reference
+    this.outlineMesh = torsoOutline;
 
     // Add character group to container
+    // Offset down so feet are at origin
+    this.characterGroup.position.y = -0.14;
     this.container.add(this.characterGroup);
 
     // Position the container
@@ -455,12 +689,20 @@ export class Player {
     const isRunning = this.inputManager.isRunning();
     const isMoving = this.inputManager.isMoving();
 
-    // Calculate speed
-    const speed = isRunning ? this.runSpeed : this.walkSpeed;
+    // Calculate target speed with smooth acceleration/deceleration
+    const targetSpeed = isMoving ? (isRunning ? this.runSpeed : this.walkSpeed) : 0;
+    this.currentSpeed = THREE.MathUtils.lerp(this.currentSpeed, targetSpeed, this.speedAcceleration * deltaTime);
+    const speed = this.currentSpeed;
 
     // Update animation state based on movement
     if (isMoving) {
       this.setAnimationState(isRunning ? ANIM_STATES.RUN : ANIM_STATES.WALK);
+
+      // Play footstep sounds
+      const audioManager = getAudioManager();
+      if (audioManager && audioManager.initialized) {
+        audioManager.playFootstep(isRunning, 'grass');
+      }
     } else {
       this.setAnimationState(ANIM_STATES.IDLE);
     }
@@ -484,64 +726,97 @@ export class Player {
 
   /**
    * Update procedural character animation (no external animation files needed)
+   * Natural human movement with proper arm/leg swing
    */
   updateProceduralAnimation(deltaTime, isMoving, isRunning) {
     if (!this.characterGroup) return;
 
+    // Base offset for character group (keep feet at ground)
+    const baseY = -0.14;
+
     if (isMoving) {
-      // Walk/run cycle
-      const cycleSpeed = isRunning ? 12 : 8;
+      // Walk/run cycle timing
+      const cycleSpeed = isRunning ? 14 : 9;
       this.walkCycle += deltaTime * cycleSpeed;
 
-      // Leg swing
-      const legSwing = Math.sin(this.walkCycle) * 0.4;
-      if (this.leftLeg) {
-        this.leftLeg.rotation.x = legSwing;
-        this.leftLeg.position.z = Math.sin(this.walkCycle) * 0.05;
+      // Leg swing amplitude (larger for running)
+      const legSwingAmp = isRunning ? 0.5 : 0.35;
+      const legSwing = Math.sin(this.walkCycle) * legSwingAmp;
+
+      // Apply to thighs (main leg movement)
+      if (this.leftThigh) {
+        this.leftThigh.rotation.x = legSwing;
       }
-      if (this.rightLeg) {
-        this.rightLeg.rotation.x = -legSwing;
-        this.rightLeg.position.z = -Math.sin(this.walkCycle) * 0.05;
+      if (this.rightThigh) {
+        this.rightThigh.rotation.x = -legSwing;
+      }
+
+      // Shins follow with slight delay
+      if (this.leftShin) {
+        this.leftShin.rotation.x = Math.sin(this.walkCycle - 0.3) * legSwingAmp * 0.5;
+      }
+      if (this.rightShin) {
+        this.rightShin.rotation.x = -Math.sin(this.walkCycle - 0.3) * legSwingAmp * 0.5;
       }
 
       // Arm swing (opposite to legs)
-      const armSwing = Math.sin(this.walkCycle) * 0.3;
-      if (this.leftArm) {
-        this.leftArm.rotation.x = -armSwing;
+      const armSwingAmp = isRunning ? 0.4 : 0.25;
+      const armSwing = Math.sin(this.walkCycle) * armSwingAmp;
+
+      if (this.leftUpperArm) {
+        this.leftUpperArm.rotation.x = -armSwing;
       }
-      if (this.rightArm) {
-        this.rightArm.rotation.x = armSwing;
+      if (this.rightUpperArm) {
+        this.rightUpperArm.rotation.x = armSwing;
       }
 
-      // Body bob
-      const bobAmount = isRunning ? 0.03 : 0.015;
-      this.characterGroup.position.y = Math.abs(Math.sin(this.walkCycle * 2)) * bobAmount;
+      if (this.leftForearm) {
+        this.leftForearm.rotation.x = -Math.sin(this.walkCycle + 0.2) * armSwingAmp * 0.6;
+      }
+      if (this.rightForearm) {
+        this.rightForearm.rotation.x = Math.sin(this.walkCycle + 0.2) * armSwingAmp * 0.6;
+      }
+
+      // Body bob (vertical bounce)
+      const bobAmount = isRunning ? 0.04 : 0.02;
+      const bob = Math.abs(Math.sin(this.walkCycle * 2)) * bobAmount;
+      this.characterGroup.position.y = baseY + bob;
+
+      // Slight forward lean when running
+      if (isRunning) {
+        this.characterGroup.rotation.x = 0.08;
+      } else {
+        this.characterGroup.rotation.x *= 0.9;
+      }
 
       // Reset idle time
       this.idleTime = 0;
     } else {
-      // Idle animation (gentle breathing)
+      // Idle animation - breathing and subtle sway
       this.idleTime += deltaTime;
-      const breathe = Math.sin(this.idleTime * 2) * 0.01;
 
-      // Slight body movement
-      this.characterGroup.position.y = breathe;
+      // Breathing (chest rises and falls)
+      const breathe = Math.sin(this.idleTime * 2) * 0.008;
 
-      // Reset limbs to rest position
-      if (this.leftLeg) {
-        this.leftLeg.rotation.x *= 0.9;
-        this.leftLeg.position.z *= 0.9;
-      }
-      if (this.rightLeg) {
-        this.rightLeg.rotation.x *= 0.9;
-        this.rightLeg.position.z *= 0.9;
-      }
-      if (this.leftArm) {
-        this.leftArm.rotation.x *= 0.9;
-      }
-      if (this.rightArm) {
-        this.rightArm.rotation.x *= 0.9;
-      }
+      // Subtle body sway (weight shift)
+      const sway = Math.sin(this.idleTime * 0.7) * 0.008;
+
+      // Apply breathing and sway
+      this.characterGroup.position.y = baseY + breathe;
+      this.characterGroup.rotation.z = sway;
+      this.characterGroup.rotation.x *= 0.95; // Reset forward lean
+
+      // Smoothly reset limbs to rest position
+      const resetSpeed = 0.92;
+
+      if (this.leftThigh) this.leftThigh.rotation.x *= resetSpeed;
+      if (this.rightThigh) this.rightThigh.rotation.x *= resetSpeed;
+      if (this.leftShin) this.leftShin.rotation.x *= resetSpeed;
+      if (this.rightShin) this.rightShin.rotation.x *= resetSpeed;
+      if (this.leftUpperArm) this.leftUpperArm.rotation.x *= resetSpeed;
+      if (this.rightUpperArm) this.rightUpperArm.rotation.x *= resetSpeed;
+      if (this.leftForearm) this.leftForearm.rotation.x *= resetSpeed;
+      if (this.rightForearm) this.rightForearm.rotation.x *= resetSpeed;
 
       // Gradually reset walk cycle
       this.walkCycle *= 0.95;

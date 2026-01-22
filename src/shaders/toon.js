@@ -1,17 +1,19 @@
 /**
- * toon.js - Enhanced Cel-Shading Material Factory
- * Creates toon-shaded materials with 4-band lighting, rim lighting, and purple shadows
- * Per visual quality spec: messenger.abeto.co parity
+ * toon.js - Messenger-Style Cel-Shading Material Factory
+ * Creates toon-shaded materials with soft cel-shading and blue-gray shadows
+ * Style matching messenger.abeto.co - muted, hand-drawn aesthetic
  */
 
 import * as THREE from 'three';
+import { MESSENGER_PALETTE } from '../constants/colors.js';
 
-// Visual quality constants from spec
-const SHADOW_COLOR = 0x4A4063; // Purple shadow undertone (never pure black)
-const OUTLINE_COLOR = 0x1A1A2E; // Dark blue-ish outline
+// Visual quality constants - messenger.abeto.co style
+// CRITICAL: Shadows are BLUE-GRAY, never black or purple
+const SHADOW_COLOR = MESSENGER_PALETTE.SHADOW_TINT; // #5A6B7A blue-gray
+const OUTLINE_COLOR = MESSENGER_PALETTE.OUTLINE_PRIMARY; // #2A2A2A near-black
 const RIM_COLOR = 0xFFFFFF;
-const RIM_INTENSITY_CHARACTER = 0.4;
-const RIM_INTENSITY_ENVIRONMENT = 0.25;
+const RIM_INTENSITY_CHARACTER = 0.3; // Slightly reduced for softer look
+const RIM_INTENSITY_ENVIRONMENT = 0.15; // Very subtle on environment
 
 /**
  * Create a basic toon material with cel-shading (for simple objects)

@@ -47,7 +47,8 @@ MODEL=""
 
 # DANGER: Skip permission prompts for autonomous operation
 # Only enable in isolated/sandboxed environments!
-DANGEROUSLY_SKIP_PERMISSIONS="false"
+# Set to "true" to allow Ralph to edit files without permission prompts
+DANGEROUSLY_SKIP_PERMISSIONS="true"
 
 #######################################
 # SAFETY SETTINGS

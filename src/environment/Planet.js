@@ -14,15 +14,15 @@ import {
   TOON_CONSTANTS,
 } from '../shaders/toon.js';
 
-// Neon sign colors
+// Neon sign colors (softened for dreamy messenger-like feel)
 const NEON_COLORS = {
-  pink: 0xFF1493,
-  blue: 0x00BFFF,
-  green: 0x00FF7F,
-  yellow: 0xFFD54F,
-  orange: 0xFF6B35,
-  purple: 0x9B59B6,
-  red: 0xFF3333,
+  pink: 0xE87AA4,    // Muted from 0xFF1493
+  blue: 0x7EC8E3,    // Muted from 0x00BFFF
+  green: 0x7FD1A6,   // Muted from 0x00FF7F
+  yellow: 0xE8D178,  // Softened from 0xFFD54F
+  orange: 0xE8A87C,  // Muted from 0xFF6B35
+  purple: 0x9B89B3,  // Muted from 0x9B59B6
+  red: 0xE88B8B,     // Muted from 0xFF3333
 };
 
 // NYC prop colors
@@ -82,7 +82,81 @@ export class Planet {
     this.createPlanetSphere();
     this.createPortfolioBuildings();
     this.createProps();
+    this.createPowerLines(); // Connect street lights with power lines
+    this.createBushesNearBuildings(); // Add vegetation near buildings
     this.createGroundScatter();
+  }
+
+  /**
+   * Create bushes/shrubs near buildings for more natural environment
+   */
+  createBushesNearBuildings() {
+    const bushMaterial = createToonMaterial({ color: 0x2E7D32 }); // Dark green
+    const bushMaterialLight = createToonMaterial({ color: 0x4CAF50 }); // Lighter green
+
+    // Building positions with offsets for bushes
+    const buildingBushes = [
+      // Skills Building (West) - lon 90
+      { lat: 3, lon: 85 }, { lat: -3, lon: 85 },
+      { lat: 5, lon: 95 }, { lat: -5, lon: 95 },
+      // Projects Building (North) - lat 45, lon 0
+      { lat: 42, lon: 5 }, { lat: 42, lon: -5 },
+      { lat: 48, lon: 3 }, { lat: 48, lon: -3 },
+      // Music Shop (East) - lon -90
+      { lat: 3, lon: -85 }, { lat: -3, lon: -85 },
+      { lat: 2, lon: -95 }, { lat: -2, lon: -95 },
+      // Contact Cafe (South) - lat -45, lon 0
+      { lat: -42, lon: 5 }, { lat: -42, lon: -5 },
+      { lat: -48, lon: 3 }, { lat: -48, lon: -3 },
+    ];
+
+    buildingBushes.forEach((pos, index) => {
+      this.createBush(pos.lat, pos.lon, index % 2 === 0 ? bushMaterial : bushMaterialLight);
+    });
+  }
+
+  /**
+   * Create a bush/shrub at the specified position
+   */
+  createBush(lat, lon, material) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Create bush from multiple overlapping spheres for organic shape
+    const bushGroup = new THREE.Group();
+
+    // Main bush body (3 overlapping spheres)
+    const sizes = [0.5, 0.4, 0.35];
+    const offsets = [
+      { x: 0, y: 0, z: 0 },
+      { x: 0.25, y: 0.15, z: 0.1 },
+      { x: -0.2, y: 0.1, z: -0.15 },
+    ];
+
+    sizes.forEach((size, i) => {
+      const sphereGeo = new THREE.SphereGeometry(size, 8, 6);
+      const sphere = new THREE.Mesh(sphereGeo, material);
+      sphere.position.set(offsets[i].x, offsets[i].y + size, offsets[i].z);
+      sphere.castShadow = true;
+      bushGroup.add(sphere);
+    });
+
+    // Position and orient bush on planet surface
+    bushGroup.position.copy(surfacePos);
+    bushGroup.quaternion.copy(orientation);
+
+    this.scene.add(bushGroup);
+    this.meshes.push(bushGroup);
+
+    // Add collision for the main sphere
+    const collisionGeo = new THREE.SphereGeometry(0.5, 8, 6);
+    const collisionMesh = new THREE.Mesh(collisionGeo, material);
+    collisionMesh.position.copy(surfacePos.clone().add(up.clone().multiplyScalar(0.5)));
+    collisionMesh.visible = false;
+    this.collisionMeshes.push(collisionMesh);
+
+    this.props.push({ mesh: bushGroup, type: 'bush', lat, lon });
   }
 
   /**
@@ -534,6 +608,9 @@ export class Planet {
         // Transform to building's coordinate system
         windowMesh.position.set(localX, localY, localZ);
 
+        // Mark 30% of windows as "dark" - they stay unlit at night for realism
+        windowMesh.userData.isDarkWindow = Math.random() < 0.3;
+
         // Add as child of building so it inherits orientation
         building.add(windowMesh);
         this.windowMeshes.push(windowMesh);
@@ -824,13 +901,112 @@ export class Planet {
     bulb.position.set(0, -0.15, 0);
     fixture.add(bulb);
 
+    // Glow sprite (additive blending for soft corona effect)
+    const glowMaterial = new THREE.SpriteMaterial({
+      color: 0xFFE4B5,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const glowSprite = new THREE.Sprite(glowMaterial);
+    glowSprite.scale.set(1.2, 1.2, 1);
+    glowSprite.position.set(0, -0.15, 0);
+    fixture.add(glowSprite);
+
     // Point light
     const pointLight = new THREE.PointLight(0xFFE4B5, 0, 12);
     pointLight.position.set(0, -0.15, 0);
     fixture.add(pointLight);
 
-    this.lights.push({ light: pointLight, mesh: bulb, type: 'streetlight' });
+    this.lights.push({ light: pointLight, mesh: bulb, glow: glowSprite, type: 'streetlight' });
     this.props.push({ mesh: pole, type: 'streetlight', lat, lon });
+
+    // Store pole reference for power line connections
+    if (!this.streetLightPoles) {
+      this.streetLightPoles = [];
+    }
+    this.streetLightPoles.push({
+      position: polePos.clone().add(up.clone().multiplyScalar(2)), // Top of pole
+      lat,
+      lon,
+    });
+  }
+
+  /**
+   * Create power lines between nearby street light poles
+   */
+  createPowerLines() {
+    if (!this.streetLightPoles || this.streetLightPoles.length < 2) return;
+
+    const wireMaterial = new THREE.LineBasicMaterial({
+      color: 0x1A1A1A,
+      linewidth: 1,
+    });
+
+    // Define which poles should be connected (based on proximity)
+    const connections = [
+      // Equator connections (poles at lat 0)
+      { from: { lat: 0, lon: 45 }, to: { lat: 0, lon: 135 } },
+      { from: { lat: 0, lon: 135 }, to: { lat: 10, lon: 180 } },
+      { from: { lat: 10, lon: 180 }, to: { lat: 0, lon: -135 } },
+      { from: { lat: 0, lon: -135 }, to: { lat: 0, lon: -45 } },
+      // Northern connections
+      { from: { lat: 20, lon: 20 }, to: { lat: 30, lon: 70 } },
+      { from: { lat: 30, lon: 70 }, to: { lat: 25, lon: -110 } },
+      // Southern connections
+      { from: { lat: -20, lon: -20 }, to: { lat: -30, lon: -70 } },
+      { from: { lat: -30, lon: -70 }, to: { lat: -25, lon: 110 } },
+      // Cross connections (north-south)
+      { from: { lat: 0, lon: 45 }, to: { lat: 20, lon: 20 } },
+      { from: { lat: 0, lon: -45 }, to: { lat: -20, lon: -20 } },
+    ];
+
+    connections.forEach(({ from, to }) => {
+      const fromPole = this.streetLightPoles.find(
+        (p) => p.lat === from.lat && p.lon === from.lon
+      );
+      const toPole = this.streetLightPoles.find(
+        (p) => p.lat === to.lat && p.lon === to.lon
+      );
+
+      if (fromPole && toPole) {
+        this.createPowerLine(fromPole.position, toPole.position, wireMaterial);
+      }
+    });
+  }
+
+  /**
+   * Create a sagging power line between two points
+   */
+  createPowerLine(start, end, material) {
+    const points = [];
+    const segments = 20;
+
+    // Create a catenary curve (natural sag of a hanging cable)
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+
+      // Linear interpolation for base position
+      const point = new THREE.Vector3().lerpVectors(start, end, t);
+
+      // Add sag (catenary approximation using parabola)
+      // Sag is maximum at middle (t=0.5) and zero at ends
+      const sagAmount = 0.8; // How much the wire sags
+      const sag = sagAmount * Math.sin(t * Math.PI);
+
+      // Get the "down" direction at this point on the sphere
+      const up = this.planet.getUpVector(point);
+      point.add(up.clone().multiplyScalar(-sag));
+
+      points.push(point);
+    }
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const line = new THREE.Line(geometry, material);
+
+    this.scene.add(line);
+    this.meshes.push(line);
   }
 
   /**
@@ -1150,29 +1326,80 @@ export class Planet {
   setTimeOfDay(time) {
     this.timeOfDay = time;
 
+    // Day and night colors
+    const dayWindowColor = new THREE.Color(0x87CEEB); // Sky blue reflection
+    const nightWindowColor = new THREE.Color(0xFFE082); // Warm interior light
+
     // Update street lights
-    this.lights.forEach(({ light, mesh, type }) => {
+    this.lights.forEach(({ light, mesh, glow, type }) => {
       if (type === 'streetlight' && light) {
-        light.intensity = time * 2;
+        // Street light intensity increases at night
+        light.intensity = time * 3;
         if (mesh && mesh.material) {
-          mesh.material.opacity = time;
+          // Bulb glows brighter at night
+          mesh.material.opacity = 0.3 + time * 0.7;
+          // Add emissive glow
+          if (mesh.material.emissive) {
+            mesh.material.emissive.setHex(0xFFE4B5);
+            mesh.material.emissiveIntensity = time * 2;
+          }
+        }
+        // Glow sprite visibility (additive blending corona)
+        if (glow && glow.material) {
+          glow.material.opacity = time * 0.5; // Soft glow at night
+          // Scale glow based on time for bloom-like effect
+          const glowScale = 1.2 + time * 0.6;
+          glow.scale.set(glowScale, glowScale, 1);
         }
       } else if (type === 'neon' && light) {
-        light.intensity = 0.5 + time * 1.5;
+        // Neon lights are always somewhat visible, brighter at night
+        light.intensity = 0.3 + time * 2.0;
       }
     });
 
-    // Update neon signs
-    this.neonSigns.forEach(({ mesh }) => {
+    // Update neon signs with color intensity
+    this.neonSigns.forEach(({ mesh, color }) => {
       if (mesh && mesh.material) {
-        mesh.material.opacity = 0.7 + time * 0.3;
+        // Neon signs glow brighter at night
+        const brightness = 0.6 + time * 0.4;
+        mesh.material.opacity = brightness;
+        // Make neon more vivid at night
+        if (mesh.material.color && color) {
+          const neonColor = new THREE.Color(color);
+          neonColor.multiplyScalar(0.7 + time * 0.5);
+          mesh.material.color.copy(neonColor);
+        }
       }
     });
 
-    // Update windows
+    // Dark window colors (30% of windows stay unlit at night for realism)
+    const darkWindowColor = new THREE.Color(0x2A3040); // Dark blue-gray
+
+    // Update windows - transition from blue (day) to warm yellow (night)
+    // Some windows (marked as dark) stay unlit at night for realism
     this.windowMeshes.forEach((mesh) => {
-      if (mesh.material && mesh.material.transparent) {
-        mesh.material.opacity = time * 0.6;
+      if (mesh.material) {
+        const isDark = mesh.userData.isDarkWindow;
+
+        if (isDark) {
+          // Dark windows: stay blue during day, become dark at night
+          const windowColor = dayWindowColor.clone().lerp(darkWindowColor, time);
+          mesh.material.color.copy(windowColor);
+
+          // Dark windows stay dim
+          if (mesh.material.transparent) {
+            mesh.material.opacity = 0.3;
+          }
+        } else {
+          // Normal windows: transition from blue to warm yellow
+          const windowColor = dayWindowColor.clone().lerp(nightWindowColor, time);
+          mesh.material.color.copy(windowColor);
+
+          // Windows become more opaque/lit at night
+          if (mesh.material.transparent) {
+            mesh.material.opacity = 0.3 + time * 0.5;
+          }
+        }
       }
     });
   }
@@ -1182,7 +1409,38 @@ export class Planet {
   }
 
   update(deltaTime) {
-    // Animate any props that need it
+    // Track animation time
+    this.animationTime = (this.animationTime || 0) + deltaTime;
+
+    // Animate neon signs with subtle flicker (only at night)
+    if (this.timeOfDay > 0.3) {
+      this.neonSigns.forEach(({ mesh, color, type }, index) => {
+        if (mesh && mesh.material) {
+          // Different flicker patterns for each sign
+          const flickerSpeed = 8 + index * 2;
+          const flickerAmount = 0.1;
+
+          // Subtle brightness flicker using noise-like pattern
+          const flicker = 1.0 + Math.sin(this.animationTime * flickerSpeed) * flickerAmount
+            * Math.sin(this.animationTime * flickerSpeed * 0.7 + index) * 0.5;
+
+          // Apply flicker to opacity
+          const baseOpacity = 0.6 + this.timeOfDay * 0.4;
+          mesh.material.opacity = baseOpacity * flicker;
+        }
+      });
+
+      // Animate neon point lights
+      this.lights.forEach(({ light, type }, index) => {
+        if (type === 'neon' && light) {
+          const flickerSpeed = 6 + index;
+          const flicker = 1.0 + Math.sin(this.animationTime * flickerSpeed) * 0.15;
+          const baseIntensity = 0.3 + this.timeOfDay * 2.0;
+          light.intensity = baseIntensity * flicker;
+        }
+      });
+    }
+
     // Animate flowers swaying
     if (this.flowerInstances) {
       this.flowerTime = (this.flowerTime || 0) + deltaTime;
