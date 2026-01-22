@@ -53,16 +53,16 @@ export const MESSENGER_PALETTE = {
   OUTLINE_SOFT: 0x4A4A4A,     // Distant objects, softer outlines
   OUTLINE_LIGHTEST: 0x5A5A5A, // Very distant, subtle outlines
 
-  // === CHARACTER ===
-  CHAR_SKIN: 0xE8D8C8,        // Warm beige skin tone
-  CHAR_HAIR: 0x3A3A3A,        // Dark charcoal hair
-  CHAR_SHIRT_WHITE: 0xF5F0E8, // Off-white shirt base
-  CHAR_SHIRT_BLUE: 0x5ABBB8,  // Teal shirt design
-  CHAR_SHORTS: 0x6A7A7A,      // Gray/blue shorts
-  CHAR_SOCKS: 0x2A2A2A,       // Black socks
-  CHAR_SHOES: 0xE8B84A,       // Yellow chunky sneakers
-  CHAR_BAG: 0xE8B84A,         // Yellow messenger bag
-  CHAR_STRAP: 0xD88A4A,       // Orange bag strap
+  // === CHARACTER (messenger.abeto.co reference) ===
+  CHAR_SKIN: 0xF5E1D0,        // Warm peach skin tone
+  CHAR_HAIR: 0x2A2A2A,        // Black hair (very dark)
+  CHAR_SHIRT: 0x2A2A2A,       // Black/dark shirt
+  CHAR_SHIRT_COLLAR: 0xF5E8D8, // Shirt collar accent (cream)
+  CHAR_SKIRT: 0xB84A5A,       // Red/maroon skirt (signature look)
+  CHAR_SOCKS: 0xF5F5F5,       // White socks
+  CHAR_SHOES: 0x2A2A2A,       // Black shoes
+  CHAR_BAG: 0x3A3A3A,         // Dark messenger bag
+  CHAR_STRAP: 0x3A3A3A,       // Dark bag strap
 
   // === UI ===
   UI_WHITE: 0xFFFFFF,         // UI backgrounds
@@ -118,9 +118,9 @@ export const VEGETATION_COLORS = {
 export const CHARACTER_COLORS = {
   skin: MESSENGER_PALETTE.CHAR_SKIN,
   hair: MESSENGER_PALETTE.CHAR_HAIR,
-  shirtWhite: MESSENGER_PALETTE.CHAR_SHIRT_WHITE,
-  shirtBlue: MESSENGER_PALETTE.CHAR_SHIRT_BLUE,
-  shorts: MESSENGER_PALETTE.CHAR_SHORTS,
+  shirt: MESSENGER_PALETTE.CHAR_SHIRT,
+  shirtCollar: MESSENGER_PALETTE.CHAR_SHIRT_COLLAR,
+  skirt: MESSENGER_PALETTE.CHAR_SKIRT,
   socks: MESSENGER_PALETTE.CHAR_SOCKS,
   shoes: MESSENGER_PALETTE.CHAR_SHOES,
   bag: MESSENGER_PALETTE.CHAR_BAG,
