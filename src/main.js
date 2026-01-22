@@ -1,5 +1,6 @@
 /**
- * NYC Street Portfolio - Main Entry Point
+ * Messenger Clone - Main Entry Point
+ * Mail delivery game on a tiny planet inspired by messenger.abeto.co
  * Initializes the 3D world and handles the application lifecycle
  */
 
@@ -46,7 +47,7 @@ class App {
       // Set up window resize handler
       window.addEventListener('resize', () => this.onResize());
 
-      console.log('NYC Street Portfolio initialized successfully');
+      console.log('Messenger clone initialized successfully');
     } catch (error) {
       console.error('Failed to initialize application:', error);
       this.showError(error.message);

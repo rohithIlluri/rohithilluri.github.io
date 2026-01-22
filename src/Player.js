@@ -208,6 +208,13 @@ export class Player {
       lightDirection: this.lightDirection,
     });
 
+    // Thigh material (skin-colored - visible below skirt)
+    const shortsMaterial = createEnhancedToonMaterial({
+      color: skinColor,
+      isCharacter: true,
+      lightDirection: this.lightDirection,
+    });
+
     // =====================================================
     // HEAD (0.3 units height, positioned at top)
     // =====================================================
