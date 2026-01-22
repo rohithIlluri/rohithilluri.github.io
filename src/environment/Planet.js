@@ -11,6 +11,7 @@ import {
   createEnhancedToonMaterial,
   createGlowMaterial,
   createOutlineMesh,
+  createThickOutlineMesh,
   TOON_CONSTANTS,
 } from '../shaders/toon.js';
 
@@ -24,6 +25,31 @@ const NEON_COLORS = {
   purple: 0x9B89B3,  // Muted from 0x9B59B6
   red: 0xE88B8B,     // Muted from 0xFF3333
 };
+
+// Building color palette (messenger.abeto.co style)
+const BUILDING_COLORS = {
+  cream: 0xE8DFD0,     // Most common - warm cream
+  warmGray: 0xB8AFA0,  // Warm gray
+  coolGray: 0x8A9090,  // Cool gray
+  mint: 0x8ECAC6,      // Mint/teal accent
+  coral: 0xE8A8A0,     // Coral/peach accent
+};
+
+// Awning colors for storefronts
+const AWNING_COLORS = [
+  0xC44536, // Red
+  0x2A9D8F, // Teal
+  0xE9C46A, // Yellow/gold
+  0x264653, // Dark teal
+  0xE76F51, // Orange/coral
+];
+
+// Sign border colors (Japanese style)
+const SIGN_BORDER_COLORS = [
+  0xC44536, // Red
+  0x2A9D8F, // Teal
+  0xE9C46A, // Yellow
+];
 
 // NYC prop colors
 const NYC_COLORS = {
@@ -181,10 +207,10 @@ export class Planet {
     this.scene.add(planetMesh);
     this.meshes.push(planetMesh);
 
-    // Create an outline for the planet
-    const outlineMesh = createOutlineMesh(planetMesh, 0.1);
-    this.scene.add(outlineMesh);
-    this.meshes.push(outlineMesh);
+    // Create an outline for the planet (thick for silhouette effect)
+    const planetOutline = createThickOutlineMesh(planetMesh, 0.15);
+    this.scene.add(planetOutline);
+    this.meshes.push(planetOutline);
 
     // Add zone accents (paths, colored areas)
     this.createZoneAccents();
@@ -224,17 +250,19 @@ export class Planet {
    * Create portfolio buildings on the planet surface
    */
   createPortfolioBuildings() {
+    // Main portfolio buildings with detailed facades
     // Skills Building - Forest Grove (West)
     this.createBuilding({
       lat: 0,
       lon: 90,
       name: 'Skills Library',
-      type: 'tower',
-      color: 0x8B4513,
+      type: 'apartment',
+      color: BUILDING_COLORS.cream,
       neonColor: NEON_COLORS.blue,
-      width: 6,
-      height: 10,
+      width: 7,
+      height: 12,
       depth: 6,
+      floors: 4,
     });
 
     // Projects Building - Mountain Peak (North)
@@ -242,12 +270,13 @@ export class Planet {
       lat: 45,
       lon: 0,
       name: 'Projects Tower',
-      type: 'tower',
-      color: 0x4A4A4A,
+      type: 'apartment',
+      color: BUILDING_COLORS.warmGray,
       neonColor: NEON_COLORS.pink,
       width: 8,
-      height: 15,
-      depth: 8,
+      height: 16,
+      depth: 7,
+      floors: 5,
     });
 
     // Music Shop - Beach (East)
@@ -256,11 +285,12 @@ export class Planet {
       lon: -90,
       name: 'Vinyl Records',
       type: 'shop',
-      color: 0xB22222,
+      color: BUILDING_COLORS.coral,
       neonColor: NEON_COLORS.green,
-      width: 5,
-      height: 5,
+      width: 6,
+      height: 8,
       depth: 5,
+      floors: 3,
     });
 
     // Contact Building - Harbor (South)
@@ -269,25 +299,73 @@ export class Planet {
       lon: 0,
       name: 'Contact Cafe',
       type: 'shop',
-      color: 0x8B4513,
+      color: BUILDING_COLORS.mint,
       neonColor: NEON_COLORS.orange,
-      width: 5,
-      height: 4,
+      width: 6,
+      height: 7,
       depth: 5,
+      floors: 3,
+    });
+
+    // Additional background buildings for density (messenger.abeto.co style)
+    const backgroundBuildings = [
+      { lat: 15, lon: 70, color: BUILDING_COLORS.cream, floors: 4 },
+      { lat: -15, lon: 70, color: BUILDING_COLORS.warmGray, floors: 3 },
+      { lat: 15, lon: 110, color: BUILDING_COLORS.coolGray, floors: 5 },
+      { lat: -15, lon: 110, color: BUILDING_COLORS.coral, floors: 3 },
+      { lat: 30, lon: -30, color: BUILDING_COLORS.cream, floors: 4 },
+      { lat: -30, lon: -30, color: BUILDING_COLORS.mint, floors: 3 },
+      { lat: 30, lon: 30, color: BUILDING_COLORS.warmGray, floors: 5 },
+      { lat: -30, lon: 30, color: BUILDING_COLORS.coolGray, floors: 4 },
+      { lat: 20, lon: 150, color: BUILDING_COLORS.cream, floors: 3 },
+      { lat: -20, lon: 150, color: BUILDING_COLORS.coral, floors: 4 },
+      { lat: 25, lon: -120, color: BUILDING_COLORS.mint, floors: 3 },
+      { lat: -25, lon: -120, color: BUILDING_COLORS.warmGray, floors: 5 },
+    ];
+
+    backgroundBuildings.forEach((bldg, index) => {
+      const width = 5 + Math.random() * 3;
+      const height = 6 + bldg.floors * 2.5;
+      const depth = 4 + Math.random() * 2;
+
+      this.createBuilding({
+        lat: bldg.lat,
+        lon: bldg.lon,
+        name: `Building ${index + 1}`,
+        type: 'apartment',
+        color: bldg.color,
+        neonColor: Object.values(NEON_COLORS)[index % Object.values(NEON_COLORS).length],
+        width,
+        height,
+        depth,
+        floors: bldg.floors,
+      });
     });
   }
 
   /**
-   * Create a building at the specified latitude/longitude on the planet
+   * Create a detailed multi-story building at the specified latitude/longitude
+   * Matches messenger.abeto.co visual style with storefronts, varied windows, and architectural details
    */
   createBuilding(config) {
-    const { lat, lon, name, type, color, neonColor, width, height, depth } = config;
+    const {
+      lat,
+      lon,
+      name,
+      type,
+      color,
+      neonColor,
+      width,
+      height,
+      depth,
+      floors = 3,
+    } = config;
 
     // Get position on planet surface
     const surfacePos = this.planet.latLonToPosition(lat, lon);
     const up = this.planet.getUpVector(surfacePos);
 
-    // Create building geometry
+    // Create main building body
     const geometry = new THREE.BoxGeometry(width, height, depth);
     const material = createEnhancedToonMaterial({
       color: color,
@@ -312,21 +390,39 @@ export class Planet {
     this.meshes.push(building);
     this.collisionMeshes.push(building);
 
-    // Create outline for the building
-    const outline = createOutlineMesh(building, 0.06);
+    // Create thick outline for the building (0.08 for visibility)
+    const outline = createOutlineMesh(building, 0.08);
     outline.position.copy(building.position);
     outline.quaternion.copy(building.quaternion);
     this.scene.add(outline);
     this.meshes.push(outline);
 
-    // Add windows
-    this.addWindowsToBuilding(building, width, height, depth, surfacePos, up);
+    // Calculate floor height
+    const floorHeight = (height - 1) / floors;
 
-    // Add neon sign
+    // Add ground floor storefront
+    this.addStorefront(building, width, height, depth, floorHeight);
+
+    // Add windows for upper floors with varied layouts
+    for (let floor = 1; floor < floors; floor++) {
+      this.addFloorWindows(building, width, height, depth, floor, floorHeight, floors);
+    }
+
+    // Add roof parapet
+    this.addRoofParapet(building, width, height, depth, color);
+
+    // Add water tank on tall buildings (5+ floors)
+    if (floors >= 5) {
+      this.addWaterTank(building, width, height, depth);
+    }
+
+    // Add Japanese-style vertical sign on some buildings
+    if (Math.random() > 0.3) {
+      this.addBuildingSign(building, width, height, depth, name);
+    }
+
+    // Add neon sign on front
     this.addNeonSignToBuilding(building, name, neonColor, height, depth, surfacePos, up);
-
-    // Add architectural details (rooftop, awning, AC units)
-    this.addBuildingDetails(building, width, height, depth, color);
 
     // Store building reference
     this.buildings.push({
@@ -340,162 +436,423 @@ export class Planet {
   }
 
   /**
-   * Add architectural details to buildings (rooftop, awning, AC units, fire escapes, water tanks)
+   * Add a ground floor storefront with glass windows and colored awning
    */
-  addBuildingDetails(building, width, height, depth, baseColor) {
-    // Rooftop parapet/edge
-    const parapetGeo = new THREE.BoxGeometry(width + 0.3, 0.25, depth + 0.3);
-    const parapetColor = this.darkenColor(baseColor, 0.15);
-    const parapetMat = createToonMaterial({ color: parapetColor });
-    const parapet = new THREE.Mesh(parapetGeo, parapetMat);
-    parapet.position.y = height / 2 + 0.125;
-    parapet.castShadow = true;
-    building.add(parapet);
-    this.meshes.push(parapet);
+  addStorefront(building, width, height, depth, floorHeight) {
+    const storefrontHeight = floorHeight * 0.9;
+    const storefrontY = -height / 2 + storefrontHeight / 2 + 0.1;
 
-    // Awning over door (front face)
-    const awningGeo = new THREE.BoxGeometry(width * 0.6, 0.12, 0.8);
-    const awningMat = createToonMaterial({ color: 0xB22222 }); // Red awning
+    // Storefront base
+    const baseGeo = new THREE.BoxGeometry(width - 0.2, 0.3, 0.15);
+    const baseMat = createToonMaterial({ color: 0x4A4A4A });
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.set(0, -height / 2 + 0.15, depth / 2 + 0.08);
+    building.add(base);
+    this.meshes.push(base);
+
+    // Base outline
+    const baseOutline = createOutlineMesh(base, 0.08);
+    baseOutline.position.copy(base.position);
+    building.add(baseOutline);
+    this.meshes.push(baseOutline);
+
+    // Large storefront windows
+    const windowWidth = (width - 1.5) / 2;
+    const windowHeight = storefrontHeight * 0.7;
+    const windowMat = createToonMaterial({ color: 0x87CEEB });
+    const frameMat = createToonMaterial({ color: 0x5A5A5A });
+
+    // Left window
+    const leftWindowGeo = new THREE.PlaneGeometry(windowWidth, windowHeight);
+    const leftWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+    leftWindow.position.set(-(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    building.add(leftWindow);
+    this.windowMeshes.push(leftWindow);
+
+    // Left window frame
+    this.addWindowFrame(building, -(windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.01, windowWidth, windowHeight, frameMat);
+
+    // Right window
+    const rightWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+    rightWindow.position.set((windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.02);
+    building.add(rightWindow);
+    this.windowMeshes.push(rightWindow);
+
+    // Right window frame
+    this.addWindowFrame(building, (windowWidth / 2 + 0.4), storefrontY, depth / 2 + 0.01, windowWidth, windowHeight, frameMat);
+
+    // Door
+    const doorGeo = new THREE.BoxGeometry(1.0, storefrontHeight * 0.85, 0.08);
+    const doorMat = createToonMaterial({ color: 0x5D4037 });
+    const door = new THREE.Mesh(doorGeo, doorMat);
+    door.position.set(0, storefrontY - 0.1, depth / 2 + 0.04);
+    building.add(door);
+    this.meshes.push(door);
+
+    // Door frame
+    const doorFrameGeo = new THREE.BoxGeometry(1.2, storefrontHeight * 0.9, 0.06);
+    const doorFrame = new THREE.Mesh(doorFrameGeo, frameMat);
+    doorFrame.position.set(0, storefrontY - 0.08, depth / 2 + 0.02);
+    building.add(doorFrame);
+    this.meshes.push(doorFrame);
+
+    // Door outline
+    const doorOutline = createOutlineMesh(door, 0.08);
+    doorOutline.position.copy(door.position);
+    building.add(doorOutline);
+    this.meshes.push(doorOutline);
+
+    // Awning
+    const awningColor = AWNING_COLORS[Math.floor(Math.random() * AWNING_COLORS.length)];
+    const awningGeo = new THREE.BoxGeometry(width * 0.85, 0.15, 1.0);
+    const awningMat = createToonMaterial({ color: awningColor });
     const awning = new THREE.Mesh(awningGeo, awningMat);
-    awning.position.set(0, -height / 2 + 2.5, depth / 2 + 0.4);
+    awning.position.set(0, storefrontY + windowHeight / 2 + 0.3, depth / 2 + 0.5);
+    awning.rotation.x = -0.15;
     awning.castShadow = true;
     building.add(awning);
     this.meshes.push(awning);
 
-    // Awning stripe (decorative)
-    const stripeGeo = new THREE.BoxGeometry(width * 0.6, 0.05, 0.82);
-    const stripeMat = createToonMaterial({ color: 0xFFFFFF });
-    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-    stripe.position.set(0, -height / 2 + 2.55, depth / 2 + 0.4);
-    building.add(stripe);
-    this.meshes.push(stripe);
+    // Awning outline
+    const awningOutline = createOutlineMesh(awning, 0.08);
+    awningOutline.position.copy(awning.position);
+    awningOutline.rotation.copy(awning.rotation);
+    building.add(awningOutline);
+    this.meshes.push(awningOutline);
 
-    // AC unit on side (random side)
-    const acGeo = new THREE.BoxGeometry(0.8, 0.4, 0.6);
-    const acMat = createToonMaterial({ color: 0x757575 }); // Gray metal
+    // Awning trim
+    const trimGeo = new THREE.BoxGeometry(width * 0.85, 0.08, 0.15);
+    const trimMat = createToonMaterial({ color: 0xFFFFFF });
+    const trim = new THREE.Mesh(trimGeo, trimMat);
+    trim.position.set(0, -0.04, 0.43);
+    awning.add(trim);
+    this.meshes.push(trim);
+  }
+
+  /**
+   * Add window frame around a window
+   */
+  addWindowFrame(building, x, y, z, windowWidth, windowHeight, frameMat) {
+    const frameThickness = 0.08;
+    const frameDepth = 0.05;
+
+    // Top frame
+    const topGeo = new THREE.BoxGeometry(windowWidth + frameThickness * 2, frameThickness, frameDepth);
+    const top = new THREE.Mesh(topGeo, frameMat);
+    top.position.set(x, y + windowHeight / 2 + frameThickness / 2, z);
+    building.add(top);
+    this.meshes.push(top);
+
+    // Bottom frame
+    const bottom = new THREE.Mesh(topGeo, frameMat);
+    bottom.position.set(x, y - windowHeight / 2 - frameThickness / 2, z);
+    building.add(bottom);
+    this.meshes.push(bottom);
+
+    // Left frame
+    const sideGeo = new THREE.BoxGeometry(frameThickness, windowHeight, frameDepth);
+    const left = new THREE.Mesh(sideGeo, frameMat);
+    left.position.set(x - windowWidth / 2 - frameThickness / 2, y, z);
+    building.add(left);
+    this.meshes.push(left);
+
+    // Right frame
+    const right = new THREE.Mesh(sideGeo, frameMat);
+    right.position.set(x + windowWidth / 2 + frameThickness / 2, y, z);
+    building.add(right);
+    this.meshes.push(right);
+  }
+
+  /**
+   * Add windows for a specific floor with random AC units and balconies
+   */
+  addFloorWindows(building, width, height, depth, floor, floorHeight, totalFloors) {
+    const windowSize = 0.9;
+    const windowGap = 0.5;
+    const windowsPerRow = Math.max(2, Math.floor((width - 1) / (windowSize + windowGap)));
+
+    const floorY = -height / 2 + floorHeight * floor + floorHeight / 2 + 0.5;
+
+    const windowMat = createToonMaterial({ color: 0x87CEEB });
+    const frameMat = createToonMaterial({ color: 0x5A5A5A });
+
+    for (let col = 0; col < windowsPerRow; col++) {
+      const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
+
+      // Window pane
+      const windowGeo = new THREE.PlaneGeometry(windowSize, windowSize * 1.2);
+      const windowMesh = new THREE.Mesh(windowGeo, windowMat.clone());
+      windowMesh.position.set(localX, floorY, depth / 2 + 0.02);
+      windowMesh.userData.isDarkWindow = Math.random() < 0.3;
+      building.add(windowMesh);
+      this.windowMeshes.push(windowMesh);
+
+      // Window frame
+      this.addWindowFrame(building, localX, floorY, depth / 2 + 0.01, windowSize, windowSize * 1.2, frameMat);
+
+      // Window sill
+      const sillGeo = new THREE.BoxGeometry(windowSize + 0.2, 0.08, 0.15);
+      const sillMat = createToonMaterial({ color: 0x757575 });
+      const sill = new THREE.Mesh(sillGeo, sillMat);
+      sill.position.set(localX, floorY - windowSize * 0.6 - 0.1, depth / 2 + 0.08);
+      sill.castShadow = true;
+      building.add(sill);
+      this.meshes.push(sill);
+
+      // Sill outline
+      const sillOutline = createOutlineMesh(sill, 0.08);
+      sillOutline.position.copy(sill.position);
+      building.add(sillOutline);
+      this.meshes.push(sillOutline);
+
+      // 20% chance of AC unit
+      if (Math.random() < 0.2 && floor > 1) {
+        this.addACUnit(building, localX, floorY, depth, windowSize);
+      }
+
+      // 15% chance of balcony on upper floors
+      if (Math.random() < 0.15 && floor >= 2 && floor < totalFloors - 1) {
+        this.addBalcony(building, localX, floorY, depth, windowSize);
+      }
+    }
+
+    // Add side windows
+    this.addSideWindows(building, width, height, depth, floorY, windowSize, windowMat);
+  }
+
+  /**
+   * Add simpler windows on building sides
+   */
+  addSideWindows(building, width, height, depth, floorY, windowSize, windowMat) {
+    const windowsPerSide = Math.max(1, Math.floor((depth - 1) / (windowSize + 0.6)));
+
+    for (let col = 0; col < windowsPerSide; col++) {
+      const localZ = (col - (windowsPerSide - 1) / 2) * (windowSize + 0.6);
+
+      // Left side window
+      const leftWindowGeo = new THREE.PlaneGeometry(windowSize * 0.8, windowSize * 1.1);
+      const leftWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+      leftWindow.position.set(-width / 2 - 0.02, floorY, localZ);
+      leftWindow.rotation.y = -Math.PI / 2;
+      leftWindow.userData.isDarkWindow = Math.random() < 0.4;
+      building.add(leftWindow);
+      this.windowMeshes.push(leftWindow);
+
+      // Right side window
+      const rightWindow = new THREE.Mesh(leftWindowGeo, windowMat.clone());
+      rightWindow.position.set(width / 2 + 0.02, floorY, localZ);
+      rightWindow.rotation.y = Math.PI / 2;
+      rightWindow.userData.isDarkWindow = Math.random() < 0.4;
+      building.add(rightWindow);
+      this.windowMeshes.push(rightWindow);
+    }
+  }
+
+  /**
+   * Add an AC unit below a window
+   */
+  addACUnit(building, x, y, depth, windowSize) {
+    const acGeo = new THREE.BoxGeometry(0.6, 0.35, 0.45);
+    const acMat = createToonMaterial({ color: 0x808080 });
     const acUnit = new THREE.Mesh(acGeo, acMat);
-    const acSide = Math.random() > 0.5 ? 1 : -1;
-    acUnit.position.set(acSide * (width / 2 + 0.3), 0, 0);
+    acUnit.position.set(x, y - windowSize * 0.6 - 0.35, depth / 2 + 0.25);
     acUnit.castShadow = true;
     building.add(acUnit);
     this.meshes.push(acUnit);
 
     // AC unit outline
-    const acOutline = createOutlineMesh(acUnit, 0.02);
+    const acOutline = createOutlineMesh(acUnit, 0.08);
     acOutline.position.copy(acUnit.position);
     building.add(acOutline);
     this.meshes.push(acOutline);
 
-    // Door frame
-    const doorFrameGeo = new THREE.BoxGeometry(1.4, 2.4, 0.08);
-    const doorFrameMat = createToonMaterial({ color: 0x3D3D3D });
-    const doorFrame = new THREE.Mesh(doorFrameGeo, doorFrameMat);
-    doorFrame.position.set(0, -height / 2 + 1.3, depth / 2 + 0.01);
-    building.add(doorFrame);
-    this.meshes.push(doorFrame);
-
-    // Door (slightly recessed)
-    const doorGeo = new THREE.BoxGeometry(1.2, 2.2, 0.06);
-    const doorMat = createToonMaterial({ color: 0x5D4037 }); // Brown door
-    const door = new THREE.Mesh(doorGeo, doorMat);
-    door.position.set(0, -height / 2 + 1.3, depth / 2 + 0.04);
-    building.add(door);
-    this.meshes.push(door);
-
-    // Chimney on roof (for shorter buildings)
-    if (height < 8) {
-      const chimneyGeo = new THREE.BoxGeometry(0.5, 1.2, 0.5);
-      const chimneyMat = createToonMaterial({ color: 0x8B4513 });
-      const chimney = new THREE.Mesh(chimneyGeo, chimneyMat);
-      chimney.position.set(width / 4, height / 2 + 0.6, -depth / 4);
-      chimney.castShadow = true;
-      building.add(chimney);
-      this.meshes.push(chimney);
-    }
-
-    // Fire escape on taller buildings (height > 8)
-    if (height > 8) {
-      this.addFireEscape(building, width, height, depth);
-    }
-
-    // Water tank on roof for taller buildings (height > 10)
-    if (height > 10) {
-      this.addWaterTank(building, width, height, depth);
-    }
-
-    // Window sills for visual depth
-    this.addWindowSills(building, width, height, depth);
+    // Vent grille
+    const ventGeo = new THREE.PlaneGeometry(0.5, 0.25);
+    const ventMat = createToonMaterial({ color: 0x4A4A4A });
+    const vent = new THREE.Mesh(ventGeo, ventMat);
+    vent.position.set(0, 0, 0.23);
+    acUnit.add(vent);
+    this.meshes.push(vent);
   }
 
   /**
-   * Add a fire escape to the side of a building (NYC brownstone style)
+   * Add a small balcony in front of a window
    */
-  addFireEscape(building, width, height, depth) {
-    const metalMat = createToonMaterial({ color: 0x2A2A2A }); // Dark metal
-    const platformCount = Math.floor((height - 3) / 3);
-    const side = -1; // Left side of building
+  addBalcony(building, x, y, depth, windowSize) {
+    const metalMat = createToonMaterial({ color: 0x2A2A2A });
 
-    for (let i = 0; i < platformCount; i++) {
-      const platformY = -height / 2 + 3 + i * 3;
+    // Balcony floor
+    const floorGeo = new THREE.BoxGeometry(windowSize + 0.4, 0.06, 0.8);
+    const balconyFloor = new THREE.Mesh(floorGeo, metalMat);
+    balconyFloor.position.set(x, y - windowSize * 0.5, depth / 2 + 0.4);
+    balconyFloor.castShadow = true;
+    building.add(balconyFloor);
+    this.meshes.push(balconyFloor);
 
-      // Platform
-      const platformGeo = new THREE.BoxGeometry(1.5, 0.06, 1.2);
-      const platform = new THREE.Mesh(platformGeo, metalMat);
-      platform.position.set(side * (width / 2 + 0.75), platformY, 0);
-      platform.castShadow = true;
-      building.add(platform);
-      this.meshes.push(platform);
+    // Balcony outline
+    const floorOutline = createOutlineMesh(balconyFloor, 0.08);
+    floorOutline.position.copy(balconyFloor.position);
+    building.add(floorOutline);
+    this.meshes.push(floorOutline);
 
-      // Railings - front
-      const railFrontGeo = new THREE.BoxGeometry(1.5, 0.5, 0.03);
-      const railFront = new THREE.Mesh(railFrontGeo, metalMat);
-      railFront.position.set(0, 0.28, 0.58);
-      platform.add(railFront);
-      this.meshes.push(railFront);
+    // Railing - front
+    const railFrontGeo = new THREE.BoxGeometry(windowSize + 0.4, 0.5, 0.04);
+    const railFront = new THREE.Mesh(railFrontGeo, metalMat);
+    railFront.position.set(0, 0.28, 0.38);
+    balconyFloor.add(railFront);
+    this.meshes.push(railFront);
 
-      // Railings - side
-      const railSideGeo = new THREE.BoxGeometry(0.03, 0.5, 1.2);
-      const railSide = new THREE.Mesh(railSideGeo, metalMat);
-      railSide.position.set(side * 0.73, 0.28, 0);
-      platform.add(railSide);
-      this.meshes.push(railSide);
+    // Railing - sides
+    const railSideGeo = new THREE.BoxGeometry(0.04, 0.5, 0.8);
+    const railLeft = new THREE.Mesh(railSideGeo, metalMat);
+    railLeft.position.set(-(windowSize + 0.4) / 2 + 0.02, 0.28, 0);
+    balconyFloor.add(railLeft);
+    this.meshes.push(railLeft);
 
-      // Ladder between platforms (except top)
-      if (i < platformCount - 1) {
-        const ladderGeo = new THREE.BoxGeometry(0.4, 2.8, 0.06);
-        const ladder = new THREE.Mesh(ladderGeo, metalMat);
-        ladder.position.set(side * (width / 2 + 0.9), platformY + 1.5, -0.4);
-        building.add(ladder);
-        this.meshes.push(ladder);
+    const railRight = new THREE.Mesh(railSideGeo, metalMat);
+    railRight.position.set((windowSize + 0.4) / 2 - 0.02, 0.28, 0);
+    balconyFloor.add(railRight);
+    this.meshes.push(railRight);
 
-        // Ladder rungs
-        for (let r = 0; r < 5; r++) {
-          const rungGeo = new THREE.BoxGeometry(0.4, 0.04, 0.08);
-          const rung = new THREE.Mesh(rungGeo, metalMat);
-          rung.position.set(0, -1.2 + r * 0.55, 0);
-          ladder.add(rung);
-          this.meshes.push(rung);
-        }
-      }
+    // Vertical bars
+    const barGeo = new THREE.BoxGeometry(0.03, 0.45, 0.03);
+    for (let i = 0; i < 5; i++) {
+      const barX = ((i / 4) - 0.5) * (windowSize + 0.2);
+      const bar = new THREE.Mesh(barGeo, metalMat);
+      bar.position.set(barX, 0.25, 0.38);
+      balconyFloor.add(bar);
+      this.meshes.push(bar);
     }
+  }
 
-    // Drop ladder at bottom (angled)
-    const dropLadderGeo = new THREE.BoxGeometry(0.4, 2.0, 0.06);
-    const dropLadder = new THREE.Mesh(dropLadderGeo, metalMat);
-    dropLadder.position.set(side * (width / 2 + 1.1), -height / 2 + 1.5, -0.4);
-    dropLadder.rotation.z = side * 0.3;
-    building.add(dropLadder);
-    this.meshes.push(dropLadder);
+  /**
+   * Add roof parapet and edge details
+   */
+  addRoofParapet(building, width, height, depth, baseColor) {
+    const parapetHeight = 0.4;
+    const parapetColor = this.darkenColor(baseColor, 0.1);
+    const parapetMat = createToonMaterial({ color: parapetColor });
+
+    // Front parapet
+    const frontGeo = new THREE.BoxGeometry(width + 0.3, parapetHeight, 0.15);
+    const front = new THREE.Mesh(frontGeo, parapetMat);
+    front.position.set(0, height / 2 + parapetHeight / 2, depth / 2 + 0.075);
+    front.castShadow = true;
+    building.add(front);
+    this.meshes.push(front);
+
+    // Front parapet outline
+    const frontOutline = createOutlineMesh(front, 0.08);
+    frontOutline.position.copy(front.position);
+    building.add(frontOutline);
+    this.meshes.push(frontOutline);
+
+    // Back parapet
+    const back = new THREE.Mesh(frontGeo, parapetMat);
+    back.position.set(0, height / 2 + parapetHeight / 2, -depth / 2 - 0.075);
+    back.castShadow = true;
+    building.add(back);
+    this.meshes.push(back);
+
+    // Side parapets
+    const sideGeo = new THREE.BoxGeometry(0.15, parapetHeight, depth + 0.3);
+    const left = new THREE.Mesh(sideGeo, parapetMat);
+    left.position.set(-width / 2 - 0.075, height / 2 + parapetHeight / 2, 0);
+    left.castShadow = true;
+    building.add(left);
+    this.meshes.push(left);
+
+    const right = new THREE.Mesh(sideGeo, parapetMat);
+    right.position.set(width / 2 + 0.075, height / 2 + parapetHeight / 2, 0);
+    right.castShadow = true;
+    building.add(right);
+    this.meshes.push(right);
+
+    // Parapet cap
+    const capGeo = new THREE.BoxGeometry(width + 0.5, 0.1, depth + 0.5);
+    const capMat = createToonMaterial({ color: 0x757575 });
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.set(0, height / 2 + parapetHeight + 0.05, 0);
+    building.add(cap);
+    this.meshes.push(cap);
+
+    // Cap outline
+    const capOutline = createOutlineMesh(cap, 0.08);
+    capOutline.position.copy(cap.position);
+    building.add(capOutline);
+    this.meshes.push(capOutline);
+  }
+
+  /**
+   * Add Japanese-style vertical signage to building side
+   */
+  addBuildingSign(building, width, height, depth, name) {
+    const signHeight = Math.min(height * 0.5, 6);
+    const signWidth = 0.8;
+    const signDepth = 0.15;
+
+    // Sign panel (white background)
+    const signGeo = new THREE.BoxGeometry(signWidth, signHeight, signDepth);
+    const signMat = createToonMaterial({ color: 0xF5F5F5 });
+    const sign = new THREE.Mesh(signGeo, signMat);
+
+    // Position on left or right side
+    const side = Math.random() > 0.5 ? 1 : -1;
+    sign.position.set(
+      side * (width / 2 + signDepth / 2 + 0.02),
+      height * 0.15,
+      depth / 4
+    );
+    sign.rotation.y = side * Math.PI / 2;
+    sign.castShadow = true;
+    building.add(sign);
+    this.meshes.push(sign);
+
+    // Sign outline
+    const signOutline = createOutlineMesh(sign, 0.08);
+    signOutline.position.copy(sign.position);
+    signOutline.rotation.copy(sign.rotation);
+    building.add(signOutline);
+    this.meshes.push(signOutline);
+
+    // Colored border
+    const borderColor = SIGN_BORDER_COLORS[Math.floor(Math.random() * SIGN_BORDER_COLORS.length)];
+    const borderMat = createToonMaterial({ color: borderColor });
+
+    // Top border
+    const topBorderGeo = new THREE.BoxGeometry(signWidth + 0.1, 0.12, signDepth + 0.05);
+    const topBorder = new THREE.Mesh(topBorderGeo, borderMat);
+    topBorder.position.set(0, signHeight / 2 + 0.06, 0);
+    sign.add(topBorder);
+    this.meshes.push(topBorder);
+
+    // Bottom border
+    const bottomBorder = new THREE.Mesh(topBorderGeo, borderMat);
+    bottomBorder.position.set(0, -signHeight / 2 - 0.06, 0);
+    sign.add(bottomBorder);
+    this.meshes.push(bottomBorder);
+
+    // Side borders
+    const sideBorderGeo = new THREE.BoxGeometry(0.1, signHeight, signDepth + 0.05);
+    const leftBorder = new THREE.Mesh(sideBorderGeo, borderMat);
+    leftBorder.position.set(-signWidth / 2 - 0.05, 0, 0);
+    sign.add(leftBorder);
+    this.meshes.push(leftBorder);
+
+    const rightBorder = new THREE.Mesh(sideBorderGeo, borderMat);
+    rightBorder.position.set(signWidth / 2 + 0.05, 0, 0);
+    sign.add(rightBorder);
+    this.meshes.push(rightBorder);
   }
 
   /**
    * Add a rooftop water tank (NYC iconic element)
    */
   addWaterTank(building, width, height, depth) {
-    const woodMat = createToonMaterial({ color: 0x6B4423 }); // Dark wood
+    const woodMat = createToonMaterial({ color: 0x6B4423 });
     const metalMat = createToonMaterial({ color: 0x3D3D3D });
 
-    // Tank body (cylinder)
+    // Tank body
     const tankGeo = new THREE.CylinderGeometry(0.8, 0.9, 1.8, 10);
     const tank = new THREE.Mesh(tankGeo, woodMat);
     tank.position.set(-width / 4, height / 2 + 1.8, -depth / 4);
@@ -510,7 +867,7 @@ export class Planet {
     tank.add(roof);
     this.meshes.push(roof);
 
-    // Metal bands around tank
+    // Metal bands
     const bandGeo = new THREE.TorusGeometry(0.85, 0.03, 6, 16);
     const band1 = new THREE.Mesh(bandGeo, metalMat);
     band1.position.set(0, 0.5, 0);
@@ -524,7 +881,7 @@ export class Planet {
     tank.add(band2);
     this.meshes.push(band2);
 
-    // Support legs (4)
+    // Support legs
     const legGeo = new THREE.BoxGeometry(0.1, 0.8, 0.1);
     const legPositions = [
       { x: 0.5, z: 0.5 },
@@ -541,38 +898,10 @@ export class Planet {
     });
 
     // Tank outline
-    const tankOutline = createOutlineMesh(tank, 0.03);
+    const tankOutline = createOutlineMesh(tank, 0.08);
     tankOutline.position.copy(tank.position);
     building.add(tankOutline);
     this.meshes.push(tankOutline);
-  }
-
-  /**
-   * Add window sills for visual depth
-   */
-  addWindowSills(building, width, height, depth) {
-    const sillMat = createToonMaterial({ color: 0x757575 }); // Gray stone
-
-    const windowSize = 1.0;
-    const windowGap = 0.6;
-    const windowsPerRow = Math.floor((width - 1) / (windowSize + windowGap));
-    const windowRows = Math.floor((height - 2) / (windowSize + windowGap));
-
-    for (let row = 0; row < windowRows; row++) {
-      for (let col = 0; col < windowsPerRow; col++) {
-        // Position relative to building
-        const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
-        const localY = height / 2 - 1 - row * (windowSize + windowGap) - 0.5;
-
-        // Window sill (small ledge under window)
-        const sillGeo = new THREE.BoxGeometry(windowSize + 0.2, 0.08, 0.12);
-        const sill = new THREE.Mesh(sillGeo, sillMat);
-        sill.position.set(localX, localY, depth / 2 + 0.05);
-        sill.castShadow = true;
-        building.add(sill);
-        this.meshes.push(sill);
-      }
-    }
   }
 
   /**
@@ -582,40 +911,6 @@ export class Planet {
     const color = new THREE.Color(hexColor);
     color.multiplyScalar(1 - factor);
     return color.getHex();
-  }
-
-  /**
-   * Add windows to a building oriented on the sphere
-   */
-  addWindowsToBuilding(building, width, height, depth, surfacePos, up) {
-    const windowMaterial = createToonMaterial({ color: 0x87CEEB });
-
-    const windowSize = 1.0;
-    const windowGap = 0.6;
-    const windowsPerRow = Math.floor((width - 1) / (windowSize + windowGap));
-    const windowRows = Math.floor((height - 2) / (windowSize + windowGap));
-
-    for (let row = 0; row < windowRows; row++) {
-      for (let col = 0; col < windowsPerRow; col++) {
-        const windowGeom = new THREE.PlaneGeometry(windowSize, windowSize);
-        const windowMesh = new THREE.Mesh(windowGeom, windowMaterial.clone());
-
-        // Position relative to building
-        const localX = (col - (windowsPerRow - 1) / 2) * (windowSize + windowGap);
-        const localY = height / 2 - 1 - row * (windowSize + windowGap);
-        const localZ = depth / 2 + 0.01;
-
-        // Transform to building's coordinate system
-        windowMesh.position.set(localX, localY, localZ);
-
-        // Mark 30% of windows as "dark" - they stay unlit at night for realism
-        windowMesh.userData.isDarkWindow = Math.random() < 0.3;
-
-        // Add as child of building so it inherits orientation
-        building.add(windowMesh);
-        this.windowMeshes.push(windowMesh);
-      }
-    }
   }
 
   /**
@@ -785,6 +1080,60 @@ export class Planet {
     hotDogCartPositions.forEach((pos) => {
       this.createHotDogCart(pos.lat, pos.lon);
     });
+
+    // Japanese-style vending machines (8)
+    const vendingMachinePositions = [
+      { lat: 5, lon: 85 },
+      { lat: -5, lon: 85 },
+      { lat: 10, lon: -85 },
+      { lat: -10, lon: -85 },
+      { lat: 40, lon: 10 },
+      { lat: -40, lon: -10 },
+      { lat: 20, lon: 50 },
+      { lat: -20, lon: -50 },
+    ];
+
+    vendingMachinePositions.forEach((pos) => {
+      this.createVendingMachine(pos.lat, pos.lon);
+    });
+
+    // Japanese post boxes (4)
+    const postBoxPositions = [
+      { lat: 8, lon: 88 },
+      { lat: -8, lon: -88 },
+      { lat: 42, lon: 5 },
+      { lat: -42, lon: -5 },
+    ];
+
+    postBoxPositions.forEach((pos) => {
+      this.createJapanesePostBox(pos.lat, pos.lon);
+    });
+
+    // Bicycles (6)
+    const bicyclePositions = [
+      { lat: 3, lon: 82 },
+      { lat: -3, lon: -82 },
+      { lat: 38, lon: 8 },
+      { lat: -38, lon: -8 },
+      { lat: 15, lon: 60 },
+      { lat: -15, lon: -60 },
+    ];
+
+    bicyclePositions.forEach((pos) => {
+      this.createBicycle(pos.lat, pos.lon);
+    });
+
+    // Street signs (4)
+    const streetSignPositions = [
+      { lat: 0, lon: 50, direction: 'right' },
+      { lat: 0, lon: -50, direction: 'left' },
+      { lat: 25, lon: 0, direction: 'right' },
+      { lat: -25, lon: 0, direction: 'left' },
+    ];
+
+    streetSignPositions.forEach((pos) => {
+      this.createStreetSign(pos.lat, pos.lon, pos.direction);
+    });
   }
 
   /**
@@ -809,6 +1158,13 @@ export class Planet {
     this.meshes.push(trunk);
     this.collisionMeshes.push(trunk);
 
+    // Outline for trunk
+    const trunkOutline = createOutlineMesh(trunk, 0.03);
+    trunkOutline.position.copy(trunk.position);
+    trunkOutline.quaternion.copy(trunk.quaternion);
+    this.scene.add(trunkOutline);
+    this.meshes.push(trunkOutline);
+
     // Tree foliage (cone shape)
     const foliageGeom = new THREE.ConeGeometry(1.5, 3, 8);
     const foliageMaterial = createToonMaterial({ color: 0x388E3C });
@@ -822,8 +1178,8 @@ export class Planet {
     this.scene.add(foliage);
     this.meshes.push(foliage);
 
-    // Outline for foliage
-    const foliageOutline = createOutlineMesh(foliage, 0.04);
+    // Outline for foliage (increased for graphic novel style)
+    const foliageOutline = createOutlineMesh(foliage, 0.05);
     foliageOutline.position.copy(foliage.position);
     foliageOutline.quaternion.copy(foliage.quaternion);
     this.scene.add(foliageOutline);
@@ -854,6 +1210,13 @@ export class Planet {
     this.meshes.push(seat);
     this.collisionMeshes.push(seat);
 
+    // Outline for bench seat
+    const seatOutline = createOutlineMesh(seat, 0.025);
+    seatOutline.position.copy(seat.position);
+    seatOutline.quaternion.copy(seat.quaternion);
+    this.scene.add(seatOutline);
+    this.meshes.push(seatOutline);
+
     // Bench back
     const backGeom = new THREE.BoxGeometry(1.5, 0.5, 0.1);
     const back = new THREE.Mesh(backGeom, woodMaterial);
@@ -883,6 +1246,13 @@ export class Planet {
 
     this.scene.add(pole);
     this.meshes.push(pole);
+
+    // Outline for street light pole
+    const poleOutline = createOutlineMesh(pole, 0.02);
+    poleOutline.position.copy(pole.position);
+    poleOutline.quaternion.copy(pole.quaternion);
+    this.scene.add(poleOutline);
+    this.meshes.push(poleOutline);
 
     // Light fixture
     const fixtureGeom = new THREE.BoxGeometry(0.5, 0.2, 0.3);
@@ -1318,6 +1688,453 @@ export class Planet {
     this.meshes.push(outline);
 
     this.props.push({ mesh: cart, type: 'hotDogCart', lat, lon });
+  }
+
+  /**
+   * Create a Japanese-style vending machine at the specified position
+   */
+  createVendingMachine(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Choose random color for vending machine
+    const vendingColors = [0x2E5090, 0xCC3333, 0x228B22]; // Blue, red, green
+    const machineColor = vendingColors[Math.floor(Math.random() * vendingColors.length)];
+
+    // Main body
+    const bodyGeom = new THREE.BoxGeometry(0.9, 1.6, 0.7);
+    const bodyMaterial = createToonMaterial({ color: machineColor });
+    const body = new THREE.Mesh(bodyGeom, bodyMaterial);
+
+    const bodyPos = surfacePos.clone().add(up.clone().multiplyScalar(0.8));
+    body.position.copy(bodyPos);
+    body.quaternion.copy(orientation);
+    body.castShadow = true;
+
+    this.scene.add(body);
+    this.meshes.push(body);
+    this.collisionMeshes.push(body);
+
+    // Display window (dark glass)
+    const windowGeom = new THREE.BoxGeometry(0.7, 0.9, 0.05);
+    const windowMaterial = createToonMaterial({ color: 0x1A2A3A }); // Dark glass
+    const displayWindow = new THREE.Mesh(windowGeom, windowMaterial);
+    displayWindow.position.set(0, 0.2, 0.33);
+    body.add(displayWindow);
+    this.meshes.push(displayWindow);
+
+    // Drink bottles inside (colored cylinders)
+    const bottleColors = [0xFF3333, 0x33FF33, 0x3333FF, 0xFFFF33, 0xFF6600, 0x00FFFF];
+    const bottleGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.2, 8);
+
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 4; col++) {
+        const bottleColor = bottleColors[(row * 4 + col) % bottleColors.length];
+        const bottleMaterial = createToonMaterial({ color: bottleColor });
+        const bottle = new THREE.Mesh(bottleGeom, bottleMaterial);
+        bottle.position.set(
+          -0.22 + col * 0.15,
+          0.45 - row * 0.3,
+          0.25
+        );
+        body.add(bottle);
+        this.meshes.push(bottle);
+      }
+    }
+
+    // Top light panel (glows at night)
+    const lightPanelGeom = new THREE.BoxGeometry(0.85, 0.2, 0.65);
+    const lightPanelMaterial = new THREE.MeshBasicMaterial({
+      color: 0xFFFFFF,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const lightPanel = new THREE.Mesh(lightPanelGeom, lightPanelMaterial);
+    lightPanel.position.set(0, 0.8, 0);
+    body.add(lightPanel);
+    this.meshes.push(lightPanel);
+    this.neonSigns.push({ mesh: lightPanel, color: 0xFFFFFF, type: 'vendingLight' });
+
+    // Coin slot panel
+    const coinPanelGeom = new THREE.BoxGeometry(0.15, 0.2, 0.06);
+    const coinPanelMaterial = createToonMaterial({ color: 0x3D3D3D });
+    const coinPanel = new THREE.Mesh(coinPanelGeom, coinPanelMaterial);
+    coinPanel.position.set(0.3, -0.3, 0.33);
+    body.add(coinPanel);
+    this.meshes.push(coinPanel);
+
+    // Coin slot
+    const coinSlotGeom = new THREE.BoxGeometry(0.08, 0.02, 0.02);
+    const coinSlotMaterial = createToonMaterial({ color: 0x1A1A1A });
+    const coinSlot = new THREE.Mesh(coinSlotGeom, coinSlotMaterial);
+    coinSlot.position.set(0, 0.05, 0.02);
+    coinPanel.add(coinSlot);
+    this.meshes.push(coinSlot);
+
+    // Dispensing slot at bottom
+    const dispensingGeom = new THREE.BoxGeometry(0.4, 0.2, 0.2);
+    const dispensingMaterial = createToonMaterial({ color: 0x1A1A1A });
+    const dispensingSlot = new THREE.Mesh(dispensingGeom, dispensingMaterial);
+    dispensingSlot.position.set(0, -0.65, 0.25);
+    body.add(dispensingSlot);
+    this.meshes.push(dispensingSlot);
+
+    // Dispensing slot interior (darker)
+    const interiorGeom = new THREE.BoxGeometry(0.35, 0.15, 0.15);
+    const interiorMaterial = createToonMaterial({ color: 0x0A0A0A });
+    const interior = new THREE.Mesh(interiorGeom, interiorMaterial);
+    interior.position.set(0, 0, 0.03);
+    dispensingSlot.add(interior);
+    this.meshes.push(interior);
+
+    // Outline for main body
+    const outline = createOutlineMesh(body, 0.04);
+    outline.position.copy(body.position);
+    outline.quaternion.copy(body.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: body, type: 'vendingMachine', lat, lon });
+  }
+
+  /**
+   * Create a Japanese-style yellow post box at the specified position
+   */
+  createJapanesePostBox(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Main body (yellow cylinder)
+    const bodyGeom = new THREE.CylinderGeometry(0.25, 0.25, 0.9, 16);
+    const bodyMaterial = createToonMaterial({ color: 0xE8B84A }); // Yellow
+    const body = new THREE.Mesh(bodyGeom, bodyMaterial);
+
+    const bodyPos = surfacePos.clone().add(up.clone().multiplyScalar(0.45));
+    body.position.copy(bodyPos);
+    body.quaternion.copy(orientation);
+    body.castShadow = true;
+
+    this.scene.add(body);
+    this.meshes.push(body);
+    this.collisionMeshes.push(body);
+
+    // Rounded top (half sphere)
+    const topGeom = new THREE.SphereGeometry(0.25, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    const top = new THREE.Mesh(topGeom, bodyMaterial);
+    top.position.set(0, 0.45, 0);
+    body.add(top);
+    this.meshes.push(top);
+
+    // Red stripe across middle
+    const stripeGeom = new THREE.CylinderGeometry(0.26, 0.26, 0.1, 16);
+    const stripeMaterial = createToonMaterial({ color: 0xCC3333 }); // Red
+    const stripe = new THREE.Mesh(stripeGeom, stripeMaterial);
+    stripe.position.set(0, 0.1, 0);
+    body.add(stripe);
+    this.meshes.push(stripe);
+
+    // Mail slot (dark horizontal opening)
+    const slotGeom = new THREE.BoxGeometry(0.2, 0.02, 0.1);
+    const slotMaterial = createToonMaterial({ color: 0x1A1A1A });
+    const slot = new THREE.Mesh(slotGeom, slotMaterial);
+    slot.position.set(0.2, 0.25, 0);
+    slot.rotation.y = Math.PI / 2;
+    body.add(slot);
+    this.meshes.push(slot);
+
+    // White collection time panel
+    const panelGeom = new THREE.BoxGeometry(0.15, 0.1, 0.02);
+    const panelMaterial = createToonMaterial({ color: 0xFFFFFF });
+    const panel = new THREE.Mesh(panelGeom, panelMaterial);
+    panel.position.set(0.2, -0.1, 0);
+    panel.rotation.y = Math.PI / 2;
+    body.add(panel);
+    this.meshes.push(panel);
+
+    // Base/pedestal
+    const baseGeom = new THREE.CylinderGeometry(0.28, 0.3, 0.15, 16);
+    const baseMaterial = createToonMaterial({ color: 0xD4A84A }); // Slightly darker yellow
+    const base = new THREE.Mesh(baseGeom, baseMaterial);
+    base.position.set(0, -0.52, 0);
+    body.add(base);
+    this.meshes.push(base);
+
+    // Outline for body
+    const outline = createOutlineMesh(body, 0.025);
+    outline.position.copy(body.position);
+    outline.quaternion.copy(body.quaternion);
+    this.scene.add(outline);
+    this.meshes.push(outline);
+
+    this.props.push({ mesh: body, type: 'japanesePostBox', lat, lon });
+  }
+
+  /**
+   * Create a bicycle at the specified position
+   */
+  createBicycle(lat, lon) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Bicycle group
+    const bikeGroup = new THREE.Group();
+
+    // Frame material
+    const frameMaterial = createToonMaterial({ color: 0x4A4A4A }); // Dark gray frame
+    const wheelMaterial = createToonMaterial({ color: 0x1A1A1A }); // Black tires
+
+    // Front wheel
+    const wheelGeom = new THREE.TorusGeometry(0.25, 0.025, 8, 24);
+    const frontWheel = new THREE.Mesh(wheelGeom, wheelMaterial);
+    frontWheel.position.set(0.4, 0.25, 0);
+    frontWheel.rotation.y = Math.PI / 2;
+    bikeGroup.add(frontWheel);
+    this.meshes.push(frontWheel);
+
+    // Front wheel spokes (simple cross)
+    const spokeGeom = new THREE.CylinderGeometry(0.008, 0.008, 0.45, 6);
+    const spokeMaterial = createToonMaterial({ color: 0x8A8A8A });
+    const spoke1 = new THREE.Mesh(spokeGeom, spokeMaterial);
+    spoke1.position.copy(frontWheel.position);
+    spoke1.rotation.z = Math.PI / 2;
+    bikeGroup.add(spoke1);
+    this.meshes.push(spoke1);
+
+    const spoke2 = new THREE.Mesh(spokeGeom, spokeMaterial);
+    spoke2.position.copy(frontWheel.position);
+    bikeGroup.add(spoke2);
+    this.meshes.push(spoke2);
+
+    // Rear wheel
+    const rearWheel = new THREE.Mesh(wheelGeom, wheelMaterial);
+    rearWheel.position.set(-0.4, 0.25, 0);
+    rearWheel.rotation.y = Math.PI / 2;
+    bikeGroup.add(rearWheel);
+    this.meshes.push(rearWheel);
+
+    // Rear wheel spokes
+    const spoke3 = new THREE.Mesh(spokeGeom, spokeMaterial);
+    spoke3.position.copy(rearWheel.position);
+    spoke3.rotation.z = Math.PI / 2;
+    bikeGroup.add(spoke3);
+    this.meshes.push(spoke3);
+
+    const spoke4 = new THREE.Mesh(spokeGeom, spokeMaterial);
+    spoke4.position.copy(rearWheel.position);
+    bikeGroup.add(spoke4);
+    this.meshes.push(spoke4);
+
+    // Frame tubes
+    const frameGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.5, 6);
+
+    // Top tube (horizontal)
+    const topTube = new THREE.Mesh(frameGeom, frameMaterial);
+    topTube.position.set(0, 0.55, 0);
+    topTube.rotation.z = Math.PI / 2;
+    bikeGroup.add(topTube);
+    this.meshes.push(topTube);
+
+    // Down tube (diagonal front)
+    const downTube = new THREE.Mesh(frameGeom, frameMaterial);
+    downTube.position.set(0.2, 0.4, 0);
+    downTube.rotation.z = Math.PI / 4;
+    bikeGroup.add(downTube);
+    this.meshes.push(downTube);
+
+    // Seat tube (vertical)
+    const seatTube = new THREE.Mesh(frameGeom, frameMaterial);
+    seatTube.position.set(-0.15, 0.5, 0);
+    bikeGroup.add(seatTube);
+    this.meshes.push(seatTube);
+
+    // Chain stay (diagonal rear)
+    const chainStay = new THREE.Mesh(frameGeom, frameMaterial);
+    chainStay.position.set(-0.28, 0.4, 0);
+    chainStay.rotation.z = -Math.PI / 4;
+    bikeGroup.add(chainStay);
+    this.meshes.push(chainStay);
+
+    // Seat stay (diagonal rear upper)
+    const seatStay = new THREE.Mesh(frameGeom, frameMaterial);
+    seatStay.position.set(-0.28, 0.5, 0);
+    seatStay.rotation.z = Math.PI / 6;
+    bikeGroup.add(seatStay);
+    this.meshes.push(seatStay);
+
+    // Fork (front vertical tube)
+    const forkGeom = new THREE.CylinderGeometry(0.012, 0.012, 0.35, 6);
+    const fork = new THREE.Mesh(forkGeom, frameMaterial);
+    fork.position.set(0.4, 0.42, 0);
+    bikeGroup.add(fork);
+    this.meshes.push(fork);
+
+    // Handlebars
+    const handlebarGeom = new THREE.CylinderGeometry(0.012, 0.012, 0.35, 6);
+    const handlebar = new THREE.Mesh(handlebarGeom, frameMaterial);
+    handlebar.position.set(0.4, 0.65, 0);
+    handlebar.rotation.x = Math.PI / 2;
+    bikeGroup.add(handlebar);
+    this.meshes.push(handlebar);
+
+    // Handlebar grips
+    const gripGeom = new THREE.CylinderGeometry(0.018, 0.018, 0.08, 8);
+    const gripMaterial = createToonMaterial({ color: 0x2A2A2A });
+    const leftGrip = new THREE.Mesh(gripGeom, gripMaterial);
+    leftGrip.position.set(0.4, 0.65, 0.18);
+    leftGrip.rotation.x = Math.PI / 2;
+    bikeGroup.add(leftGrip);
+    this.meshes.push(leftGrip);
+
+    const rightGrip = new THREE.Mesh(gripGeom, gripMaterial);
+    rightGrip.position.set(0.4, 0.65, -0.18);
+    rightGrip.rotation.x = Math.PI / 2;
+    bikeGroup.add(rightGrip);
+    this.meshes.push(rightGrip);
+
+    // Seat
+    const seatGeom = new THREE.BoxGeometry(0.2, 0.05, 0.12);
+    const seatMaterial = createToonMaterial({ color: 0x5A3A2A }); // Brown
+    const seat = new THREE.Mesh(seatGeom, seatMaterial);
+    seat.position.set(-0.15, 0.75, 0);
+    bikeGroup.add(seat);
+    this.meshes.push(seat);
+
+    // Seat post
+    const seatPostGeom = new THREE.CylinderGeometry(0.012, 0.012, 0.15, 6);
+    const seatPost = new THREE.Mesh(seatPostGeom, frameMaterial);
+    seatPost.position.set(-0.15, 0.68, 0);
+    bikeGroup.add(seatPost);
+    this.meshes.push(seatPost);
+
+    // Kickstand
+    const kickstandGeom = new THREE.CylinderGeometry(0.01, 0.01, 0.3, 6);
+    const kickstandMaterial = createToonMaterial({ color: 0x3D3D3D });
+    const kickstand = new THREE.Mesh(kickstandGeom, kickstandMaterial);
+    kickstand.position.set(-0.1, 0.15, 0.08);
+    kickstand.rotation.z = Math.PI / 6;
+    kickstand.rotation.x = -Math.PI / 12;
+    bikeGroup.add(kickstand);
+    this.meshes.push(kickstand);
+
+    // Pedals
+    const pedalGeom = new THREE.BoxGeometry(0.08, 0.02, 0.05);
+    const pedalMaterial = createToonMaterial({ color: 0x2A2A2A });
+    const leftPedal = new THREE.Mesh(pedalGeom, pedalMaterial);
+    leftPedal.position.set(0, 0.25, 0.12);
+    bikeGroup.add(leftPedal);
+    this.meshes.push(leftPedal);
+
+    const rightPedal = new THREE.Mesh(pedalGeom, pedalMaterial);
+    rightPedal.position.set(0, 0.25, -0.12);
+    bikeGroup.add(rightPedal);
+    this.meshes.push(rightPedal);
+
+    // Position and orient bicycle on planet surface
+    bikeGroup.position.copy(surfacePos.clone().add(up.clone().multiplyScalar(0.02)));
+    bikeGroup.quaternion.copy(orientation);
+
+    this.scene.add(bikeGroup);
+    this.meshes.push(bikeGroup);
+
+    this.props.push({ mesh: bikeGroup, type: 'bicycle', lat, lon });
+  }
+
+  /**
+   * Create a street sign at the specified position
+   * @param {number} lat - Latitude
+   * @param {number} lon - Longitude
+   * @param {string} direction - 'left' or 'right' for arrow direction
+   */
+  createStreetSign(lat, lon, direction = 'right') {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Sign group
+    const signGroup = new THREE.Group();
+
+    // Pole
+    const poleGeom = new THREE.CylinderGeometry(0.04, 0.05, 2.5, 8);
+    const poleMaterial = createToonMaterial({ color: 0x5A5A5A }); // Gray
+    const pole = new THREE.Mesh(poleGeom, poleMaterial);
+    pole.position.set(0, 1.25, 0);
+    pole.castShadow = true;
+    signGroup.add(pole);
+    this.meshes.push(pole);
+
+    // Sign panel (green)
+    const panelGeom = new THREE.BoxGeometry(0.8, 0.25, 0.03);
+    const panelMaterial = createToonMaterial({ color: 0x006400 }); // Dark green
+    const panel = new THREE.Mesh(panelGeom, panelMaterial);
+    panel.position.set(0, 2.3, 0.1);
+    panel.castShadow = true;
+    signGroup.add(panel);
+    this.meshes.push(panel);
+
+    // White text area (simulated text strip)
+    const textAreaGeom = new THREE.BoxGeometry(0.65, 0.12, 0.01);
+    const textMaterial = createToonMaterial({ color: 0xFFFFFF });
+    const textArea = new THREE.Mesh(textAreaGeom, textMaterial);
+    textArea.position.set(0, 0, 0.02);
+    panel.add(textArea);
+    this.meshes.push(textArea);
+
+    // Arrow indicator
+    const arrowGroup = new THREE.Group();
+
+    // Arrow shaft
+    const arrowShaftGeom = new THREE.BoxGeometry(0.2, 0.04, 0.01);
+    const arrowMaterial = createToonMaterial({ color: 0xFFFFFF });
+    const arrowShaft = new THREE.Mesh(arrowShaftGeom, arrowMaterial);
+    arrowGroup.add(arrowShaft);
+    this.meshes.push(arrowShaft);
+
+    // Arrow head (triangle made from thin box rotated)
+    const arrowHeadGeom = new THREE.ConeGeometry(0.05, 0.1, 3);
+    const arrowHead = new THREE.Mesh(arrowHeadGeom, arrowMaterial);
+    arrowHead.rotation.z = direction === 'left' ? Math.PI / 2 : -Math.PI / 2;
+    arrowHead.position.x = direction === 'left' ? -0.12 : 0.12;
+    arrowGroup.add(arrowHead);
+    this.meshes.push(arrowHead);
+
+    arrowGroup.position.set(0, -0.02, 0.02);
+    panel.add(arrowGroup);
+
+    // Second sign panel (optional cross-street style)
+    const panel2Geom = new THREE.BoxGeometry(0.6, 0.2, 0.03);
+    const panel2 = new THREE.Mesh(panel2Geom, panelMaterial);
+    panel2.position.set(0, 2.05, 0.1);
+    panel2.castShadow = true;
+    signGroup.add(panel2);
+    this.meshes.push(panel2);
+
+    // White text area for second panel
+    const textArea2 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.1, 0.01),
+      textMaterial
+    );
+    textArea2.position.set(0, 0, 0.02);
+    panel2.add(textArea2);
+    this.meshes.push(textArea2);
+
+    // Outline for pole
+    const poleOutline = createOutlineMesh(pole, 0.02);
+    poleOutline.position.copy(pole.position);
+    signGroup.add(poleOutline);
+    this.meshes.push(poleOutline);
+
+    // Position and orient sign on planet surface
+    signGroup.position.copy(surfacePos.clone().add(up.clone().multiplyScalar(0.02)));
+    signGroup.quaternion.copy(orientation);
+
+    this.scene.add(signGroup);
+    this.meshes.push(signGroup);
+    this.collisionMeshes.push(pole);
+
+    this.props.push({ mesh: signGroup, type: 'streetSign', lat, lon });
   }
 
   /**

@@ -130,6 +130,36 @@ export function createOutlineMesh(originalMesh, width = 0.05) {
 }
 
 /**
+ * Create thick outline mesh for graphic novel visual style
+ * Enhanced version with darker, more prominent outlines (#2A2A2A)
+ * @param {THREE.Mesh} originalMesh The mesh to create outline for
+ * @param {number} width Outline width (default 0.08 for prominent graphic novel style)
+ * @returns {THREE.Mesh} Outline mesh
+ */
+export function createThickOutlineMesh(originalMesh, width = 0.08) {
+  const outlineMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+      uniform float outlineWidth;
+      void main() {
+        vec3 newPosition = position + normal * outlineWidth;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+      }
+    `,
+    fragmentShader: `
+      void main() {
+        gl_FragColor = vec4(0.165, 0.165, 0.165, 1.0); // #2A2A2A
+      }
+    `,
+    uniforms: { outlineWidth: { value: width } },
+    side: THREE.BackSide,
+    depthWrite: true,
+  });
+  const outlineMesh = new THREE.Mesh(originalMesh.geometry.clone(), outlineMaterial);
+  outlineMesh.renderOrder = -1;
+  return outlineMesh;
+}
+
+/**
  * Create outline material for inverted hull method
  * From spec: 2-4px outlines, color #1A1A2E
  */
