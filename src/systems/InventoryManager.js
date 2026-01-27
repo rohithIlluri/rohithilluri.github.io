@@ -63,6 +63,37 @@ class InventoryManager {
   }
 
   /**
+   * Get all mail items for display
+   * @returns {Array} Mail items with full info
+   */
+  getAllMail() {
+    return useGameStore.getState().inventory.mail;
+  }
+
+  /**
+   * Check if player has any mail for a specific recipient
+   * @param {string} recipientId
+   * @returns {boolean}
+   */
+  hasMailFor(recipientId) {
+    return useGameStore.getState().inventory.mail.some(m => m.to === recipientId);
+  }
+
+  /**
+   * Deliver mail directly to an NPC (bypasses dialogue system)
+   * Used when interacting with game NPCs from NPCData
+   * @param {string} npcId NPC definition ID
+   * @returns {boolean} Success
+   */
+  deliverMailToNPC(npcId) {
+    const mail = this.getMailFor(npcId);
+    if (!mail) {
+      return false;
+    }
+    return useGameStore.getState().deliverMail(mail.id, npcId);
+  }
+
+  /**
    * Add mail to inventory
    * @param {Object} mailItem Mail data { id, from, to, priority, description }
    * @returns {boolean} Success

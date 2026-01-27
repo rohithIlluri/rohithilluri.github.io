@@ -69,6 +69,11 @@ export class InputManager {
           this.emit('toggleDayNight');
         }
         break;
+      case 'KeyQ':
+        if (!event.repeat) {
+          this.emit('toggleQuestLog');
+        }
+        break;
       case 'Escape':
         if (!event.repeat) {
           this.emit('escape');
