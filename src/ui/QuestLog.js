@@ -92,6 +92,16 @@ export class QuestLog {
   }
 
   /**
+   * Initialize the quest log (called by UIManager for consistency)
+   */
+  init() {
+    // Initial render if needed
+    if (this.isVisible) {
+      this.render();
+    }
+  }
+
+  /**
    * Handle keyboard input
    * @param {KeyboardEvent} event
    */

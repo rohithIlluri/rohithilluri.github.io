@@ -18,6 +18,7 @@ export class HUD {
     this.mailPanel = null;
     this.questElement = null;
     this.compassElement = null;
+    this.controlsHintElement = null;
     this.isVisible = true;
     this.isMailPanelOpen = false;
   }
@@ -81,6 +82,18 @@ export class HUD {
       <span class="ui-compass-text" id="ui-zone-name">Spawn Point</span>
     `;
     this.container.appendChild(this.compassElement);
+
+    // Controls hint (bottom-center)
+    this.controlsHintElement = document.createElement('div');
+    this.controlsHintElement.className = 'ui-controls-hint';
+    this.controlsHintElement.innerHTML = `
+      <span class="ui-control-key">WASD</span> Move
+      <span class="ui-control-key">SHIFT</span> Run
+      <span class="ui-control-key">E</span> Interact
+      <span class="ui-control-key">Q</span> Quests
+      <span class="ui-control-key">N</span> Day/Night
+    `;
+    this.container.appendChild(this.controlsHintElement);
   }
 
   /**
@@ -179,8 +192,8 @@ export class HUD {
   getCoinIcon() {
     return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="10" fill="currentColor"/>
-      <circle cx="12" cy="12" r="7" fill="#1A1A2E" opacity="0.3"/>
-      <text x="12" y="16" text-anchor="middle" fill="#1A1A2E" font-size="10" font-weight="bold">$</text>
+      <circle cx="12" cy="12" r="6.5" fill="#1A1A2E" opacity="0.3"/>
+      <path d="M12 7V17M9 10H15M9 14H15" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round"/>
     </svg>`;
   }
 
@@ -299,17 +312,10 @@ export class HUD {
   animateValue(element) {
     if (!element) return;
 
-    // Remove existing animation class
-    element.classList.remove('value-changed');
-
-    // Force reflow to restart animation
-    void element.offsetWidth;
-
-    // Add animation class
-    element.style.transform = 'scale(1.15)';
-    setTimeout(() => {
-      element.style.transform = 'scale(1)';
-    }, 150);
+    element.classList.add('value-change');
+    element.addEventListener('animationend', () => {
+      element.classList.remove('value-change');
+    }, { once: true });
   }
 
   /**
@@ -323,6 +329,9 @@ export class HUD {
     }
     if (this.compassElement) {
       this.compassElement.style.opacity = '1';
+    }
+    if (this.controlsHintElement) {
+      this.controlsHintElement.style.opacity = '1';
     }
   }
 
@@ -340,6 +349,9 @@ export class HUD {
     }
     if (this.compassElement) {
       this.compassElement.style.opacity = '0';
+    }
+    if (this.controlsHintElement) {
+      this.controlsHintElement.style.opacity = '0';
     }
   }
 
@@ -359,12 +371,16 @@ export class HUD {
     if (this.mailPanel && this.mailPanel.parentNode) {
       this.mailPanel.parentNode.removeChild(this.mailPanel);
     }
+    if (this.controlsHintElement && this.controlsHintElement.parentNode) {
+      this.controlsHintElement.parentNode.removeChild(this.controlsHintElement);
+    }
     this.element = null;
     this.questElement = null;
     this.compassElement = null;
     this.coinsElement = null;
     this.mailElement = null;
     this.mailPanel = null;
+    this.controlsHintElement = null;
     this.isMailPanelOpen = false;
   }
 }

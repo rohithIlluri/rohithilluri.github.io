@@ -54,6 +54,8 @@ export class UIManager {
     this.hud.init();
     this.interactionPrompt.init();
     this.notificationToast.init();
+    this.questLog.init();
+    this.questTracker.init();
 
     // Subscribe to store for reactive updates
     this.subscribeToStore();

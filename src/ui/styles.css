@@ -361,10 +361,46 @@
   letter-spacing: 0.05em;
 }
 
+/* ===== CONTROLS HINT (Bottom Center) ===== */
+.ui-controls-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(26, 26, 46, 0.75);
+  padding: 10px 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  transition: opacity 0.3s ease;
+}
+
+.ui-control-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 8px;
+  background: linear-gradient(180deg, #FFD54F 0%, #FFC107 100%);
+  color: #1A1A2E;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 #C79A00, 0 3px 6px rgba(0, 0, 0, 0.3);
+  margin-right: 4px;
+}
+
 /* ===== INTERACTION PROMPT ===== */
 .ui-interaction-prompt {
   position: absolute;
-  bottom: 20%;
+  bottom: 15%;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   display: flex;
@@ -433,7 +469,7 @@
 /* ===== NOTIFICATION TOAST ===== */
 .ui-toast-container {
   position: absolute;
-  top: 80px;
+  top: 100px;
   right: 20px;
   display: flex;
   flex-direction: column;
@@ -565,6 +601,20 @@
     font-size: 12px;
   }
 
+  .ui-controls-hint {
+    bottom: 12px;
+    padding: 8px 14px;
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .ui-control-key {
+    min-width: 28px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 10px;
+  }
+
   .ui-interaction-prompt {
     bottom: 15%;
     padding: 12px 20px;
@@ -645,6 +695,17 @@
   50% {
     opacity: 0.6;
   }
+}
+
+/* Value change animation */
+.ui-hud-item.value-change {
+  animation: valueChange 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes valueChange {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 /* Entry animations for HUD items */
@@ -1241,4 +1302,37 @@
   .quest-tracker-objective {
     font-size: 11px;
   }
+}
+
+/* ===== CUSTOM SCROLLBARS ===== */
+.quest-log-body::-webkit-scrollbar,
+.quest-list::-webkit-scrollbar,
+.ui-mail-panel-list::-webkit-scrollbar {
+  width: 6px;
+}
+.quest-log-body::-webkit-scrollbar-track,
+.quest-list::-webkit-scrollbar-track,
+.ui-mail-panel-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+.quest-log-body::-webkit-scrollbar-thumb,
+.quest-list::-webkit-scrollbar-thumb,
+.ui-mail-panel-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.quest-log-body::-webkit-scrollbar-thumb:hover,
+.quest-list::-webkit-scrollbar-thumb:hover,
+.ui-mail-panel-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== DISABLED BUTTON STATES ===== */
+.quest-action-btn:disabled,
+.ui-mail-panel-close:disabled,
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }

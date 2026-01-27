@@ -19,7 +19,7 @@ export class DialogueBox {
     this.currentText = '';
     this.displayedText = '';
     this.typewriterInterval = null;
-    this.typewriterSpeed = 30; // ms per character
+    this.typewriterSpeed = 40; // ms per character
 
     // Current choices (for event emission)
     this.currentChoices = [];
@@ -67,7 +67,7 @@ export class DialogueBox {
       max-width: 700px;
       z-index: 1000;
       display: none;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Nunito', 'Space Grotesk', system-ui, sans-serif;
       pointer-events: auto;
     `;
 

@@ -30,6 +30,14 @@ export class QuestTracker {
   }
 
   /**
+   * Initialize the quest tracker (called by UIManager for consistency)
+   */
+  init() {
+    // Ensure initial update
+    this.update();
+  }
+
+  /**
    * Create the quest tracker UI elements
    */
   createUI() {
@@ -56,14 +64,21 @@ export class QuestTracker {
 
     // Click to open quest log
     this.container.addEventListener('click', () => {
-      useGameStore.getState().toggleQuestLog();
+      const state = useGameStore.getState();
+      useGameStore.setState({
+        ui: {
+          ...state.ui,
+          showQuestLog: !state.ui.showQuestLog
+        }
+      });
     });
 
-    // Add to HUD (or body if HUD doesn't exist yet)
-    const hud = document.getElementById('hud');
-    if (hud) {
-      hud.appendChild(this.container);
+    // Add to UI overlay (or body if overlay not ready)
+    const uiOverlay = document.getElementById('ui-overlay');
+    if (uiOverlay) {
+      uiOverlay.appendChild(this.container);
     } else {
+      // Fallback to body if overlay not ready
       document.body.appendChild(this.container);
     }
   }
