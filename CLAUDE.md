@@ -10,7 +10,7 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 
 ---
 
-## Current Status Assessment (v0.7.0)
+## Current Status Assessment (v0.8.0)
 
 ### Completion Summary
 
@@ -19,19 +19,19 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 | Visual Rendering | 95% | Excellent |
 | Tiny Planet/Movement | 100% | Excellent |
 | Player Controller | 100% | Excellent |
-| Camera System | 100% | Excellent |
-| NPC Visuals/Animation | 80% | Good |
+| Camera System | 100% | Excellent (frame-rate independent) |
+| NPC Visuals/Animation | 85% | Good |
 | Day/Night Cycle | 100% | Excellent |
 | Post-Processing | 90% | Excellent |
-| **UI/HUD** | **10%** | **Missing** |
-| **Dialogue System** | **5%** | **Missing** |
-| **Mail Delivery Loop** | **20%** | **Incomplete** |
+| **UI/HUD** | **85%** | **Good** |
+| **Dialogue System** | **80%** | **Good** |
+| **Mail Delivery Loop** | **75%** | **Functional** |
 | **Character Customization** | **15%** | **Store only** |
-| **Quest Integration** | **30%** | **Incomplete** |
+| **Quest Integration** | **70%** | **Good** |
 | Audio | 0% | Disabled |
 | Multiplayer | 0% | Not started |
 
-**Overall: ~55% complete** (Target: 60%+)
+**Overall: ~78% complete** (Target: 60%+ ACHIEVED)
 
 ---
 
@@ -187,14 +187,15 @@ src/
 ├── main.js              # App entry, loading screen
 ├── World.js             # Scene orchestrator (lighting, rendering)
 ├── Player.js            # Character controller (spherical movement)
-├── Camera.js            # Third-person camera with collision
+├── Camera.js            # Third-person camera (frame-rate independent)
 ├── InputManager.js      # Keyboard/touch input events
 ├── audio/
 │   └── AudioManager.js  # Sound effects and music (disabled)
 ├── constants/
 │   └── colors.js        # Complete color palette (messenger.abeto.co match)
 ├── data/
-│   └── quests.json      # Quest definitions
+│   ├── dialogues.js     # NPC dialogue trees (6 NPCs)
+│   └── quests.js        # Quest definitions (8 quests)
 ├── effects/
 │   ├── PostProcessing.js    # Bloom, SSAO, vignette
 │   └── particles/
@@ -203,7 +204,9 @@ src/
 ├── entities/
 │   ├── NPC.js           # NPC character with procedural mesh
 │   ├── NPCData.js       # 6 NPC configurations
-│   └── NPCManager.js    # NPC spawning/patrol/look-at
+│   ├── NPCManager.js    # NPC spawning/patrol/look-at
+│   ├── Mailbox.js       # 3D mailbox entity with cel-shading
+│   └── MailboxManager.js # Mailbox spawning (6 mailboxes)
 ├── environment/
 │   ├── TinyPlanet.js    # Spherical gravity + coordinate system
 │   ├── Planet.js        # Buildings, props, zones
@@ -216,12 +219,19 @@ src/
 ├── stores/
 │   └── gameStore.js     # Complete Zustand state (500+ lines)
 ├── systems/
-│   ├── QuestManager.js  # Quest logic (needs integration)
-│   └── MailSystem.js    # Mail logic (stub)
-└── ui/                  # TO BE IMPLEMENTED
-    ├── UIManager.js
-    ├── HUD.js
-    └── DialogueBox.js
+│   ├── DialogueManager.js  # Dialogue tree handler + actions
+│   ├── QuestManager.js     # Quest logic + progress tracking
+│   ├── InventoryManager.js # Inventory management
+│   └── MailSystem.js       # Mail logic
+└── ui/
+    ├── UIManager.js        # Central UI controller
+    ├── HUD.js              # Coins, mail, quest indicator
+    ├── DialogueBox.js      # Typewriter dialogue with choices
+    ├── InteractionPrompt.js # "Press E to talk/collect"
+    ├── NotificationToast.js # Toast notifications
+    ├── QuestLog.js         # Full quest log UI
+    ├── QuestTracker.js     # Mini HUD quest tracker
+    └── styles.css          # Complete UI styling
 ```
 
 ## Visual Style (Messenger-quality) - ACHIEVED
@@ -239,11 +249,11 @@ src/
 |-----|--------|
 | WASD / Arrows | Move |
 | Shift | Run |
-| E | Interact with NPCs |
+| E | Interact (NPCs, Mailboxes) |
 | N | Toggle day/night |
-| I | Toggle inventory (TODO) |
-| Q | Toggle quest log (TODO) |
-| ESC | Pause menu (TODO) |
+| Q | Toggle quest log |
+| 1-4 | Select dialogue choices |
+| ESC | Close dialogue/quest log |
 
 ## Key Features Status
 
@@ -253,10 +263,13 @@ src/
 | Character Visuals | DONE | Anime-style procedural mesh |
 | Cel-Shading | DONE | 4-band + outlines |
 | Day/Night | DONE | 1.5s smooth transition |
-| NPCs | PARTIAL | Patrol + look-at, no dialogue |
-| Mail Delivery | NOT DONE | Store ready, no gameplay |
-| Customization | NOT DONE | Store ready, no UI |
-| Quests | NOT DONE | Data ready, no UI |
+| Camera | DONE | Frame-rate independent, smooth |
+| NPCs | DONE | Patrol + look-at + dialogue |
+| Mail Delivery | DONE | Collect → Deliver → Reward |
+| Dialogue System | DONE | Typewriter effect, choices |
+| Quest System | DONE | Quest log, tracker, objectives |
+| UI/HUD | DONE | Coins, mail, prompts, toasts |
+| Customization | PARTIAL | Store ready, no UI |
 | Multiplayer | NOT STARTED | Planned for v1.0 |
 
 ## Performance Targets
@@ -329,14 +342,15 @@ const mat = createToonMaterial({ color: 0xff0000 });
    Navigate to `http://localhost:3000`
 
 4. **Test Controls**
-   - WASD to move
-   - Shift to run
+   - WASD to move, Shift to run
+   - E to interact with NPCs and mailboxes
+   - Q to open quest log
    - N to toggle day/night
-   - Walk near NPCs to see them look at you
+   - Walk near NPCs to trigger dialogue prompts
 
 ## Known Issues
 
-1. **E key does nothing** - Dialogue system not connected
-2. **No visible UI** - HUD not implemented
-3. **Audio disabled** - Browser autoplay workaround pending
-4. **Mobile touch needs work** - Basic support only
+1. **Audio disabled** - Browser autoplay workaround pending
+2. **Character customization** - Store ready, UI not implemented
+3. **Mobile touch needs work** - Basic support only
+4. **Multiplayer** - Not started (planned for v1.0)
