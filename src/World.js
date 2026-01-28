@@ -12,7 +12,7 @@ import { Planet } from './environment/Planet.js';
 import { SkyShader } from './shaders/sky.js';
 import { PostProcessing } from './effects/PostProcessing.js';
 import { ParticleManager } from './effects/particles/ParticleManager.js';
-import { createFireflyEmitter, createLeafEmitter, createBirdEmitter } from './effects/particles/Emitters.js';
+import { createFireflyEmitter, createLeafEmitter, createBirdEmitter, createDustMoteEmitter } from './effects/particles/Emitters.js';
 import { LODManager } from './optimization/LODManager.js';
 import { useGameStore } from './stores/gameStore.js';
 // Audio disabled for now - keeping file for future use
@@ -401,6 +401,18 @@ export class World {
     if (this.worldMode === 'planet') {
       const birdCount = this.qualityLevel === 'low' ? 6 : 12;
       this.birdEmitter = createBirdEmitter(this.scene, this.radius || 50, birdCount);
+    }
+
+    // Create ambient dust motes (floating particles for atmosphere)
+    if (this.worldMode === 'planet') {
+      const dustCount = this.qualityLevel === 'low' ? 10 : (this.qualityLevel === 'medium' ? 30 : 40);
+      const planetRadius = this.planetEnv ? this.planetEnv.radius : 50;
+      this.dustMoteEmitter = createDustMoteEmitter(
+        this.particleManager,
+        new THREE.Vector3(0, 0, 0), // Planet center
+        planetRadius,
+        { count: dustCount }
+      );
     }
 
     // Store particle manager for player to access
@@ -808,6 +820,7 @@ export class World {
     if (this.mailboxManager) this.mailboxManager.dispose();
     if (dialogueManager) dialogueManager.dispose();
     if (this.birdEmitter) this.birdEmitter.dispose();
+    if (this.dustMoteEmitter) this.dustMoteEmitter.dispose();
 
     // Dispose of Three.js resources
     this.scene.traverse((object) => {

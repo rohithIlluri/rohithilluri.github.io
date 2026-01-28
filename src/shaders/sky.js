@@ -53,13 +53,13 @@ export class SkyShader {
         atmosphereColor: { value: new THREE.Color(MESSENGER_PALETTE.YELLOW_ACCENT) },
         atmosphereIntensity: { value: 0.05 }, // Very subtle
 
-        // Cloud properties - painterly brush-stroke style
+        // Cloud properties - painterly brush-stroke style with dramatic presence
         uTime: { value: 0.0 },
         cloudColor: { value: new THREE.Color(MESSENGER_PALETTE.CLOUD_WHITE) }, // Pure white
         cloudShadowColor: { value: new THREE.Color(MESSENGER_PALETTE.CLOUD_SHADOW) }, // Light shadow
-        cloudDensity: { value: 0.5 }, // More visible clouds
+        cloudDensity: { value: 0.65 }, // More prominent clouds
         cloudSpeed: { value: 0.015 }, // Slower drift
-        cloudScale: { value: 2.5 }, // Larger cloud forms
+        cloudScale: { value: 3.0 }, // Larger, more dramatic cloud forms
       },
       vertexShader: `
         varying vec3 vWorldPosition;

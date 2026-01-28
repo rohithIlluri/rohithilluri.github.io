@@ -227,8 +227,70 @@ export class Planet {
     this.scene.add(planetOutline);
     this.meshes.push(planetOutline);
 
+    // Create atmospheric rim glow effect
+    this.createAtmosphericGlow();
+
     // Add zone accents (paths, colored areas)
     this.createZoneAccents();
+  }
+
+  /**
+   * Create atmospheric rim glow around the planet
+   * Creates a soft turquoise glow at the edges for a dreamy atmosphere
+   */
+  createAtmosphericGlow() {
+    const glowGeometry = new THREE.SphereGeometry(this.radius * 1.02, 64, 64);
+
+    // Custom shader for fresnel-based rim glow
+    const glowMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        glowColor: { value: new THREE.Color(0x5BBFBA) }, // Turquoise from messenger palette
+        intensity: { value: 0.6 },
+        timeOfDay: { value: 0.0 },
+      },
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 glowColor;
+        uniform float intensity;
+        uniform float timeOfDay;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+          // Calculate view direction
+          vec3 viewDir = normalize(vViewPosition);
+
+          // Fresnel effect - stronger at edges
+          float rim = 1.0 - abs(dot(vNormal, viewDir));
+          rim = pow(rim, 3.0); // Sharpen the falloff
+
+          // Reduce glow at night
+          float dayFactor = 1.0 - timeOfDay * 0.7;
+
+          // Final glow color with alpha
+          float alpha = rim * intensity * dayFactor * 0.4;
+          gl_FragColor = vec4(glowColor, alpha);
+        }
+      `,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false,
+    });
+
+    this.glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+    this.scene.add(this.glowMesh);
+    this.meshes.push(this.glowMesh);
   }
 
   /**
@@ -2862,6 +2924,11 @@ export class Planet {
    */
   setTimeOfDay(time) {
     this.timeOfDay = time;
+
+    // Update atmospheric glow
+    if (this.glowMesh && this.glowMesh.material.uniforms) {
+      this.glowMesh.material.uniforms.timeOfDay.value = time;
+    }
 
     // Day and night colors
     const dayWindowColor = new THREE.Color(0x87CEEB); // Sky blue reflection

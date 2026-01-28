@@ -10,21 +10,22 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { MESSENGER_PALETTE } from '../constants/colors.js';
 
-// Visual quality constants - messenger.abeto.co style
-const BLOOM_THRESHOLD = 0.95;     // Higher threshold - subtle bloom only
-const BLOOM_INTENSITY = 0.1;      // Reduced for cleaner look
-const BLOOM_RADIUS = 0.3;         // Tighter bloom
+// Visual quality constants - messenger.abeto.co style with cinematic polish
+const BLOOM_THRESHOLD = 0.85;     // Lower threshold - more elements glow
+const BLOOM_INTENSITY = 0.15;     // Slightly stronger for dreamy feel
+const BLOOM_RADIUS = 0.4;         // Wider bloom for softer glow
 const VIGNETTE_INTENSITY = 0.08;  // Very subtle vignette
 const VIGNETTE_COLOR = new THREE.Color(MESSENGER_PALETTE.SHADOW_TINT);
 const OUTLINE_COLOR = new THREE.Color(MESSENGER_PALETTE.OUTLINE_PRIMARY);
 const OUTLINE_THICKNESS = 2.0;    // Sketch-style outlines
 
-// SSAO settings - subtle blue-gray shadows
-const SSAO_RADIUS = 0.4;          // Moderate radius
-const SSAO_INTENSITY = 0.2;       // Subtle, not aggressive
+// SSAO settings - visible contact shadows for depth
+const SSAO_RADIUS = 0.5;          // Slightly larger radius
+const SSAO_INTENSITY = 0.35;      // More visible contact shadows
 const SSAO_BIAS = 0.02;
 const SSAO_COLOR = new THREE.Color(MESSENGER_PALETTE.SHADOW_TINT); // Blue-gray, never black
 
@@ -38,10 +39,17 @@ const COLOR_GRADE = {
   tint: 0.005,        // Minimal tint
 };
 
-// Film grain - removed for cleaner messenger style
+// Film grain - subtle cinematic texture
 const FILM_GRAIN = {
-  intensity: 0.0,     // Disabled - messenger has clean look
-  size: 1.0,
+  intensity: 0.015,   // Subtle grain for cinematic feel
+  size: 1.5,          // Slightly larger grain pattern
+};
+
+// Depth of Field - tilt-shift miniature effect
+const DOF_SETTINGS = {
+  focus: 50.0,        // Focus at planet center distance
+  aperture: 0.00015,  // Shallow depth for subtle miniature effect
+  maxblur: 0.008,     // Subtle blur at edges
 };
 
 /**
@@ -312,6 +320,48 @@ const FilmGrainShader = {
 };
 
 /**
+ * Chromatic Aberration Shader
+ * Creates subtle RGB color separation at screen edges for lens effect
+ */
+const ChromaticAberrationShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    intensity: { value: 0.002 },
+  },
+
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float intensity;
+    varying vec2 vUv;
+
+    void main() {
+      // Calculate distance from center for edge-based effect
+      vec2 toCenter = vUv - 0.5;
+      float dist = length(toCenter);
+
+      // Apply effect more at edges, less in center
+      float edgeFactor = smoothstep(0.3, 0.7, dist);
+      vec2 offset = toCenter * intensity * edgeFactor;
+
+      // Sample RGB channels with slight offset
+      float r = texture2D(tDiffuse, vUv + offset).r;
+      float g = texture2D(tDiffuse, vUv).g;
+      float b = texture2D(tDiffuse, vUv - offset).b;
+
+      gl_FragColor = vec4(r, g, b, 1.0);
+    }
+  `,
+};
+
+/**
  * Gamma correction shader (replaces OutputPass for compatibility)
  */
 const GammaCorrectionShader = {
@@ -375,14 +425,25 @@ export class PostProcessing {
     // FXAA settings
     this.fxaaEnabled = true;
 
+    // DOF settings
+    this.dofEnabled = true;
+    this.dofFocus = DOF_SETTINGS.focus;
+    this.dofAperture = DOF_SETTINGS.aperture;
+    this.dofMaxBlur = DOF_SETTINGS.maxblur;
+
+    // Quality preset tracking
+    this.qualityPreset = 'high';
+
     // Composer and passes
     this.composer = null;
     this.renderPass = null;
     this.saoPass = null;
+    this.dofPass = null;
     this.bloomPass = null;
     this.outlinePass = null;
     this.colorGradingPass = null;
     this.filmGrainPass = null;
+    this.chromaPass = null;
     this.vignettePass = null;
     this.fxaaPass = null;
     this.gammaPass = null;
@@ -442,6 +503,22 @@ export class PostProcessing {
         this.ssaoEnabled = false;
       }
 
+      // 2.5. Depth of Field Pass - Tilt-shift miniature effect
+      if (this.qualityPreset !== 'low') {
+        try {
+          this.dofPass = new BokehPass(this.scene, this.camera, {
+            focus: this.dofFocus,
+            aperture: this.dofAperture,
+            maxblur: this.dofMaxBlur,
+          });
+          this.dofPass.enabled = this.dofEnabled && this.qualityPreset === 'high';
+          this.composer.addPass(this.dofPass);
+        } catch (e) {
+          console.warn('Bokeh DOF Pass not available:', e);
+          this.dofEnabled = false;
+        }
+      }
+
       // 3. Outline Pass - Clean static outlines (graphic novel style)
       this.outlinePass = new ShaderPass(OutlineShader);
       this.outlinePass.uniforms.uResolution.value.set(size.x * pixelRatio, size.y * pixelRatio);
@@ -471,6 +548,11 @@ export class PostProcessing {
       this.filmGrainPass.uniforms.intensity.value = this.filmGrainIntensity;
       this.filmGrainPass.enabled = this.filmGrainEnabled;
       this.composer.addPass(this.filmGrainPass);
+
+      // 6.5. Chromatic Aberration Pass - Lens color fringing at edges
+      this.chromaPass = new ShaderPass(ChromaticAberrationShader);
+      this.chromaPass.enabled = this.qualityPreset !== 'low';
+      this.composer.addPass(this.chromaPass);
 
       // 7. Vignette Pass - Edge darkening
       this.vignettePass = new ShaderPass(VignetteShader);
@@ -644,10 +726,48 @@ export class PostProcessing {
   }
 
   /**
+   * Set Depth of Field parameters
+   * @param {Object} options DOF options
+   */
+  setDOF(options = {}) {
+    if (options.enabled !== undefined) {
+      this.dofEnabled = options.enabled;
+      if (this.dofPass) this.dofPass.enabled = options.enabled;
+    }
+    if (options.focus !== undefined && this.dofPass) {
+      this.dofFocus = options.focus;
+      this.dofPass.uniforms['focus'].value = options.focus;
+    }
+    if (options.aperture !== undefined && this.dofPass) {
+      this.dofAperture = options.aperture;
+      this.dofPass.uniforms['aperture'].value = options.aperture;
+    }
+    if (options.maxblur !== undefined && this.dofPass) {
+      this.dofMaxBlur = options.maxblur;
+      this.dofPass.uniforms['maxblur'].value = options.maxblur;
+    }
+  }
+
+  /**
+   * Set Chromatic Aberration parameters
+   * @param {Object} options Chromatic aberration options
+   */
+  setChromaticAberration(options = {}) {
+    if (options.enabled !== undefined && this.chromaPass) {
+      this.chromaPass.enabled = options.enabled;
+    }
+    if (options.intensity !== undefined && this.chromaPass) {
+      this.chromaPass.uniforms.intensity.value = options.intensity;
+    }
+  }
+
+  /**
    * Apply quality preset
    * @param {string} quality 'low', 'medium', or 'high'
    */
   setQualityPreset(quality) {
+    this.qualityPreset = quality;
+
     switch (quality) {
       case 'low':
         this.setSSAO({ enabled: false });
@@ -656,6 +776,8 @@ export class PostProcessing {
         this.setVignette({ enabled: true, intensity: 0.1 });
         this.setColorGrading({ enabled: true });
         this.setFilmGrain({ enabled: false });
+        this.setDOF({ enabled: false });
+        this.setChromaticAberration({ enabled: false });
         this.setFXAA({ enabled: false });
         break;
 
@@ -664,13 +786,15 @@ export class PostProcessing {
         this.setBloom({
           enabled: true,
           threshold: 0.9,
-          intensity: 0.1,
-          radius: 0.3,
+          intensity: 0.12,
+          radius: 0.35,
         });
         this.setOutline({ enabled: true, thickness: 1.5, threshold: 0.15 });
         this.setVignette({ enabled: true, intensity: 0.15 });
         this.setColorGrading({ enabled: true });
-        this.setFilmGrain({ enabled: true, intensity: 0.02 });
+        this.setFilmGrain({ enabled: true, intensity: 0.01 });
+        this.setDOF({ enabled: true, focus: 50.0, aperture: 0.0001, maxblur: 0.005 });
+        this.setChromaticAberration({ enabled: true, intensity: 0.0015 });
         this.setFXAA({ enabled: true });
         break;
 
@@ -687,6 +811,8 @@ export class PostProcessing {
         this.setVignette({ enabled: true, intensity: VIGNETTE_INTENSITY });
         this.setColorGrading({ enabled: true });
         this.setFilmGrain({ enabled: true, intensity: FILM_GRAIN.intensity });
+        this.setDOF({ enabled: true, focus: DOF_SETTINGS.focus, aperture: DOF_SETTINGS.aperture, maxblur: DOF_SETTINGS.maxblur });
+        this.setChromaticAberration({ enabled: true, intensity: 0.002 });
         this.setFXAA({ enabled: true });
         break;
     }
@@ -811,4 +937,5 @@ export {
   OutlineShader,
   ColorGradingShader,
   FilmGrainShader,
+  ChromaticAberrationShader,
 };

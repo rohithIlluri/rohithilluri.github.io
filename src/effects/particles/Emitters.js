@@ -497,4 +497,56 @@ export function createBirdEmitter(scene, planetRadius = 50, count = 12) {
   };
 }
 
+/**
+ * Dust Mote Emitter
+ * Creates floating ambient dust particles around the planet
+ * Gives a sense of atmosphere and scale
+ */
+export function createDustMoteEmitter(particleManager, planetCenter, radius, options = {}) {
+  const count = options.count || 40;
+  const emitters = [];
+
+  for (let i = 0; i < count; i++) {
+    // Stagger spawn times for gradual appearance
+    setTimeout(() => {
+      const id = `dustmote_${i}`;
+
+      particleManager.addEmitter({
+        id,
+        type: 'sparkle', // Reuse sparkle system for glowing dust
+        rate: 4 + Math.random() * 2, // 4-6 seconds between spawns
+        position: () => {
+          // Random position on sphere surface, slightly above
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI;
+          const r = radius + 1 + Math.random() * 5; // 1-6 units above surface
+
+          return {
+            x: planetCenter.x + r * Math.sin(phi) * Math.cos(theta),
+            y: planetCenter.y + r * Math.cos(phi),
+            z: planetCenter.z + r * Math.sin(phi) * Math.sin(theta),
+          };
+        },
+        velocity: {
+          x: (Math.random() - 0.5) * 0.02,
+          y: 0.02 + Math.random() * 0.02, // Slow upward drift
+          z: (Math.random() - 0.5) * 0.02,
+        },
+        life: 5 + Math.random() * 3, // 5-8 second lifespan
+        size: 0.015 + Math.random() * 0.01, // Tiny particles
+        color: 0xFFFFDD, // Warm white/cream color
+      });
+
+      emitters.push(id);
+    }, (i / count) * 8000); // Spread spawns over 8 seconds
+  }
+
+  return {
+    ids: emitters,
+    dispose: () => {
+      emitters.forEach((id) => particleManager.removeEmitter(id));
+    },
+  };
+}
+
 export { GROUND_COLORS, LEAF_COLORS };
