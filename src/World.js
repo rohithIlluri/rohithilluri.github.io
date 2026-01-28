@@ -18,6 +18,8 @@ import { useGameStore } from './stores/gameStore.js';
 // Audio disabled for now - keeping file for future use
 // import { createAudioManager, getAudioManager } from './audio/AudioManager.js';
 import { NPCManager } from './entities/NPCManager.js';
+import { MailboxManager } from './entities/MailboxManager.js';
+import { dialogueManager } from './systems/DialogueManager.js';
 
 // Quality presets - enhanced for messenger.abeto.co parity
 const QUALITY_PRESETS = {
@@ -79,6 +81,9 @@ export class World {
 
     // NPC system
     this.npcManager = null;
+
+    // Mailbox system
+    this.mailboxManager = null;
 
     // Lighting
     this.ambientLight = null;
@@ -181,6 +186,9 @@ export class World {
     this.reportProgress(0.7, 'Spawning NPCs...');
     this.setupNPCs();
 
+    this.reportProgress(0.75, 'Placing mailboxes...');
+    this.setupMailboxes();
+
     this.reportProgress(0.8, 'Setting up camera...');
     this.setupCamera();
 
@@ -195,10 +203,16 @@ export class World {
     // this.reportProgress(0.95, 'Initializing audio...');
     // await this.setupAudio();
 
+    this.reportProgress(0.95, 'Initializing dialogue system...');
+    this.setupDialogueSystem();
+
     this.reportProgress(1.0, 'Ready!');
 
     // Listen for day/night toggle
     this.inputManager.on('toggleDayNight', () => this.toggleDayNight());
+
+    // Listen for interaction key (E) to handle mailbox collection
+    this.inputManager.on('interact', () => this.handleInteraction());
 
     // Store quality level
     useGameStore.getState().setQualityLevel(this.qualityLevel);
@@ -329,6 +343,21 @@ export class World {
     }
   }
 
+  setupMailboxes() {
+    // Only spawn mailboxes on planet mode
+    if (this.worldMode === 'planet' && this.tinyPlanet) {
+      this.mailboxManager = new MailboxManager(this.scene, this.tinyPlanet, {
+        maxMailboxes: 6, // 4-6 mailboxes around the planet
+        enabled: true,
+      });
+
+      // Sync light direction
+      if (this.lightDirection) {
+        this.mailboxManager.setLightDirection(this.lightDirection);
+      }
+    }
+  }
+
   setupPostProcessing(preset) {
     this.postProcessing = new PostProcessing(
       this.renderer,
@@ -388,6 +417,31 @@ export class World {
     // For now, the environment uses simple geometry that doesn't need LOD
   }
 
+  /**
+   * Setup dialogue system
+   */
+  setupDialogueSystem() {
+    // Initialize the dialogue manager
+    dialogueManager.init();
+
+    // Listen for dialogue events if needed
+    dialogueManager.on('conversationStarted', (data) => {
+      console.log('[World] Dialogue started with NPC:', data.npcId);
+    });
+
+    dialogueManager.on('conversationEnded', (data) => {
+      console.log('[World] Dialogue ended with NPC:', data.npcId);
+    });
+
+    dialogueManager.on('questGiven', (quest) => {
+      console.log('[World] Quest given:', quest.title);
+    });
+
+    dialogueManager.on('mailGiven', (mail) => {
+      console.log('[World] Mail received:', mail.id);
+    });
+  }
+
   // Audio disabled - keeping for future use
   // async setupAudio() {
   //   // Create audio manager
@@ -437,6 +491,11 @@ export class World {
       this.npcManager.setLightDirection(direction);
     }
 
+    // Update Mailboxes
+    if (this.mailboxManager) {
+      this.mailboxManager.setLightDirection(direction);
+    }
+
     // Update environment
     if (this.worldMode === 'planet' && this.planetEnv) {
       this.planetEnv.setLightDirection(direction);
@@ -471,6 +530,54 @@ export class World {
 
     // Update store
     useGameStore.getState().setQualityLevel(quality);
+  }
+
+  /**
+   * Handle E key interaction (mailbox collection, NPC dialogue, etc.)
+   */
+  handleInteraction() {
+    const store = useGameStore.getState();
+
+    // Don't handle interaction if in dialogue
+    if (store.gameState === 'dialogue') return;
+
+    // Check for nearby mailbox first
+    if (this.mailboxManager && store.nearbyMailbox) {
+      const mailbox = store.nearbyMailbox;
+
+      if (mailbox.hasNewMail) {
+        const mail = this.mailboxManager.collectMailFromNearby();
+
+        if (mail) {
+          // Add mail to player inventory
+          const added = store.addMail(mail);
+
+          if (!added) {
+            // Inventory was full, put mail back
+            mailbox.currentMail = mail;
+            mailbox.hasNewMail = true;
+          }
+        }
+        return; // Interaction handled
+      }
+    }
+
+    // Check for nearby NPC and start dialogue
+    if (store.nearbyNPC) {
+      const npc = store.nearbyNPC;
+      const npcId = npc.definition?.id || npc.id;
+
+      if (npcId) {
+        // Get appearance/name info for the dialogue
+        const npcData = {
+          name: npc.appearance?.name || npc.definition?.appearance || 'Stranger',
+        };
+
+        // Start dialogue with this NPC
+        dialogueManager.startConversation(npcId, npcData);
+        return; // Interaction handled
+      }
+    }
   }
 
   toggleDayNight() {
@@ -606,6 +713,15 @@ export class World {
       this.npcManager.update(deltaTime);
     }
 
+    // Update Mailboxes
+    if (this.mailboxManager) {
+      // Sync player position for proximity checks
+      if (this.player) {
+        this.mailboxManager.setPlayerPosition(this.player.getPosition());
+      }
+      this.mailboxManager.update(deltaTime);
+    }
+
     // Update particle systems
     if (this.particleManager) {
       this.particleManager.update(deltaTime);
@@ -689,6 +805,8 @@ export class World {
     // Audio disabled
     // if (this.audioManager) this.audioManager.dispose();
     if (this.npcManager) this.npcManager.dispose();
+    if (this.mailboxManager) this.mailboxManager.dispose();
+    if (dialogueManager) dialogueManager.dispose();
     if (this.birdEmitter) this.birdEmitter.dispose();
 
     // Dispose of Three.js resources

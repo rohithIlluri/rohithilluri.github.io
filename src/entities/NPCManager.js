@@ -5,6 +5,7 @@
 
 import { NPC } from './NPC.js';
 import { NPC_DEFINITIONS } from './NPCData.js';
+import { useGameStore } from '../stores/gameStore.js';
 
 export class NPCManager {
   constructor(scene, planet, options = {}) {
@@ -81,6 +82,31 @@ export class NPCManager {
 
     // Update each NPC
     this.npcs.forEach(npc => npc.update(deltaTime));
+
+    // Check for nearby NPC and update game store
+    this.updateNearbyNPC();
+  }
+
+  /**
+   * Update nearbyNPC in gameStore based on player proximity
+   * Interaction range is 2 units
+   */
+  updateNearbyNPC() {
+    if (!this.playerPosition) return;
+
+    const store = useGameStore.getState();
+    const interactionRange = 2.0; // Units for interaction
+
+    // Find the nearest NPC within interaction range
+    const nearestNPC = this.getNearestNPC(this.playerPosition, interactionRange);
+
+    // Get current nearbyNPC from store
+    const currentNearby = store.nearbyNPC;
+
+    // Only update if changed
+    if (nearestNPC !== currentNearby) {
+      store.setNearbyNPC(nearestNPC);
+    }
   }
 
   /**

@@ -1,19 +1,18 @@
 /**
  * DialogueManager.js - NPC Dialogue and Conversation System
- * Manages dialogue trees, player responses, and conversation effects
+ * Manages dialogue trees, player choices, and conversation effects
  */
 
 import { useGameStore } from '../stores/gameStore.js';
-import { questManager } from './QuestManager.js';
-import { inventoryManager } from './InventoryManager.js';
-import dialoguesData from '../data/dialogues.json';
-import questsData from '../data/quests.json';
+import { getDialogueTree, getDialogueNode, getQuest, getMailItem, DIALOGUE_TREES } from '../data/dialogues.js';
+import { DialogueBox } from '../ui/DialogueBox.js';
 
 class DialogueManager {
   constructor() {
     this.npcDialogues = new Map();
     this.currentConversation = null;
     this.eventListeners = new Map();
+    this.dialogueBox = null;
   }
 
   /**
@@ -21,15 +20,34 @@ class DialogueManager {
    */
   init() {
     this.loadDialogues();
+    this.initUI();
     console.log('[DialogueManager] Initialized with', this.npcDialogues.size, 'NPC dialogues');
   }
 
   /**
-   * Load dialogues from data file
+   * Initialize the dialogue UI
+   */
+  initUI() {
+    this.dialogueBox = new DialogueBox();
+
+    // Listen for choice selections
+    this.dialogueBox.on('choiceSelected', (choice) => {
+      this.handleChoice(choice);
+    });
+
+    // Listen for dialogue close (ESC or click outside)
+    this.dialogueBox.on('close', () => {
+      this.endConversation();
+    });
+  }
+
+  /**
+   * Load dialogues from dialogues.js
    */
   loadDialogues() {
-    for (const [npcId, npcData] of Object.entries(dialoguesData.npcs)) {
-      this.npcDialogues.set(npcId, npcData);
+    // Load from the DIALOGUE_TREES exported from dialogues.js
+    for (const [npcId, dialogueTree] of Object.entries(DIALOGUE_TREES)) {
+      this.npcDialogues.set(npcId, dialogueTree);
     }
   }
 
@@ -49,51 +67,48 @@ class DialogueManager {
    * @returns {Object|null}
    */
   getNode(npcId, nodeId) {
-    const npc = this.npcDialogues.get(npcId);
-    if (!npc || !npc.nodes) return null;
-    return npc.nodes[nodeId] || null;
+    const tree = this.npcDialogues.get(npcId);
+    if (!tree || !tree.nodes) return null;
+    return tree.nodes[nodeId] || null;
   }
 
   /**
    * Start conversation with NPC
-   * @param {Object} npc NPC object { id, name, ... }
+   * @param {string} npcId NPC definition id
+   * @param {Object} npcData Optional additional NPC data
    * @returns {Object} First dialogue node
    */
-  startConversation(npc) {
-    const npcDialogue = this.getNPCDialogue(npc.id);
-    if (!npcDialogue) {
-      console.warn('[DialogueManager] No dialogue for NPC:', npc.id);
+  startConversation(npcId, npcData = null) {
+    const dialogueTree = this.getNPCDialogue(npcId);
+    if (!dialogueTree) {
+      console.warn('[DialogueManager] No dialogue for NPC:', npcId);
       return null;
     }
 
-    // Determine starting node based on context
-    let startNode = npcDialogue.defaultNode;
+    // Get the starting node
+    const startNodeId = dialogueTree.startNode;
+    const startNode = dialogueTree.nodes[startNodeId];
 
-    // Check if we've talked before (use return node)
-    const stats = useGameStore.getState().stats;
-    if (stats.npcsTalkedTo.has(npc.id) && npcDialogue.nodes[`${npc.id.replace('npc_', '')}_return`]) {
-      startNode = `${npc.id.replace('npc_', '')}_return`;
-    }
-
-    // Check for delivery opportunity
-    const mailForNPC = inventoryManager.getMailFor(npc.id);
-    if (mailForNPC && npcDialogue.nodes[`${npc.id.replace('npc_', '')}_delivery`]) {
-      startNode = `${npc.id.replace('npc_', '')}_delivery`;
+    if (!startNode) {
+      console.warn('[DialogueManager] No start node found for NPC:', npcId);
+      return null;
     }
 
     this.currentConversation = {
-      npc,
-      npcData: npcDialogue,
-      currentNodeId: startNode,
+      npcId,
+      npcData,
+      dialogueTree,
+      currentNodeId: startNodeId,
     };
 
     // Update game state
-    useGameStore.getState().startDialogue(npc, startNode);
+    const npc = { id: npcId, ...npcData };
+    useGameStore.getState().startDialogue(npc, startNodeId);
 
-    // Check talk objectives
-    questManager.checkObjective('talk', npc.id);
+    // Show the dialogue UI
+    this.showCurrentNode();
 
-    this.emit('conversationStarted', { npc, node: this.getCurrentNode() });
+    this.emit('conversationStarted', { npcId, node: startNode });
 
     return this.getCurrentNode();
   }
@@ -105,132 +120,184 @@ class DialogueManager {
   getCurrentNode() {
     if (!this.currentConversation) return null;
 
-    const { npcData, currentNodeId } = this.currentConversation;
-    const node = npcData.nodes[currentNodeId];
+    const { dialogueTree, currentNodeId } = this.currentConversation;
+    const node = dialogueTree.nodes[currentNodeId];
 
     if (!node) return null;
 
     return {
       ...node,
-      speaker: npcData.name,
-      portrait: npcData.portrait,
       nodeId: currentNodeId,
     };
   }
 
   /**
-   * Get available responses for current node
-   * @returns {Array}
+   * Show current dialogue node in UI
    */
-  getResponses() {
+  showCurrentNode() {
     const node = this.getCurrentNode();
-    if (!node || !node.responses) return [];
+    if (!node || !this.dialogueBox) return;
 
-    // Filter responses based on conditions (if any)
-    return node.responses.filter(response => {
-      if (response.condition) {
-        return this.evaluateCondition(response.condition);
-      }
-      return true;
+    this.dialogueBox.show({
+      speaker: node.speaker,
+      text: node.text,
+      choices: node.choices || [],
     });
   }
 
   /**
-   * Select a response
-   * @param {number} responseIndex
-   * @returns {Object|null} Next node or null if conversation ends
+   * Get available choices for current node
+   * @returns {Array}
    */
-  selectResponse(responseIndex) {
-    const responses = this.getResponses();
-    if (responseIndex < 0 || responseIndex >= responses.length) {
-      console.warn('[DialogueManager] Invalid response index');
-      return null;
-    }
-
-    const response = responses[responseIndex];
-
-    // Execute effect if any
-    if (response.effect) {
-      this.executeEffect(response.effect);
-    }
-
-    // Advance to next node or end conversation
-    if (response.next) {
-      this.currentConversation.currentNodeId = response.next;
-      useGameStore.getState().advanceDialogue(response.next);
-
-      const nextNode = this.getCurrentNode();
-      this.emit('nodeChanged', nextNode);
-      return nextNode;
-    } else {
-      // End conversation
-      this.endConversation();
-      return null;
-    }
+  getChoices() {
+    const node = this.getCurrentNode();
+    if (!node || !node.choices) return [];
+    return node.choices;
   }
 
   /**
-   * Execute dialogue effect
-   * @param {string} effectString Format: "action:param1:param2"
+   * Handle a player's choice selection
+   * @param {Object} choice - The selected choice
+   */
+  handleChoice(choice) {
+    if (!choice) return;
+
+    // Process any action attached to this choice
+    if (choice.action) {
+      this.executeEffect(choice.action);
+    }
+
+    // If nextNode is null or action is endDialogue, end the conversation
+    if (!choice.nextNode || choice.action === 'endDialogue') {
+      this.endConversation();
+      return;
+    }
+
+    // Advance to next node
+    this.advanceToNode(choice.nextNode);
+  }
+
+  /**
+   * Select a choice by index (legacy support)
+   * @param {number} choiceIndex
+   * @returns {Object|null} Next node or null if conversation ends
+   */
+  selectResponse(choiceIndex) {
+    const choices = this.getChoices();
+    if (choiceIndex < 0 || choiceIndex >= choices.length) {
+      console.warn('[DialogueManager] Invalid choice index');
+      return null;
+    }
+
+    const choice = choices[choiceIndex];
+    this.handleChoice(choice);
+
+    return this.getCurrentNode();
+  }
+
+  /**
+   * Advance to a specific node
+   * @param {string} nodeId
+   */
+  advanceToNode(nodeId) {
+    if (!this.currentConversation) return;
+
+    const { dialogueTree } = this.currentConversation;
+    const nextNode = dialogueTree.nodes[nodeId];
+
+    if (!nextNode) {
+      console.warn('[DialogueManager] Node not found:', nodeId);
+      this.endConversation();
+      return;
+    }
+
+    this.currentConversation.currentNodeId = nodeId;
+    useGameStore.getState().advanceDialogue(nodeId);
+
+    // Show the new node in UI
+    this.showCurrentNode();
+
+    this.emit('nodeChanged', this.getCurrentNode());
+  }
+
+  /**
+   * Execute dialogue effect/action
+   * @param {string} effectString Format: "action:param" (e.g., "giveQuest:quest_id")
    */
   executeEffect(effectString) {
+    if (!effectString) return;
+
     const [action, ...params] = effectString.split(':');
+    const param = params.join(':'); // Rejoin in case param contains colons
+    const store = useGameStore.getState();
 
     switch (action) {
-      case 'accept_quest':
-        questManager.acceptQuest(params[0]);
+      case 'giveQuest': {
+        const quest = getQuest(param);
+        if (quest) {
+          store.acceptQuest({ ...quest });
+          this.emit('questGiven', quest);
+          console.log('[DialogueManager] Quest given:', quest.title);
+        } else {
+          console.warn('[DialogueManager] Quest not found:', param);
+        }
         break;
+      }
 
-      case 'complete_objective':
-        questManager.completeObjective(params[0], parseInt(params[1]));
-        break;
-
-      case 'give_mail':
-        const mailItem = questsData.mailItems.find(m => m.id === params[0]);
+      case 'giveMail': {
+        const mailItem = getMailItem(param);
         if (mailItem) {
-          inventoryManager.collectMail(mailItem);
+          const success = store.addMail({ ...mailItem });
+          if (success) {
+            this.emit('mailGiven', mailItem);
+            console.log('[DialogueManager] Mail given:', mailItem.id);
+          }
+        } else {
+          console.warn('[DialogueManager] Mail item not found:', param);
+        }
+        break;
+      }
+
+      case 'endDialogue':
+        // Will be handled by handleChoice
+        break;
+
+      case 'accept_quest':
+        // Legacy format support
+        const legacyQuest = getQuest(param);
+        if (legacyQuest) {
+          store.acceptQuest({ ...legacyQuest });
         }
         break;
 
       case 'give_coins':
-        inventoryManager.addCoins(parseInt(params[0]));
+        const amount = parseInt(param);
+        if (!isNaN(amount)) {
+          store.addCoins(amount);
+        }
         break;
 
-      case 'unlock_zone':
-        useGameStore.getState().markZoneVisited(params[0]);
+      case 'deliver_mail':
+      case 'deliverMail': {
+        // Deliver mail to current NPC or specified recipient
+        // Param can be a specific mail ID or empty to auto-find mail for current NPC
+        const recipientId = param || (this.currentConversation ? this.currentConversation.npcId : null);
+        if (recipientId) {
+          const mail = store.inventory.mail.find(m => m.to === recipientId);
+          if (mail) {
+            store.deliverMail(mail.id, recipientId);
+            this.emit('mailDelivered', { mailId: mail.id, recipientId });
+            console.log('[DialogueManager] Mail delivered to:', recipientId);
+          }
+        }
         break;
+      }
 
       default:
-        console.warn('[DialogueManager] Unknown effect:', action);
+        console.warn('[DialogueManager] Unknown action:', action);
     }
 
     this.emit('effectExecuted', { action, params });
-  }
-
-  /**
-   * Evaluate a condition
-   * @param {string} conditionString
-   * @returns {boolean}
-   */
-  evaluateCondition(conditionString) {
-    const [type, ...params] = conditionString.split(':');
-
-    switch (type) {
-      case 'has_mail':
-        return inventoryManager.hasMail(params[0]);
-
-      case 'has_quest':
-        return questManager.isQuestActive(params[0]);
-
-      case 'quest_complete':
-        return questManager.isQuestComplete(params[0]);
-
-      case 'has_coins':
-        return inventoryManager.getCoins() >= parseInt(params[0]);
-
-      default:
-        return true;
-    }
   }
 
   /**
@@ -239,10 +306,17 @@ class DialogueManager {
   endConversation() {
     if (!this.currentConversation) return;
 
-    this.emit('conversationEnded', { npc: this.currentConversation.npc });
+    const npcId = this.currentConversation.npcId;
+
+    this.emit('conversationEnded', { npcId });
 
     this.currentConversation = null;
     useGameStore.getState().endDialogue();
+
+    // Hide the UI
+    if (this.dialogueBox) {
+      this.dialogueBox.hide();
+    }
   }
 
   /**
@@ -263,17 +337,17 @@ class DialogueManager {
     }
 
     const node = this.getCurrentNode();
-    const responses = this.getResponses();
+    const choices = this.getChoices();
 
     return {
       active: true,
       speaker: node?.speaker || 'Unknown',
-      portrait: node?.portrait || 'default',
       text: node?.text || '',
-      responses: responses.map((r, i) => ({
+      choices: choices.map((c, i) => ({
         index: i,
-        text: r.text,
-        hasEffect: !!r.effect,
+        text: c.text,
+        nextNode: c.nextNode,
+        action: c.action,
       })),
     };
   }
@@ -308,6 +382,10 @@ class DialogueManager {
    */
   dispose() {
     this.endConversation();
+    if (this.dialogueBox) {
+      this.dialogueBox.dispose();
+      this.dialogueBox = null;
+    }
     this.eventListeners.clear();
     console.log('[DialogueManager] Disposed');
   }

@@ -6,6 +6,7 @@
 import { useGameStore } from '../stores/gameStore.js';
 import { mailSystem } from './MailSystem.js';
 import questsData from '../data/quests.json';
+import { QUESTS, getQuestsForNPC } from '../data/quests.js';
 
 class QuestManager {
   constructor() {
@@ -17,7 +18,7 @@ class QuestManager {
    * Initialize the quest system
    */
   init() {
-    // Load quests from JSON
+    // Load quests from data files
     this.loadQuests();
 
     // Set up initial available quests
@@ -27,11 +28,25 @@ class QuestManager {
   }
 
   /**
-   * Load quests from data file
+   * Load quests from data files (supports both JSON and JS module)
    */
   loadQuests() {
-    for (const quest of questsData.quests) {
-      this.questDatabase.set(quest.id, quest);
+    // Load from JSON file
+    if (questsData && questsData.quests) {
+      for (const quest of questsData.quests) {
+        this.questDatabase.set(quest.id, quest);
+      }
+    }
+
+    // Merge with JS module quests (adds npcId field)
+    for (const quest of QUESTS) {
+      if (!this.questDatabase.has(quest.id)) {
+        this.questDatabase.set(quest.id, quest);
+      } else {
+        // Merge npcId from JS module into existing quest
+        const existingQuest = this.questDatabase.get(quest.id);
+        existingQuest.npcId = quest.npcId;
+      }
     }
   }
 
@@ -171,10 +186,109 @@ class QuestManager {
 
   /**
    * Get available quests
+   * @param {string} [npcId] - Optional NPC ID to filter quests from this NPC
    * @returns {Array}
    */
-  getAvailableQuests() {
-    return useGameStore.getState().quests.available;
+  getAvailableQuests(npcId = null) {
+    const available = useGameStore.getState().quests.available;
+
+    if (npcId) {
+      // Filter to quests from this specific NPC
+      return available.filter(q => q.npcId === npcId);
+    }
+
+    return available;
+  }
+
+  /**
+   * Get all quests that can be given by a specific NPC
+   * @param {string} npcId
+   * @returns {Array} Available quests from this NPC
+   */
+  getQuestsFromNPC(npcId) {
+    const state = useGameStore.getState();
+    const completed = state.quests.completed;
+    const active = state.quests.active.map(q => q.id);
+    const available = [];
+
+    for (const [id, quest] of this.questDatabase) {
+      // Skip if not from this NPC
+      if (quest.npcId !== npcId) continue;
+
+      // Skip if already completed or active
+      if (completed.includes(id) || active.includes(id)) continue;
+
+      // Check prerequisite
+      if (quest.prerequisite && !completed.includes(quest.prerequisite)) continue;
+
+      available.push(quest);
+    }
+
+    return available;
+  }
+
+  /**
+   * Check if NPC has available quests
+   * @param {string} npcId
+   * @returns {boolean}
+   */
+  hasQuestsForNPC(npcId) {
+    return this.getQuestsFromNPC(npcId).length > 0;
+  }
+
+  /**
+   * Check if NPC has deliverable mail quest objective
+   * @param {string} npcId
+   * @returns {Object|null} Active quest with deliver objective for this NPC
+   */
+  hasDeliveryForNPC(npcId) {
+    const state = useGameStore.getState();
+
+    for (const quest of state.quests.active) {
+      for (const obj of quest.objectives) {
+        if (obj.type === 'deliver' && obj.target === npcId && !obj.complete) {
+          return quest;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Update quest progress by type and target
+   * @param {string} questId - Quest ID
+   * @param {string} objectiveType - 'talk', 'deliver', 'collect'
+   * @param {string} targetId - Target NPC or item ID
+   * @param {number} [progressAmount=1] - Amount of progress to add
+   * @returns {boolean} True if progress was made
+   */
+  updateProgress(questId, objectiveType, targetId, progressAmount = 1) {
+    const state = useGameStore.getState();
+    const quest = state.quests.active.find(q => q.id === questId);
+
+    if (!quest) return false;
+
+    for (let i = 0; i < quest.objectives.length; i++) {
+      const obj = quest.objectives[i];
+      if (obj.type === objectiveType && obj.target === targetId && !obj.complete) {
+        // Initialize progress tracking if needed
+        if (typeof obj.progress === 'undefined') {
+          obj.progress = 0;
+        }
+
+        obj.progress += progressAmount;
+
+        // Check if objective is complete
+        if (obj.progress >= (obj.count || 1)) {
+          this.completeObjective(questId, i);
+        }
+
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

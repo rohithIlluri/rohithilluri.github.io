@@ -114,6 +114,9 @@ const store = createStore((set, get) => ({
   npcs: [], // Loaded NPC data with current state
   nearbyNPC: null, // NPC in interaction range
 
+  // ===== MAILBOX STATE =====
+  nearbyMailbox: null, // Mailbox in interaction range
+
   // ===== SETTINGS =====
   settings: { ...DEFAULT_SETTINGS },
 
@@ -395,6 +398,9 @@ const store = createStore((set, get) => ({
   // --- NPCs ---
   setNPCs: (npcs) => set({ npcs }),
   setNearbyNPC: (npc) => set({ nearbyNPC: npc }),
+
+  // --- Mailboxes ---
+  setNearbyMailbox: (mailbox) => set({ nearbyMailbox: mailbox }),
 
   // --- Settings ---
   updateSettings: (category, settings) => {

@@ -16,8 +16,12 @@ export class Camera {
     this.distance = 8; // Distance from player
     this.height = 4; // Height above player (in local "up" direction)
     this.angle = 0; // Current rotation angle (follows player)
-    this.smoothness = 0.25; // Camera lag - increased for floaty follow
-    this.orientationSmoothness = 0.15; // Smoother sphere orientation transitions
+
+    // Smoothness values (consistent across all lerps for smooth movement)
+    // Lower values = smoother/slower transitions
+    this.positionSmoothness = 0.08; // Position interpolation (~12-frame smooth transition)
+    this.lookAtSmoothness = 0.10; // Look-at interpolation
+    this.upVectorSmoothness = 0.10; // Up vector/orientation interpolation
 
     // Look at offset (slightly above player in local up direction)
     this.lookAtOffset = new THREE.Vector3(0, 1.5, 0);
@@ -49,7 +53,7 @@ export class Camera {
   init() {
     // Create perspective camera
     this.camera = new THREE.PerspectiveCamera(
-      60, // FOV
+      55, // FOV - slightly narrower for better framing on tiny planet
       window.innerWidth / window.innerHeight, // Aspect
       0.1, // Near
       1000 // Far
@@ -63,7 +67,8 @@ export class Camera {
     if (this.planet) {
       this.initSphericalPosition(playerPos, playerRot);
     } else {
-      this.updateCameraPositionFlat(playerPos, playerRot, 1);
+      // For initialization, use instant positioning (deltaTime = 1 simulates immediate snap)
+      this.updateCameraPositionFlat(1, playerPos, playerRot);
     }
 
     this.currentPosition.copy(this.camera.position);
@@ -131,8 +136,14 @@ export class Camera {
     // Check collision and adjust
     const adjustedPosition = this.checkCollisionSpherical(playerSurfacePos, idealPosition, up);
 
+    // Frame-rate independent interpolation factors
+    // Formula: 1 - (1 - smoothness)^(deltaTime * 60) ensures consistent feel at any FPS
+    const positionLerpFactor = 1 - Math.pow(1 - this.positionSmoothness, deltaTime * 60);
+    const lookAtLerpFactor = 1 - Math.pow(1 - this.lookAtSmoothness, deltaTime * 60);
+    const upVectorLerpFactor = 1 - Math.pow(1 - this.upVectorSmoothness, deltaTime * 60);
+
     // Smoothly interpolate camera position
-    this.currentPosition.lerp(adjustedPosition, 1 - this.smoothness);
+    this.currentPosition.lerp(adjustedPosition, positionLerpFactor);
     this.camera.position.copy(this.currentPosition);
 
     // Calculate look-at target (player + offset in local up direction)
@@ -140,7 +151,7 @@ export class Camera {
     const targetLookAt = playerSurfacePos.clone().add(lookAtOffsetWorld);
 
     // Smoothly interpolate look-at
-    this.currentLookAt.lerp(targetLookAt, 0.12);
+    this.currentLookAt.lerp(targetLookAt, lookAtLerpFactor);
 
     // Make camera look at target
     this.camera.lookAt(this.currentLookAt);
@@ -148,7 +159,7 @@ export class Camera {
     // Ensure camera's "up" is aligned with planet's up at camera position
     // This prevents disorienting rolls when moving around the planet
     const cameraUp = this.planet.getUpVector(this.camera.position);
-    this.camera.up.lerp(cameraUp, this.orientationSmoothness);
+    this.camera.up.lerp(cameraUp, upVectorLerpFactor);
   }
 
   /**
@@ -156,16 +167,19 @@ export class Camera {
    */
   updateFlat(deltaTime, playerPos, playerRot) {
     // Calculate target camera position
-    this.updateCameraPositionFlat(playerPos, playerRot, this.smoothness);
+    this.updateCameraPositionFlat(deltaTime, playerPos, playerRot);
+
+    // Frame-rate independent look-at interpolation
+    const lookAtLerpFactor = 1 - Math.pow(1 - this.lookAtSmoothness, deltaTime * 60);
 
     // Update look at
     const targetLookAt = playerPos.clone().add(this.lookAtOffset);
-    this.currentLookAt.lerp(targetLookAt, 0.1);
+    this.currentLookAt.lerp(targetLookAt, lookAtLerpFactor);
 
     this.camera.lookAt(this.currentLookAt);
   }
 
-  updateCameraPositionFlat(playerPos, playerRot, smoothness) {
+  updateCameraPositionFlat(deltaTime, playerPos, playerRot) {
     // Calculate ideal camera position behind player
     const idealOffset = new THREE.Vector3(
       -Math.sin(playerRot) * this.distance,
@@ -178,8 +192,11 @@ export class Camera {
     // Check for collision between player and ideal camera position
     const adjustedPosition = this.checkCollision(playerPos, idealPosition);
 
+    // Frame-rate independent position interpolation
+    const positionLerpFactor = 1 - Math.pow(1 - this.positionSmoothness, deltaTime * 60);
+
     // Smoothly interpolate to target position
-    this.currentPosition.lerp(adjustedPosition, 1 - smoothness);
+    this.currentPosition.lerp(adjustedPosition, positionLerpFactor);
     this.camera.position.copy(this.currentPosition);
   }
 

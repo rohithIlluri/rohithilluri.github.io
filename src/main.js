@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { World } from './World.js';
 import { InputManager } from './InputManager.js';
 import { useGameStore } from './stores/gameStore.js';
+import { UIManager } from './ui/UIManager.js';
 
 /**
  * Loading Planet Preview - Mini scene for the loading screen
@@ -224,6 +225,7 @@ class App {
 
     this.world = null;
     this.inputManager = null;
+    this.uiManager = null;
     this.loadingPlanet = null;
     this.isRunning = false;
     this.isReady = false;
@@ -314,6 +316,10 @@ class App {
       this.hud.classList.remove('hidden');
     }
     useGameStore.getState().setLoaded(true);
+
+    // Initialize UI Manager after game starts
+    this.uiManager = new UIManager();
+    this.uiManager.init();
   }
 
   showError(message) {
@@ -347,6 +353,11 @@ class App {
     if (this.world) {
       this.world.update(deltaTime);
     }
+
+    // Update UI Manager (for any frame-based updates)
+    if (this.uiManager) {
+      this.uiManager.update(deltaTime);
+    }
   }
 
   onResize() {
@@ -365,6 +376,9 @@ class App {
     }
     if (this.inputManager) {
       this.inputManager.dispose();
+    }
+    if (this.uiManager) {
+      this.uiManager.dispose();
     }
   }
 }
