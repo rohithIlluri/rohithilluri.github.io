@@ -112,6 +112,13 @@ export class SettingsPanel {
                 <option value="large">Large</option>
               </select>
             </div>
+            <div class="settings-row">
+              <label for="haptic-toggle">Haptic Feedback</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="haptic-toggle" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -176,6 +183,10 @@ export class SettingsPanel {
       document.documentElement.setAttribute('data-text-size', e.target.value);
     });
 
+    this.element.querySelector('#haptic-toggle').addEventListener('change', (e) => {
+      useGameStore.getState().updateSettings('accessibility', { hapticEnabled: e.target.checked });
+    });
+
     // Reset and save buttons
     this.element.querySelector('#settings-reset').addEventListener('click', () => {
       useGameStore.getState().resetSettings();
@@ -227,6 +238,7 @@ export class SettingsPanel {
     // Accessibility
     this.element.querySelector('#reduce-motion').checked = accessibility.reduceMotion;
     this.element.querySelector('#text-size').value = accessibility.textSize;
+    this.element.querySelector('#haptic-toggle').checked = accessibility.hapticEnabled !== false;
   }
 
   saveSettings() {

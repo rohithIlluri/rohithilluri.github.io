@@ -46,6 +46,7 @@ const DEFAULT_SETTINGS = {
     colorblindMode: 'none', // 'none', 'protanopia', 'deuteranopia', 'tritanopia'
     textSize: 'medium', // 'small', 'medium', 'large'
     reduceMotion: false,
+    hapticEnabled: true, // Vibration feedback on mobile
   },
 };
 
