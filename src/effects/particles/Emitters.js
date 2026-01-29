@@ -765,6 +765,9 @@ export function createDustMoteEmitter(particleManager, planetCenter, radius, opt
 
   return {
     ids: emitters,
+    update: () => {
+      // Dust motes are managed by particleManager, no per-frame update needed
+    },
     dispose: () => {
       emitters.forEach((id) => particleManager.removeEmitter(id));
     },
