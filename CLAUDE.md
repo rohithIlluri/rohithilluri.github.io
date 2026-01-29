@@ -10,7 +10,7 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 
 ---
 
-## Current Status Assessment (v0.9.6)
+## Current Status Assessment (v0.9.7)
 
 ### Completion Summary
 
@@ -29,7 +29,7 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 | Character Customization | 85% | Good (UI complete) |
 | Quest Integration | 95% | Excellent (cycle detection) |
 | Audio | 85% | Good (procedural SFX, mute button) |
-| Test Infrastructure | 85% | Good (75 tests) |
+| Test Infrastructure | 95% | Excellent (228 tests) |
 | Mobile Touch Controls | 95% | Excellent (camera look area, visible hints) |
 | Edge Case Handling | 90% | Excellent (comprehensive) |
 | User Onboarding | 90% | Excellent (6-step tutorial) |
@@ -37,9 +37,21 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 | Settings Persistence | 95% | Excellent (localStorage) |
 | Multiplayer | 0% | Not started |
 
-**Overall: ~94% complete** (Target: 60%+ ACHIEVED)
+**Overall: ~95% complete** (Target: 60%+ ACHIEVED)
 
-### Recent Improvements (v0.9.6)
+### Recent Improvements (v0.9.7)
+
+#### Test Coverage & Quality
+- Expanded test suite from 75 to 228 tests (+153 tests)
+- Added comprehensive tests for Player, TinyPlanet, NPCManager, MailboxManager
+- Added MemoryMonitor utility tests
+
+#### Performance & Tooling
+- Created MemoryMonitor for long session memory leak detection
+- Optimized NPC proximity checks with early exit optimization
+- Added haptic feedback for mobile touch controls
+
+### Previous Improvements (v0.9.6)
 
 #### UX & User Experience
 - Added SettingsPanel with audio/graphics/accessibility controls
@@ -312,7 +324,7 @@ src/
 | Customization | DONE | Color pickers for hair/skin/clothes |
 | Audio | DONE | Procedural SFX, ambient music, footsteps |
 | Touch Controls | DONE | Virtual joystick + action buttons |
-| Test Suite | DONE | 75 tests (Vitest) |
+| Test Suite | DONE | 228 tests (Vitest) |
 | Multiplayer | NOT STARTED | Planned for v1.0 |
 
 ## Performance Targets
@@ -438,11 +450,12 @@ See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
 
 ## Next Steps (v1.0 Roadmap)
 
-### Priority 1: Additional Test Coverage
-| Test Area | Status | Files to Test |
-|-----------|--------|---------------|
-| Player Movement & Collision | Needed | Player.js, TinyPlanet.js |
-| NPC/Mailbox Managers | Needed | NPCManager.js, MailboxManager.js |
+### Priority 1: Additional Test Coverage ✅ COMPLETE
+| Test Area | Status | Files Tested |
+|-----------|--------|--------------|
+| Player Movement & Collision | ✅ Done | Player.js, TinyPlanet.js |
+| NPC/Mailbox Managers | ✅ Done | NPCManager.js, MailboxManager.js |
+| Memory Monitoring | ✅ Done | MemoryMonitor.js |
 | Mail Delivery Flow | Needed | MailSystem.js, gameStore.js |
 | Quest Objective Tracking | Needed | QuestManager.js |
 | UI State Consistency | Needed | UIManager.js, HUD.js |
@@ -450,8 +463,8 @@ See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
 ### Priority 2: Performance Optimization
 - [ ] Implement LODManager for distant objects
 - [ ] Add frustum culling for NPCs/mailboxes off-screen
-- [ ] Profile and optimize NPC proximity checks (O(n) currently)
-- [ ] Add memory leak detection for long sessions
+- [x] Profile and optimize NPC proximity checks ✅ (O(n) optimal for 6 NPCs, documented)
+- [x] Add memory leak detection for long sessions ✅ (MemoryMonitor.js)
 
 ### Priority 3: Multiplayer Foundation
 - [ ] Socket.io connection setup
@@ -464,9 +477,9 @@ See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
 - [x] Implement settings persistence (localStorage) ✅ v0.9.6
 - [x] Add tutorial/onboarding for new players ✅ v0.9.6
 - [x] Add celebration effects for achievements ✅ v0.9.6
+- [x] Add haptic feedback for touch controls ✅ (TouchControls.js + settings toggle)
 - [ ] Add loading progress for 3D model assets
 - [ ] Improve mobile virtual keyboard handling
-- [ ] Add haptic feedback for touch controls
 
 ### Priority 5: Content
 - [ ] Add more NPCs with unique dialogues
@@ -480,25 +493,43 @@ See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
 
 **Session ID**: session_016oJ7t7kEtJ8JeUM21jBp9y
 
-### Changes Made (v0.9.6)
-1. Created SettingsPanel with audio/graphics/accessibility controls
-2. Added audio mute button and settings button to HUD
-3. Created TutorialOverlay for first-time player onboarding (6-step tutorial)
-4. Added CelebrationEffect with confetti particles for achievements
-5. Triggered celebrations on mail delivery and quest completion
-6. Settings now persist to localStorage
-7. Made mobile touch hints more visible
-8. All 75 tests passing, build successful
+### Changes Made (v0.9.7)
+1. Added comprehensive test coverage (228 tests total, up from 75)
+   - Player.js tests (30 tests): movement, animation, collision
+   - TinyPlanet.js tests (23 tests): spherical coordinates, zones
+   - NPCManager.js tests (27 tests): lifecycle, proximity
+   - MailboxManager.js tests (38 tests): collection, respawn
+   - MemoryMonitor.js tests (26 tests): leak detection
+2. Added haptic feedback for mobile touch controls
+   - TouchControls.js: vibration patterns (light/medium/heavy/success/error)
+   - Settings toggle in Accessibility panel
+3. Created MemoryMonitor utility for long session debugging
+   - Tracks object counts by category (geometries, materials, meshes, etc.)
+   - Periodic snapshots for trend analysis
+   - Growth rate anomaly detection
+   - Browser memory info (when available)
+4. Optimized NPC proximity checks with early exit and documentation
+5. All 228 tests passing, build successful
 
 ### New Files Created
-- `src/ui/SettingsPanel.js` - Settings UI with sliders/toggles
-- `src/ui/TutorialOverlay.js` - First-time player tutorial
-- `src/ui/CelebrationEffect.js` - Confetti particle effects
+- `src/utils/MemoryMonitor.js` - Memory leak detection utility
+- `tests/player.test.js` - Player controller tests
+- `tests/tinyPlanet.test.js` - Spherical world tests
+- `tests/npcManager.test.js` - NPC manager tests
+- `tests/mailboxManager.test.js` - Mailbox manager tests
+- `tests/memoryMonitor.test.js` - Memory monitor tests
 
 ### Files Modified
-- `src/ui/HUD.js` - Audio mute and settings buttons
-- `src/ui/UIManager.js` - Integrated new UI components, celebration triggers
-- `src/ui/styles.css` - Settings panel, tutorial, celebration CSS
+- `src/ui/TouchControls.js` - Added haptic feedback
+- `src/ui/SettingsPanel.js` - Added haptic toggle
+- `src/stores/gameStore.js` - Added hapticEnabled setting
+- `src/entities/NPCManager.js` - Optimized getNearestNPC
+
+### Previous Session (v0.9.6)
+- Created SettingsPanel with audio/graphics/accessibility controls
+- Created TutorialOverlay for first-time player onboarding
+- Added CelebrationEffect with confetti particles
+- Settings persist to localStorage
 
 ### Previous Session (v0.9.5)
 - Enhanced player controls (walk cycle, input reset, touch camera)
