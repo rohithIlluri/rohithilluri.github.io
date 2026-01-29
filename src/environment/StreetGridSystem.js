@@ -8,14 +8,14 @@ import * as THREE from 'three';
 import { createToonMaterial } from '../shaders/toon.js';
 import { STREET_GRID_COLORS } from '../constants/colors.js';
 
-// Street configuration
+// Street configuration - widened for better navigation
 const STREET_CONFIG = {
-  MAIN_WIDTH: 3.0,          // Main street width (units)
-  SIDE_WIDTH: 2.0,          // Side street width (units)
-  ALLEY_WIDTH: 1.2,         // Narrow alley width (units)
-  GRID_SPACING_LAT: 18,     // Degrees between lat streets
-  GRID_SPACING_LON: 20,     // Degrees between lon streets
-  CURB_HEIGHT: 0.08,        // Curb height above road
+  MAIN_WIDTH: 5.0,          // Main street width (units) - wider for spacious feel
+  SIDE_WIDTH: 3.5,          // Side street width (units) - still navigable
+  ALLEY_WIDTH: 2.0,         // Narrow alley width (units) - wider for accessibility
+  GRID_SPACING_LAT: 25,     // Degrees between lat streets - more space between
+  GRID_SPACING_LON: 30,     // Degrees between lon streets - more space between
+  CURB_HEIGHT: 0.10,        // Curb height above road - more visible
   ROAD_OFFSET: 0.02,        // Road height above planet surface
 };
 

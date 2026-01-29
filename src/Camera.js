@@ -13,21 +13,21 @@ export class Camera {
     this.planet = planet; // TinyPlanet instance (null for flat world)
     this.inputManager = inputManager;
 
-    // Camera settings
-    this.distance = 8; // Distance from player
-    this.height = 4; // Height above player (in local "up" direction)
+    // Camera settings - increased distance for better overview
+    this.distance = 12; // Distance from player (increased for better view)
+    this.height = 6; // Height above player (increased for better perspective)
     this.angle = 0; // Current rotation angle (follows player)
 
     // Manual camera offset (for touch/mouse camera control)
     this.orbitOffset = 0; // Horizontal offset in radians
     this.orbitOffsetTarget = 0;
-    this.orbitSmoothness = 0.1;
+    this.orbitSmoothness = 0.15; // Increased for smoother orbit control
 
-    // Smoothness values (consistent across all lerps for smooth movement)
-    // Lower values = smoother/slower transitions
-    this.positionSmoothness = 0.08; // Position interpolation (~12-frame smooth transition)
-    this.lookAtSmoothness = 0.10; // Look-at interpolation
-    this.upVectorSmoothness = 0.10; // Up vector/orientation interpolation
+    // Smoothness values (higher = more responsive, lower = smoother)
+    // Balanced for smooth but responsive camera movement
+    this.positionSmoothness = 0.12; // Position interpolation (smoother following)
+    this.lookAtSmoothness = 0.15; // Look-at interpolation (responsive targeting)
+    this.upVectorSmoothness = 0.08; // Up vector interpolation (slower to prevent roll)
 
     // Look at offset (slightly above player in local up direction)
     this.lookAtOffset = new THREE.Vector3(0, 1.5, 0);
@@ -59,7 +59,7 @@ export class Camera {
   init() {
     // Create perspective camera
     this.camera = new THREE.PerspectiveCamera(
-      55, // FOV - slightly narrower for better framing on tiny planet
+      60, // FOV - balanced for good framing and spacious view
       window.innerWidth / window.innerHeight, // Aspect
       0.1, // Near
       1000 // Far
@@ -157,7 +157,8 @@ export class Camera {
     this.orbitOffset = THREE.MathUtils.lerp(this.orbitOffset, this.orbitOffsetTarget, orbitLerpFactor);
 
     // Slowly decay orbit offset back to center when not being actively controlled
-    this.orbitOffsetTarget *= 0.98;
+    // Faster decay for more stable camera behavior
+    this.orbitOffsetTarget *= 0.92;
 
     // Get local axes at player position
     const up = this.planet.getUpVector(playerPos);

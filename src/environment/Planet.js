@@ -139,6 +139,9 @@ export class Planet {
       this.createPortfolioBuildings();
     }
 
+    // Add open plazas for gathering areas and spaciousness
+    this.createPlazas();
+
     this.createProps();
     this.createPowerLines(); // Connect street lights with power lines
     this.createBushesNearBuildings(); // Add vegetation near buildings
@@ -146,19 +149,116 @@ export class Planet {
   }
 
   /**
-   * Initialize the street grid system for Japanese downtown feel
+   * Create open plaza areas at key locations
+   * Provides clear gathering spots and visual landmarks
+   */
+  createPlazas() {
+    const plazaMaterial = createToonMaterial({ color: 0xD4C4A8 }); // Warm stone color
+    const plazaBorderMaterial = createToonMaterial({ color: 0x8B7355 }); // Darker border
+
+    // Main plaza at spawn point (lat 0, lon 0)
+    this.createPlaza(0, 0, 8, plazaMaterial, plazaBorderMaterial, 'Town Square');
+
+    // Smaller plazas near each landmark building
+    this.createPlaza(0, 80, 5, plazaMaterial, plazaBorderMaterial, 'Library Plaza');
+    this.createPlaza(0, -80, 5, plazaMaterial, plazaBorderMaterial, 'Music Plaza');
+    this.createPlaza(38, 0, 5, plazaMaterial, plazaBorderMaterial, 'Tower Plaza');
+    this.createPlaza(-38, 0, 5, plazaMaterial, plazaBorderMaterial, 'Cafe Plaza');
+  }
+
+  /**
+   * Create a circular plaza at the specified location
+   */
+  createPlaza(lat, lon, radius, material, borderMaterial, name) {
+    const surfacePos = this.planet.latLonToPosition(lat, lon);
+    const up = this.planet.getUpVector(surfacePos);
+    const orientation = this.planet.getSurfaceOrientation(surfacePos);
+
+    // Main plaza surface
+    const plazaGeo = new THREE.CircleGeometry(radius, 32);
+    const plaza = new THREE.Mesh(plazaGeo, material);
+    plaza.position.copy(surfacePos).add(up.clone().multiplyScalar(0.05));
+    plaza.quaternion.copy(orientation);
+    plaza.rotation.x = -Math.PI / 2;
+    plaza.receiveShadow = true;
+    this.scene.add(plaza);
+    this.meshes.push(plaza);
+
+    // Decorative border ring
+    const borderGeo = new THREE.RingGeometry(radius - 0.3, radius, 32);
+    const border = new THREE.Mesh(borderGeo, borderMaterial);
+    border.position.copy(surfacePos).add(up.clone().multiplyScalar(0.06));
+    border.quaternion.copy(orientation);
+    border.rotation.x = -Math.PI / 2;
+    this.scene.add(border);
+    this.meshes.push(border);
+
+    // Center feature (small fountain or monument base)
+    if (radius >= 6) {
+      const centerGeo = new THREE.CylinderGeometry(0.8, 1.0, 0.5, 12);
+      const centerMat = createToonMaterial({ color: 0x9B8B7B });
+      const center = new THREE.Mesh(centerGeo, centerMat);
+      center.position.copy(surfacePos).add(up.clone().multiplyScalar(0.3));
+      center.quaternion.copy(orientation);
+      center.castShadow = true;
+      this.scene.add(center);
+      this.meshes.push(center);
+    }
+
+    // Add benches around larger plazas
+    if (radius >= 6) {
+      this.addPlazaBenches(surfacePos, orientation, up, radius * 0.7, 4);
+    }
+  }
+
+  /**
+   * Add decorative benches around a plaza
+   */
+  addPlazaBenches(centerPos, orientation, up, distance, count) {
+    const benchMaterial = createToonMaterial({ color: 0x5D4E37 }); // Wood brown
+
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      const offset = new THREE.Vector3(
+        Math.cos(angle) * distance,
+        0,
+        Math.sin(angle) * distance
+      );
+
+      // Apply orientation to offset
+      offset.applyQuaternion(orientation);
+
+      const benchPos = centerPos.clone().add(offset).add(up.clone().multiplyScalar(0.15));
+
+      // Create simple bench
+      const benchGeo = new THREE.BoxGeometry(1.5, 0.15, 0.5);
+      const bench = new THREE.Mesh(benchGeo, benchMaterial);
+      bench.position.copy(benchPos);
+      bench.quaternion.copy(orientation);
+      bench.rotateY(angle + Math.PI / 2); // Face center
+      bench.castShadow = true;
+      this.scene.add(bench);
+      this.meshes.push(bench);
+    }
+  }
+
+  /**
+   * Initialize the street grid system for navigable town feel
+   * Fewer streets = more spacious, clearer navigation
    */
   initStreetGrid() {
     this.streetGrid = new StreetGridSystem(this.planet, this.scene);
 
-    // Generate street grid with dense spacing
+    // Generate street grid with WIDER spacing - fewer streets for clarity
     const gridData = this.streetGrid.generate({
-      latRange: { min: -55, max: 55 },
-      mainStreetLats: [0, 25, -25],
-      mainStreetLons: [0, 45, 90, 135, -45, -90, -135, 180],
+      latRange: { min: -50, max: 50 },
+      // Only 3 main latitude streets (equator + north/south)
+      mainStreetLats: [0, 35, -35],
+      // Only 4 main longitude streets connecting the landmarks
+      mainStreetLons: [0, 90, -90, 180],
     });
 
-    console.log(`Generated ${gridData.streets.length} streets and ${gridData.buildingZones.length} building zones`);
+    console.log(`Generated ${gridData.streets.length} streets (simplified grid)`);
   }
 
   /**
@@ -239,8 +339,8 @@ export class Planet {
   }
 
   /**
-   * Generate dense machiya buildings throughout the planet
-   * Creates the Japanese downtown feel with buildings lining streets
+   * Generate machiya buildings throughout the planet
+   * Creates a spacious Japanese town feel with buildings along main streets only
    */
   generateDenseMachiyaDistrict() {
     if (!this.streetGrid) return;
@@ -248,88 +348,88 @@ export class Planet {
     const presets = Object.keys(MACHIYA_PRESETS);
     let buildingCount = 0;
 
-    // Get street data for building placement
-    const mainStreetLats = [0, 25, -25, 12.5, -12.5];
-    const mainStreetLons = [0, 45, 90, 135, -45, -90, -135, 180, 22.5, 67.5, 112.5, 157.5, -22.5, -67.5, -112.5, -157.5];
+    // Reduced street data for sparser building placement - only main streets
+    const mainStreetLats = [0, 30, -30]; // Only 3 main latitude streets
+    const mainStreetLons = [45, 135, -45, -135]; // Only 4 main longitude streets (avoiding landmarks)
 
-    // Place buildings along latitude streets
+    // Place buildings along latitude streets with MORE spacing
     mainStreetLats.forEach(streetLat => {
       // Skip near landmark building locations
       const skipLons = this.getSkipLongitudes(streetLat);
 
-      // Buildings on both sides of street
-      [-1, 1].forEach(side => {
-        // Calculate building row offset from street
-        const latOffset = side * 2.5; // ~2.5 degrees offset from street center
-        const buildingLat = streetLat + latOffset;
+      // Buildings on only ONE side of street (outer side for more space)
+      const side = streetLat >= 0 ? 1 : -1;
 
-        // Place buildings around the circumference
-        const buildingSpacing = 8; // Degrees between building centers
-        const numBuildings = Math.floor(360 / buildingSpacing);
+      // Calculate building row offset from street - further away for spaciousness
+      const latOffset = side * 4.5; // Increased from 2.5 to 4.5 degrees
+      const buildingLat = streetLat + latOffset;
 
-        for (let i = 0; i < numBuildings; i++) {
-          const lon = i * buildingSpacing - 180;
+      // Place buildings with MUCH more spacing
+      const buildingSpacing = 20; // Increased from 8 to 20 degrees between building centers
+      const numBuildings = Math.floor(360 / buildingSpacing);
 
-          // Skip if near a landmark or too close to poles
-          if (Math.abs(buildingLat) > 52) continue;
-          if (this.isNearLandmark(buildingLat, lon, skipLons)) continue;
-          if (this.isNearMainMeridian(lon, mainStreetLons, 3)) continue;
+      for (let i = 0; i < numBuildings; i++) {
+        const lon = i * buildingSpacing - 180;
 
-          // Add some variation to prevent perfect grid
-          const latJitter = (Math.random() - 0.5) * 0.8;
-          const lonJitter = (Math.random() - 0.5) * 1.5;
+        // Skip if near a landmark or too close to poles
+        if (Math.abs(buildingLat) > 50) continue;
+        if (this.isNearLandmark(buildingLat, lon, skipLons)) continue;
+        if (this.isNearMainMeridian(lon, mainStreetLons, 8)) continue;
 
-          // Determine facing angle (face toward street)
-          const facingAngle = side > 0 ? 0 : Math.PI;
+        // Add some variation to prevent perfect grid
+        const latJitter = (Math.random() - 0.5) * 1.5;
+        const lonJitter = (Math.random() - 0.5) * 3;
 
-          this.machiyaBuilder.createMachiya({
-            lat: buildingLat + latJitter,
-            lon: lon + lonJitter,
-            facingAngle: facingAngle + (Math.random() - 0.5) * 0.1, // Slight angle variation
-            preset: presets[Math.floor(Math.random() * presets.length)],
-            stories: 2 + Math.floor(Math.random() * 2), // 2-3 stories
-          });
+        // Determine facing angle (face toward street)
+        const facingAngle = side > 0 ? 0 : Math.PI;
 
-          buildingCount++;
-        }
-      });
+        this.machiyaBuilder.createMachiya({
+          lat: buildingLat + latJitter,
+          lon: lon + lonJitter,
+          facingAngle: facingAngle + (Math.random() - 0.5) * 0.15,
+          preset: presets[Math.floor(Math.random() * presets.length)],
+          stories: 2 + Math.floor(Math.random() * 2), // 2-3 stories
+        });
+
+        buildingCount++;
+      }
     });
 
-    // Place buildings along longitude streets (north-south)
+    // Place FEWER buildings along longitude streets (only at intersections)
     mainStreetLons.forEach(streetLon => {
       // Skip main landmarks
       if (Math.abs(streetLon) === 90 || streetLon === 0 || Math.abs(streetLon) === 180) return;
 
-      [-1, 1].forEach(side => {
-        const lonOffset = side * 3; // Degrees offset from street center
-        const buildingLon = streetLon + lonOffset;
+      // Only one side
+      const side = streetLon > 0 ? 1 : -1;
+      const lonOffset = side * 5; // Increased offset
+      const buildingLon = streetLon + lonOffset;
 
-        // Place buildings along the meridian
-        for (let lat = -45; lat <= 45; lat += 10) {
-          // Skip near landmarks and other streets
-          if (this.isNearLandmark(lat, buildingLon, [])) continue;
-          if (Math.abs(lat % 25) < 4) continue; // Skip near lat streets
+      // Place buildings with more spacing along the meridian
+      for (let lat = -35; lat <= 35; lat += 18) { // Increased from 10 to 18
+        // Skip near landmarks and other streets
+        if (this.isNearLandmark(lat, buildingLon, [])) continue;
+        if (Math.abs(lat) < 8 || Math.abs(lat - 30) < 8 || Math.abs(lat + 30) < 8) continue;
 
-          const latJitter = (Math.random() - 0.5) * 1.5;
-          const lonJitter = (Math.random() - 0.5) * 0.5;
+        const latJitter = (Math.random() - 0.5) * 2;
+        const lonJitter = (Math.random() - 0.5) * 1;
 
-          // Face toward the meridian street
-          const facingAngle = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+        // Face toward the meridian street
+        const facingAngle = side > 0 ? Math.PI / 2 : -Math.PI / 2;
 
-          this.machiyaBuilder.createMachiya({
-            lat: lat + latJitter,
-            lon: buildingLon + lonJitter,
-            facingAngle: facingAngle + (Math.random() - 0.5) * 0.1,
-            preset: presets[Math.floor(Math.random() * presets.length)],
-            stories: 2 + Math.floor(Math.random() * 2),
-          });
+        this.machiyaBuilder.createMachiya({
+          lat: lat + latJitter,
+          lon: buildingLon + lonJitter,
+          facingAngle: facingAngle + (Math.random() - 0.5) * 0.15,
+          preset: presets[Math.floor(Math.random() * presets.length)],
+          stories: 2 + Math.floor(Math.random() * 2),
+        });
 
-          buildingCount++;
-        }
-      });
+        buildingCount++;
+      }
     });
 
-    console.log(`Generated ${buildingCount} machiya buildings`);
+    console.log(`Generated ${buildingCount} machiya buildings (reduced density)`);
   }
 
   /**
@@ -346,14 +446,15 @@ export class Planet {
 
   /**
    * Check if position is near a landmark building
+   * Increased exclusion radius for more spacious feel around landmarks
    */
   isNearLandmark(lat, lon, skipLons) {
-    // Check main landmarks
+    // Check main landmarks - increased radii for more open space
     const landmarks = [
-      { lat: 0, lon: 90, radius: 12 },   // Skills Library
-      { lat: 0, lon: -90, radius: 12 },  // Vinyl Records
-      { lat: 45, lon: 0, radius: 15 },   // Projects Tower
-      { lat: -45, lon: 0, radius: 12 },  // Contact Cafe
+      { lat: 0, lon: 90, radius: 20 },   // Skills Library - more space
+      { lat: 0, lon: -90, radius: 20 },  // Vinyl Records - more space
+      { lat: 45, lon: 0, radius: 22 },   // Projects Tower - more space
+      { lat: -45, lon: 0, radius: 20 },  // Contact Cafe - more space
     ];
 
     for (const lm of landmarks) {
@@ -365,11 +466,11 @@ export class Planet {
       }
     }
 
-    // Check skip longitudes
+    // Check skip longitudes - increased distance
     for (const skipLon of skipLons) {
       let lonDist = Math.abs(lon - skipLon);
       if (lonDist > 180) lonDist = 360 - lonDist;
-      if (lonDist < 6) return true;
+      if (lonDist < 10) return true; // Increased from 6 to 10
     }
 
     return false;
@@ -561,10 +662,10 @@ export class Planet {
    * Create visual accents for different zones
    */
   createZoneAccents() {
-    // Create path rings around the planet
-    this.createPathRing(0, 2);    // Equator path
-    this.createPathRing(30, 1.5); // Northern path
-    this.createPathRing(-30, 1.5); // Southern path
+    // Create wider path rings around the planet for better walkways
+    this.createPathRing(0, 5);    // Equator path - main wide street
+    this.createPathRing(30, 3.5); // Northern path - secondary street
+    this.createPathRing(-30, 3.5); // Southern path - secondary street
 
     // Add crosswalks near main buildings
     this.addCrosswalks();
