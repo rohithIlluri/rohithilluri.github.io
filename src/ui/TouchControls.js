@@ -5,6 +5,8 @@
  * Auto-detects touch devices and shows controls accordingly
  */
 
+import { useGameStore } from '../stores/gameStore.js';
+
 export class TouchControls {
   constructor(inputManager, cameraController = null) {
     this.inputManager = inputManager;
@@ -31,6 +33,39 @@ export class TouchControls {
 
     // Camera rotation values (emitted to camera)
     this.cameraRotation = { x: 0, y: 0 };
+
+    // Haptic feedback settings
+    this.hapticEnabled = true;
+    this.supportsHaptic = 'vibrate' in navigator;
+  }
+
+  /**
+   * Trigger haptic feedback
+   * @param {string} type - 'light' (10ms), 'medium' (25ms), 'heavy' (50ms), 'success' (pattern)
+   */
+  haptic(type = 'light') {
+    if (!this.hapticEnabled || !this.supportsHaptic) return;
+
+    const patterns = {
+      light: 10,
+      medium: 25,
+      heavy: 50,
+      success: [30, 50, 30],
+      error: [50, 30, 50, 30, 50],
+    };
+
+    try {
+      navigator.vibrate(patterns[type] || patterns.light);
+    } catch (e) {
+      // Vibration not supported or blocked
+    }
+  }
+
+  /**
+   * Enable or disable haptic feedback
+   */
+  setHapticEnabled(enabled) {
+    this.hapticEnabled = enabled;
   }
 
   /**
@@ -46,7 +81,26 @@ export class TouchControls {
 
     this.createElement();
     this.bindEvents();
+    this.subscribeToStore();
     this.show();
+  }
+
+  /**
+   * Subscribe to store for haptic setting changes
+   */
+  subscribeToStore() {
+    this.unsubscribe = useGameStore.subscribe((state) => {
+      const hapticEnabled = state.settings?.accessibility?.hapticEnabled;
+      if (hapticEnabled !== undefined) {
+        this.hapticEnabled = hapticEnabled;
+      }
+    });
+
+    // Initialize from current state
+    const state = useGameStore.getState();
+    if (state.settings?.accessibility?.hapticEnabled !== undefined) {
+      this.hapticEnabled = state.settings.accessibility.hapticEnabled;
+    }
   }
 
   detectTouch() {
@@ -104,6 +158,7 @@ export class TouchControls {
       interactBtn.classList.add('active');
       this.inputManager.keys.interact = true;
       this.inputManager.emit('interact');
+      this.haptic('medium'); // Haptic feedback on interact
     }, { passive: false });
 
     interactBtn.addEventListener('touchend', (e) => {
@@ -119,6 +174,7 @@ export class TouchControls {
       isRunning = !isRunning;
       runBtn.classList.toggle('active', isRunning);
       this.inputManager.keys.run = isRunning;
+      this.haptic('light'); // Haptic feedback on run toggle
     }, { passive: false });
   }
 
@@ -186,6 +242,7 @@ export class TouchControls {
 
     this.updateJoystick(touch.clientX, touch.clientY);
     this.thumbEl.classList.add('active');
+    this.haptic('light'); // Haptic feedback on joystick activation
   }
 
   onJoystickMove(e) {
@@ -280,6 +337,12 @@ export class TouchControls {
   }
 
   dispose() {
+    // Unsubscribe from store
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
