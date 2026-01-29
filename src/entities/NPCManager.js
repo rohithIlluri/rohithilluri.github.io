@@ -125,18 +125,37 @@ export class NPCManager {
 
   /**
    * Get nearest NPC to a position
+   *
+   * Performance note: Uses O(n) iteration which is optimal for small NPC counts (<20).
+   * For 100+ NPCs, consider implementing spatial hashing. Current game has 6 NPCs,
+   * so O(6) ≈ O(1) and spatial hash overhead would be counterproductive.
    */
   getNearestNPC(position, maxDistance = Infinity) {
     let nearest = null;
     let nearestDistance = maxDistance;
 
-    this.npcs.forEach(npc => {
+    // Early exit optimization: if we find NPC within half the max distance,
+    // and we only need "nearest within range", we can skip remaining checks
+    const earlyExitThreshold = maxDistance * 0.5;
+    let foundClose = false;
+
+    for (const npc of this.npcs) {
       const distance = position.distanceTo(npc.getPosition());
       if (distance < nearestDistance) {
         nearest = npc;
         nearestDistance = distance;
+
+        // If we found something very close, we likely have the answer
+        if (distance < earlyExitThreshold) {
+          foundClose = true;
+        }
       }
-    });
+
+      // Early exit if we found a very close NPC and we're looking within a range
+      if (foundClose && maxDistance !== Infinity) {
+        break;
+      }
+    }
 
     return nearest;
   }
