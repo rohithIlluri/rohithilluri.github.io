@@ -10,7 +10,7 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 
 ---
 
-## Current Status Assessment (v0.9.5)
+## Current Status Assessment (v0.9.6)
 
 ### Completion Summary
 
@@ -23,20 +23,33 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 | NPC Visuals/Animation | 85% | Good |
 | Day/Night Cycle | 100% | Excellent |
 | Post-Processing | 90% | Excellent |
-| UI/HUD | 95% | Excellent (debounce added) |
+| UI/HUD | 98% | Excellent (settings, audio, tutorial) |
 | Dialogue System | 95% | Excellent (loop detection) |
 | Mail Delivery Loop | 95% | Excellent (validation added) |
 | Character Customization | 85% | Good (UI complete) |
 | Quest Integration | 95% | Excellent (cycle detection) |
-| Audio | 80% | Good (procedural SFX) |
+| Audio | 85% | Good (procedural SFX, mute button) |
 | Test Infrastructure | 85% | Good (75 tests) |
-| Mobile Touch Controls | 90% | Excellent (camera look area) |
+| Mobile Touch Controls | 95% | Excellent (camera look area, visible hints) |
 | Edge Case Handling | 90% | Excellent (comprehensive) |
+| User Onboarding | 90% | Excellent (6-step tutorial) |
+| Celebration Effects | 95% | Excellent (confetti particles) |
+| Settings Persistence | 95% | Excellent (localStorage) |
 | Multiplayer | 0% | Not started |
 
-**Overall: ~92% complete** (Target: 60%+ ACHIEVED)
+**Overall: ~94% complete** (Target: 60%+ ACHIEVED)
 
-### Recent Improvements (v0.9.5)
+### Recent Improvements (v0.9.6)
+
+#### UX & User Experience
+- Added SettingsPanel with audio/graphics/accessibility controls
+- Audio mute button and settings button added to HUD
+- Created TutorialOverlay for first-time player onboarding (6-step tutorial)
+- Added CelebrationEffect with confetti particles for mail delivery and quest completion
+- Settings now persist to localStorage
+- Mobile touch hints made more visible (increased opacity, text shadow)
+
+### Previous Improvements (v0.9.5)
 
 #### Player Controls & Views
 - Walk cycle now wraps at 2π (prevents NaN after long sessions)
@@ -448,9 +461,10 @@ See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
 - [ ] Disconnect/reconnect handling
 
 ### Priority 4: Polish & UX
+- [x] Implement settings persistence (localStorage) ✅ v0.9.6
+- [x] Add tutorial/onboarding for new players ✅ v0.9.6
+- [x] Add celebration effects for achievements ✅ v0.9.6
 - [ ] Add loading progress for 3D model assets
-- [ ] Implement settings persistence (localStorage)
-- [ ] Add tutorial/onboarding for new players
 - [ ] Improve mobile virtual keyboard handling
 - [ ] Add haptic feedback for touch controls
 
@@ -466,27 +480,32 @@ See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
 
 **Session ID**: session_016oJ7t7kEtJ8JeUM21jBp9y
 
-### Changes Made
-1. Enhanced player controls (walk cycle, input reset, touch camera)
-2. Fixed rendering layering (renderOrder on outlines)
-3. Added comprehensive edge case handling
-4. Fixed UI toggle spam and notification duplicates
-5. Added mobile orientation/viewport handlers
-6. All 75 tests passing
+### Changes Made (v0.9.6)
+1. Created SettingsPanel with audio/graphics/accessibility controls
+2. Added audio mute button and settings button to HUD
+3. Created TutorialOverlay for first-time player onboarding (6-step tutorial)
+4. Added CelebrationEffect with confetti particles for achievements
+5. Triggered celebrations on mail delivery and quest completion
+6. Settings now persist to localStorage
+7. Made mobile touch hints more visible
+8. All 75 tests passing, build successful
+
+### New Files Created
+- `src/ui/SettingsPanel.js` - Settings UI with sliders/toggles
+- `src/ui/TutorialOverlay.js` - First-time player tutorial
+- `src/ui/CelebrationEffect.js` - Confetti particle effects
 
 ### Files Modified
-- `src/Camera.js` - Touch orbit controls
-- `src/InputManager.js` - Blur/focus handlers
-- `src/Player.js` - Walk cycle wrap, renderOrder
-- `src/World.js` - Dust mote update, inputManager to camera
-- `src/main.js` - BEGIN guard, orientation handlers
-- `src/stores/gameStore.js` - Mail validation, UI debounce
-- `src/systems/DialogueManager.js` - Loop detection
-- `src/systems/QuestManager.js` - Cycle detection
-- `src/ui/NotificationToast.js` - Duplicate prevention
-- `src/ui/TouchControls.js` - Camera look area
-- `src/ui/styles.css` - Touch look area styling
-- `tests/gameStore.test.js` - Debounce reset
+- `src/ui/HUD.js` - Audio mute and settings buttons
+- `src/ui/UIManager.js` - Integrated new UI components, celebration triggers
+- `src/ui/styles.css` - Settings panel, tutorial, celebration CSS
+
+### Previous Session (v0.9.5)
+- Enhanced player controls (walk cycle, input reset, touch camera)
+- Fixed rendering layering (renderOrder on outlines)
+- Added comprehensive edge case handling
+- Fixed UI toggle spam and notification duplicates
+- Added mobile orientation/viewport handlers
 
 ### Branch
 `claude/pull-latest-changes-4IM0s` - Ready to merge to master
