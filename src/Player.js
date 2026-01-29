@@ -6,16 +6,22 @@
  */
 
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useGameStore } from './stores/gameStore.js';
 import {
   createEnhancedToonMaterial,
   createOutlineMesh,
-  TOON_CONSTANTS,
 } from './shaders/toon.js';
-// Audio disabled
-// import { getAudioManager } from './audio/AudioManager.js';
+import { getAudioManager } from './audio/AudioManager.js';
 import { MESSENGER_PALETTE, CHARACTER_COLORS } from './constants/colors.js';
+import { loadModelWithFallback } from './utils/ModelLoader.js';
+import {
+  applyCharacterToonShading,
+  updateModelLightDirection,
+  scaleModelToHeight,
+  centerModelAtGround,
+  setupModelAnimations,
+  createCharacterShadow,
+} from './utils/ToonModelHelper.js';
 
 // Animation states
 const ANIM_STATES = {
@@ -43,6 +49,22 @@ export class Player {
     this.turnSpeed = 3.5; // Reduced from 8 for gradual turning
     this.currentSpeed = 0; // For velocity smoothing
     this.speedAcceleration = 8; // How fast speed changes
+
+    // Enhanced momentum system
+    this.momentum = {
+      acceleration: 12,      // How fast to reach target speed
+      deceleration: 8,       // How fast to slow down
+      turnAcceleration: 6,   // How fast to change direction
+      currentVelocity: new THREE.Vector3(), // Actual movement velocity
+      targetVelocity: new THREE.Vector3(),  // Desired movement velocity
+    };
+
+    // Wall sliding parameters
+    this.wallSlide = {
+      enabled: true,
+      slideStrength: 0.85,   // How much velocity is preserved when sliding
+      minSlideAngle: 0.3,    // Minimum angle to trigger slide (radians)
+    };
 
     // Capsule collision dimensions
     this.capsuleRadius = 0.4;
@@ -642,11 +664,125 @@ export class Player {
   }
 
   /**
-   * Placeholder for loading external character models (uses procedural character by default)
-   * Can be extended in the future to load custom GLB models
+   * Load external character model if available, otherwise keep procedural mesh
+   * Supports GLB format with automatic toon shading application
    */
   async loadCharacterModel() {
-    console.log('Using procedural character (no external model needed)');
+    try {
+      const { model, isLoaded } = await loadModelWithFallback(
+        'characters/player.glb',
+        () => null, // Return null to keep procedural mesh
+        { clone: true }
+      );
+
+      if (isLoaded && model) {
+        console.log('Loaded player model from GLB');
+
+        // Remove procedural mesh
+        if (this.characterGroup) {
+          this.container.remove(this.characterGroup);
+          this.characterGroup.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(m => m.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          });
+        }
+
+        // Apply toon shading to loaded model
+        applyCharacterToonShading(model, {
+          skinColor: CHARACTER_COLORS.skin,
+          hairColor: CHARACTER_COLORS.hair,
+          shirtColor: CHARACTER_COLORS.shirt,
+          pantsColor: CHARACTER_COLORS.skirt,
+          shoeColor: CHARACTER_COLORS.shoes,
+          bagColor: CHARACTER_COLORS.bag,
+        }, this.lightDirection);
+
+        // Scale model to correct height (1.8 units total)
+        scaleModelToHeight(model, 1.8);
+        centerModelAtGround(model);
+
+        // Add shadow blob
+        const shadow = createCharacterShadow(0.22, 0.25);
+        shadow.position.y = 0.01;
+        model.add(shadow);
+        this.shadowBlob = shadow;
+
+        // Set up animations if present
+        const animSetup = setupModelAnimations(model);
+        if (animSetup) {
+          this.mixer = animSetup.mixer;
+          this.animations = animSetup.actions;
+
+          // Map standard animation names
+          if (this.animations.idle) this.animations[ANIM_STATES.IDLE] = this.animations.idle;
+          if (this.animations.walk) this.animations[ANIM_STATES.WALK] = this.animations.walk;
+          if (this.animations.run) this.animations[ANIM_STATES.RUN] = this.animations.run;
+
+          // Start with idle animation
+          if (this.animations[ANIM_STATES.IDLE]) {
+            this.animations[ANIM_STATES.IDLE].play();
+          }
+        }
+
+        // Store model reference and add to container
+        this.characterModel = model;
+        this.characterGroup = model;
+        model.position.y = -0.14; // Same offset as procedural mesh
+        this.container.add(model);
+
+        // Find limb references for fallback procedural animation
+        this.findLimbReferences(model);
+
+      } else {
+        console.log('Using procedural character (no external model found)');
+      }
+    } catch (error) {
+      console.log('Using procedural character:', error.message);
+    }
+  }
+
+  /**
+   * Find limb mesh references in loaded model for procedural animation fallback
+   * Searches for meshes with common bone/object names
+   */
+  findLimbReferences(model) {
+    model.traverse((child) => {
+      const name = child.name?.toLowerCase() || '';
+
+      // Arm references
+      if (name.includes('arm') && name.includes('left') && name.includes('upper')) {
+        this.leftUpperArm = child;
+      }
+      if (name.includes('arm') && name.includes('right') && name.includes('upper')) {
+        this.rightUpperArm = child;
+      }
+      if (name.includes('arm') && name.includes('left') && name.includes('fore')) {
+        this.leftForearm = child;
+      }
+      if (name.includes('arm') && name.includes('right') && name.includes('fore')) {
+        this.rightForearm = child;
+      }
+
+      // Leg references
+      if (name.includes('thigh') && name.includes('left')) {
+        this.leftThigh = child;
+      }
+      if (name.includes('thigh') && name.includes('right')) {
+        this.rightThigh = child;
+      }
+      if (name.includes('shin') && name.includes('left')) {
+        this.leftShin = child;
+      }
+      if (name.includes('shin') && name.includes('right')) {
+        this.rightShin = child;
+      }
+    });
   }
 
   /**
@@ -657,14 +793,17 @@ export class Player {
     this.lightDirection.copy(direction).normalize();
 
     // Update material uniform if using enhanced toon material
-    if (this.mesh && this.mesh.material.uniforms) {
+    if (this.mesh && this.mesh.material?.uniforms) {
       this.mesh.material.uniforms.lightDirection.value = this.lightDirection;
     }
 
-    // Update character model materials
+    // Update character model materials (both procedural and loaded)
     if (this.characterModel) {
-      this.characterModel.traverse((child) => {
-        if (child.isMesh && child.material.uniforms) {
+      updateModelLightDirection(this.characterModel, this.lightDirection);
+    } else if (this.characterGroup) {
+      // Update procedural character materials
+      this.characterGroup.traverse((child) => {
+        if (child.isMesh && child.material?.uniforms?.lightDirection) {
           child.material.uniforms.lightDirection.value = this.lightDirection;
         }
       });
@@ -715,11 +854,10 @@ export class Player {
     if (isMoving) {
       this.setAnimationState(isRunning ? ANIM_STATES.RUN : ANIM_STATES.WALK);
 
-      // Audio disabled
-      // const audioManager = getAudioManager();
-      // if (audioManager && audioManager.initialized) {
-      //   audioManager.playFootstep(isRunning, 'grass');
-      // }
+      const audioManager = getAudioManager();
+      if (audioManager && audioManager.initialized) {
+        audioManager.playFootstep(isRunning, 'grass');
+      }
     } else {
       this.setAnimationState(ANIM_STATES.IDLE);
     }
@@ -841,39 +979,72 @@ export class Player {
   }
 
   /**
-   * Update movement on spherical planet
+   * Update movement on spherical planet with momentum and wall sliding
    */
   updateSpherical(deltaTime, movement, speed, isMoving) {
-    if (isMoving) {
-      // Update orientation from planet
-      this.updateOrientationFromPlanet();
+    // Update orientation from planet
+    this.updateOrientationFromPlanet();
 
+    if (isMoving) {
       // Calculate target heading based on movement direction
       const targetHeading = Math.atan2(movement.x, movement.z);
 
-      // Smoothly rotate towards target heading
+      // Smoothly rotate towards target heading with momentum
       let headingDiff = targetHeading - this.heading;
       while (headingDiff > Math.PI) headingDiff -= Math.PI * 2;
       while (headingDiff < -Math.PI) headingDiff += Math.PI * 2;
-      this.heading += headingDiff * this.turnSpeed * deltaTime;
+
+      // Use turn acceleration for smoother turning
+      const turnFactor = Math.min(1, this.momentum.turnAcceleration * deltaTime);
+      this.heading += headingDiff * turnFactor;
 
       // Update local axes with new heading
       this.updateOrientationFromPlanet();
 
-      // Calculate movement direction in world space
-      // Forward is into the screen (negative Z in input), so we invert
+      // Calculate target velocity in world space
       const moveDir = new THREE.Vector3()
         .addScaledVector(this.localForward, movement.z)
         .addScaledVector(this.localRight, movement.x)
         .normalize();
 
-      // Move on sphere surface
-      const distance = speed * deltaTime;
+      this.momentum.targetVelocity.copy(moveDir).multiplyScalar(speed);
+
+      // Smoothly accelerate towards target velocity (momentum)
+      const accelFactor = Math.min(1, this.momentum.acceleration * deltaTime);
+      this.momentum.currentVelocity.lerp(this.momentum.targetVelocity, accelFactor);
+    } else {
+      // Decelerate when not moving (friction/momentum)
+      this.momentum.targetVelocity.set(0, 0, 0);
+      const decelFactor = Math.min(1, this.momentum.deceleration * deltaTime);
+      this.momentum.currentVelocity.lerp(this.momentum.targetVelocity, decelFactor);
+    }
+
+    // Only move if we have meaningful velocity
+    const currentSpeed = this.momentum.currentVelocity.length();
+    if (currentSpeed > 0.01) {
+      const moveDir = this.momentum.currentVelocity.clone().normalize();
+      const distance = currentSpeed * deltaTime;
+
+      // Try to move to new position
       const newPosition = this.planet.moveOnSurface(this.position, moveDir, distance);
 
-      // Check collision
+      // Check collision with wall sliding
       if (this.canMoveTo(newPosition)) {
         this.position.copy(newPosition);
+      } else if (this.wallSlide.enabled) {
+        // Wall sliding: try to slide along the obstacle
+        const slideResult = this.tryWallSlide(newPosition, moveDir, distance);
+        if (slideResult.canMove) {
+          this.position.copy(slideResult.position);
+          // Reduce momentum in blocked direction
+          this.momentum.currentVelocity.multiplyScalar(this.wallSlide.slideStrength);
+        } else {
+          // Complete stop - can't slide
+          this.momentum.currentVelocity.multiplyScalar(0.2);
+        }
+      } else {
+        // No wall sliding, just stop
+        this.momentum.currentVelocity.set(0, 0, 0);
       }
     }
 
@@ -891,6 +1062,58 @@ export class Player {
 
     // Keep legacy rotation in sync
     this.rotation = this.heading;
+  }
+
+  /**
+   * Attempt to slide along a wall when direct movement is blocked
+   * @param {THREE.Vector3} blockedPosition - The position we couldn't move to
+   * @param {THREE.Vector3} moveDir - Original movement direction
+   * @param {number} distance - Movement distance
+   * @returns {Object} { canMove: boolean, position: THREE.Vector3 }
+   */
+  tryWallSlide(blockedPosition, moveDir, distance) {
+    // Try sliding along forward axis
+    const forwardSlide = this.planet.moveOnSurface(
+      this.position,
+      this.localForward,
+      distance * Math.abs(moveDir.dot(this.localForward))
+    );
+    if (this.canMoveTo(forwardSlide)) {
+      return { canMove: true, position: forwardSlide };
+    }
+
+    // Try sliding along right axis
+    const rightSlide = this.planet.moveOnSurface(
+      this.position,
+      this.localRight,
+      distance * Math.abs(moveDir.dot(this.localRight))
+    );
+    if (this.canMoveTo(rightSlide)) {
+      return { canMove: true, position: rightSlide };
+    }
+
+    // Try negative forward
+    const backwardSlide = this.planet.moveOnSurface(
+      this.position,
+      this.localForward.clone().negate(),
+      distance * 0.5
+    );
+    if (this.canMoveTo(backwardSlide)) {
+      return { canMove: true, position: backwardSlide };
+    }
+
+    // Try negative right
+    const leftSlide = this.planet.moveOnSurface(
+      this.position,
+      this.localRight.clone().negate(),
+      distance * 0.5
+    );
+    if (this.canMoveTo(leftSlide)) {
+      return { canMove: true, position: leftSlide };
+    }
+
+    // Can't slide in any direction
+    return { canMove: false, position: this.position };
   }
 
   /**

@@ -6,6 +6,8 @@
 
 import * as THREE from 'three';
 import { TinyPlanet } from './TinyPlanet.js';
+import { StreetGridSystem } from './StreetGridSystem.js';
+import { MachiyaBuilder } from './MachiyaBuilder.js';
 import {
   createToonMaterial,
   createEnhancedToonMaterial,
@@ -14,6 +16,7 @@ import {
   createThickOutlineMesh,
   TOON_CONSTANTS,
 } from '../shaders/toon.js';
+import { MACHIYA_PRESETS } from '../constants/colors.js';
 
 // Neon sign colors (softened for dreamy messenger-like feel)
 const NEON_COLORS = {
@@ -110,6 +113,11 @@ export class Planet {
 
     // Light direction for enhanced materials
     this.lightDirection = new THREE.Vector3(1, 1, 1).normalize();
+
+    // Japanese downtown building system
+    this.streetGrid = null;
+    this.machiyaBuilder = null;
+    this.useDenseJapaneseStyle = true; // Toggle for Japanese machiya vs legacy buildings
   }
 
   /**
@@ -121,11 +129,262 @@ export class Planet {
 
   async init() {
     this.createPlanetSphere();
-    this.createPortfolioBuildings();
+
+    if (this.useDenseJapaneseStyle) {
+      // Use new dense Japanese downtown style
+      this.initStreetGrid();
+      this.initMachiyaBuildings();
+    } else {
+      // Use legacy sparse building placement
+      this.createPortfolioBuildings();
+    }
+
     this.createProps();
     this.createPowerLines(); // Connect street lights with power lines
     this.createBushesNearBuildings(); // Add vegetation near buildings
     this.createGroundScatter();
+  }
+
+  /**
+   * Initialize the street grid system for Japanese downtown feel
+   */
+  initStreetGrid() {
+    this.streetGrid = new StreetGridSystem(this.planet, this.scene);
+
+    // Generate street grid with dense spacing
+    const gridData = this.streetGrid.generate({
+      latRange: { min: -55, max: 55 },
+      mainStreetLats: [0, 25, -25],
+      mainStreetLons: [0, 45, 90, 135, -45, -90, -135, 180],
+    });
+
+    console.log(`Generated ${gridData.streets.length} streets and ${gridData.buildingZones.length} building zones`);
+  }
+
+  /**
+   * Initialize Japanese machiya buildings along streets
+   */
+  initMachiyaBuildings() {
+    this.machiyaBuilder = new MachiyaBuilder(this.planet, this.scene, this.lightDirection);
+
+    // Main landmark buildings (keep the 4 portfolio buildings)
+    this.createLandmarkBuildings();
+
+    // Generate dense machiya buildings along streets
+    this.generateDenseMachiyaDistrict();
+
+    // Add machiya collision meshes to main collection
+    this.collisionMeshes.push(...this.machiyaBuilder.getCollisionMeshes());
+  }
+
+  /**
+   * Create the 4 main landmark portfolio buildings
+   */
+  createLandmarkBuildings() {
+    // Skills Building (West) - larger landmark
+    this.createBuilding({
+      lat: 0,
+      lon: 90,
+      name: 'Skills Library',
+      type: 'apartment',
+      color: BUILDING_COLORS.cream,
+      neonColor: NEON_COLORS.blue,
+      width: 7,
+      height: 12,
+      depth: 6,
+      floors: 4,
+    });
+
+    // Projects Building (North) - tallest landmark
+    this.createBuilding({
+      lat: 45,
+      lon: 0,
+      name: 'Projects Tower',
+      type: 'apartment',
+      color: BUILDING_COLORS.warmGray,
+      neonColor: NEON_COLORS.pink,
+      width: 8,
+      height: 16,
+      depth: 7,
+      floors: 5,
+    });
+
+    // Music Shop (East) - cozy shop
+    this.createBuilding({
+      lat: 0,
+      lon: -90,
+      name: 'Vinyl Records',
+      type: 'shop',
+      color: BUILDING_COLORS.coral,
+      neonColor: NEON_COLORS.green,
+      width: 6,
+      height: 8,
+      depth: 5,
+      floors: 3,
+    });
+
+    // Contact Cafe (South) - welcoming cafe
+    this.createBuilding({
+      lat: -45,
+      lon: 0,
+      name: 'Contact Cafe',
+      type: 'shop',
+      color: BUILDING_COLORS.mint,
+      neonColor: NEON_COLORS.orange,
+      width: 6,
+      height: 7,
+      depth: 5,
+      floors: 3,
+    });
+  }
+
+  /**
+   * Generate dense machiya buildings throughout the planet
+   * Creates the Japanese downtown feel with buildings lining streets
+   */
+  generateDenseMachiyaDistrict() {
+    if (!this.streetGrid) return;
+
+    const presets = Object.keys(MACHIYA_PRESETS);
+    let buildingCount = 0;
+
+    // Get street data for building placement
+    const mainStreetLats = [0, 25, -25, 12.5, -12.5];
+    const mainStreetLons = [0, 45, 90, 135, -45, -90, -135, 180, 22.5, 67.5, 112.5, 157.5, -22.5, -67.5, -112.5, -157.5];
+
+    // Place buildings along latitude streets
+    mainStreetLats.forEach(streetLat => {
+      // Skip near landmark building locations
+      const skipLons = this.getSkipLongitudes(streetLat);
+
+      // Buildings on both sides of street
+      [-1, 1].forEach(side => {
+        // Calculate building row offset from street
+        const latOffset = side * 2.5; // ~2.5 degrees offset from street center
+        const buildingLat = streetLat + latOffset;
+
+        // Place buildings around the circumference
+        const buildingSpacing = 8; // Degrees between building centers
+        const numBuildings = Math.floor(360 / buildingSpacing);
+
+        for (let i = 0; i < numBuildings; i++) {
+          const lon = i * buildingSpacing - 180;
+
+          // Skip if near a landmark or too close to poles
+          if (Math.abs(buildingLat) > 52) continue;
+          if (this.isNearLandmark(buildingLat, lon, skipLons)) continue;
+          if (this.isNearMainMeridian(lon, mainStreetLons, 3)) continue;
+
+          // Add some variation to prevent perfect grid
+          const latJitter = (Math.random() - 0.5) * 0.8;
+          const lonJitter = (Math.random() - 0.5) * 1.5;
+
+          // Determine facing angle (face toward street)
+          const facingAngle = side > 0 ? 0 : Math.PI;
+
+          this.machiyaBuilder.createMachiya({
+            lat: buildingLat + latJitter,
+            lon: lon + lonJitter,
+            facingAngle: facingAngle + (Math.random() - 0.5) * 0.1, // Slight angle variation
+            preset: presets[Math.floor(Math.random() * presets.length)],
+            stories: 2 + Math.floor(Math.random() * 2), // 2-3 stories
+          });
+
+          buildingCount++;
+        }
+      });
+    });
+
+    // Place buildings along longitude streets (north-south)
+    mainStreetLons.forEach(streetLon => {
+      // Skip main landmarks
+      if (Math.abs(streetLon) === 90 || streetLon === 0 || Math.abs(streetLon) === 180) return;
+
+      [-1, 1].forEach(side => {
+        const lonOffset = side * 3; // Degrees offset from street center
+        const buildingLon = streetLon + lonOffset;
+
+        // Place buildings along the meridian
+        for (let lat = -45; lat <= 45; lat += 10) {
+          // Skip near landmarks and other streets
+          if (this.isNearLandmark(lat, buildingLon, [])) continue;
+          if (Math.abs(lat % 25) < 4) continue; // Skip near lat streets
+
+          const latJitter = (Math.random() - 0.5) * 1.5;
+          const lonJitter = (Math.random() - 0.5) * 0.5;
+
+          // Face toward the meridian street
+          const facingAngle = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+
+          this.machiyaBuilder.createMachiya({
+            lat: lat + latJitter,
+            lon: buildingLon + lonJitter,
+            facingAngle: facingAngle + (Math.random() - 0.5) * 0.1,
+            preset: presets[Math.floor(Math.random() * presets.length)],
+            stories: 2 + Math.floor(Math.random() * 2),
+          });
+
+          buildingCount++;
+        }
+      });
+    });
+
+    console.log(`Generated ${buildingCount} machiya buildings`);
+  }
+
+  /**
+   * Get longitudes to skip (near landmark buildings)
+   */
+  getSkipLongitudes(lat) {
+    const skips = [];
+    // Skills Library at lon 90
+    if (Math.abs(lat) < 8) skips.push(90, -90);
+    // Projects Tower and Contact Cafe at lon 0
+    if (Math.abs(lat - 45) < 8 || Math.abs(lat + 45) < 8) skips.push(0, 180, -180);
+    return skips;
+  }
+
+  /**
+   * Check if position is near a landmark building
+   */
+  isNearLandmark(lat, lon, skipLons) {
+    // Check main landmarks
+    const landmarks = [
+      { lat: 0, lon: 90, radius: 12 },   // Skills Library
+      { lat: 0, lon: -90, radius: 12 },  // Vinyl Records
+      { lat: 45, lon: 0, radius: 15 },   // Projects Tower
+      { lat: -45, lon: 0, radius: 12 },  // Contact Cafe
+    ];
+
+    for (const lm of landmarks) {
+      const latDist = Math.abs(lat - lm.lat);
+      let lonDist = Math.abs(lon - lm.lon);
+      if (lonDist > 180) lonDist = 360 - lonDist;
+      if (latDist < lm.radius && lonDist < lm.radius) {
+        return true;
+      }
+    }
+
+    // Check skip longitudes
+    for (const skipLon of skipLons) {
+      let lonDist = Math.abs(lon - skipLon);
+      if (lonDist > 180) lonDist = 360 - lonDist;
+      if (lonDist < 6) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if longitude is near a main meridian street
+   */
+  isNearMainMeridian(lon, mainLons, threshold) {
+    for (const mainLon of mainLons) {
+      let dist = Math.abs(lon - mainLon);
+      if (dist > 180) dist = 360 - dist;
+      if (dist < threshold) return true;
+    }
+    return false;
   }
 
   /**
@@ -205,6 +464,11 @@ export class Planet {
    */
   setLightDirection(direction) {
     this.lightDirection.copy(direction).normalize();
+
+    // Update machiya builder if it exists
+    if (this.machiyaBuilder) {
+      this.machiyaBuilder.setLightDirection(direction);
+    }
   }
 
   /**
@@ -3320,6 +3584,17 @@ export class Planet {
         light.parent.remove(light);
       }
     });
+
+    // Dispose street grid and machiya builder
+    if (this.streetGrid) {
+      this.streetGrid.dispose();
+      this.streetGrid = null;
+    }
+
+    if (this.machiyaBuilder) {
+      this.machiyaBuilder.dispose();
+      this.machiyaBuilder = null;
+    }
 
     this.meshes = [];
     this.collisionMeshes = [];

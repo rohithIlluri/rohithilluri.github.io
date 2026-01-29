@@ -1,0 +1,12 @@
+# Place prop GLB models here
+# Supported models:
+# - streetlight.glb (Japanese-style lamp post)
+# - tree.glb (stylized low-poly tree)
+# - mailbox.glb (red Japanese post box)
+# - bench.glb (park bench)
+# - vending-machine.glb (Japanese vending machine)
+#
+# Model requirements:
+# - Format: GLB (GLTF binary)
+# - Poly count: 300-1,500 triangles per prop
+# - Style: Low-poly, stylized

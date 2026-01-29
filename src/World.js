@@ -15,8 +15,7 @@ import { ParticleManager } from './effects/particles/ParticleManager.js';
 import { createFireflyEmitter, createLeafEmitter, createBirdEmitter, createDustMoteEmitter } from './effects/particles/Emitters.js';
 import { LODManager } from './optimization/LODManager.js';
 import { useGameStore } from './stores/gameStore.js';
-// Audio disabled for now - keeping file for future use
-// import { createAudioManager, getAudioManager } from './audio/AudioManager.js';
+import { createAudioManager, getAudioManager } from './audio/AudioManager.js';
 import { NPCManager } from './entities/NPCManager.js';
 import { MailboxManager } from './entities/MailboxManager.js';
 import { dialogueManager } from './systems/DialogueManager.js';
@@ -76,8 +75,8 @@ export class World {
     // LOD system
     this.lodManager = null;
 
-    // Audio system (disabled)
-    // this.audioManager = null;
+    // Audio system
+    this.audioManager = null;
 
     // NPC system
     this.npcManager = null;
@@ -199,9 +198,8 @@ export class World {
     this.setupParticles();
     this.setupLOD();
 
-    // Audio disabled
-    // this.reportProgress(0.95, 'Initializing audio...');
-    // await this.setupAudio();
+    this.reportProgress(0.93, 'Initializing audio...');
+    this.setupAudio();
 
     this.reportProgress(0.95, 'Initializing dialogue system...');
     this.setupDialogueSystem();
@@ -436,48 +434,94 @@ export class World {
     // Initialize the dialogue manager
     dialogueManager.init();
 
-    // Listen for dialogue events if needed
+    // Listen for dialogue events and play audio/show notifications
     dialogueManager.on('conversationStarted', (data) => {
       console.log('[World] Dialogue started with NPC:', data.npcId);
+      const audio = getAudioManager();
+      if (audio && audio.initialized) {
+        audio.playInteractionSFX('dialogueOpen');
+      }
     });
 
     dialogueManager.on('conversationEnded', (data) => {
       console.log('[World] Dialogue ended with NPC:', data.npcId);
+      const audio = getAudioManager();
+      if (audio && audio.initialized) {
+        audio.playInteractionSFX('dialogueClose');
+      }
     });
 
     dialogueManager.on('questGiven', (quest) => {
       console.log('[World] Quest given:', quest.title);
+      const audio = getAudioManager();
+      if (audio && audio.initialized) {
+        audio.playInteractionSFX('questAccept');
+      }
+      useGameStore.getState().showNotification('quest', `New Quest: ${quest.title}`);
     });
 
     dialogueManager.on('mailGiven', (mail) => {
       console.log('[World] Mail received:', mail.id);
+      const audio = getAudioManager();
+      if (audio && audio.initialized) {
+        audio.playInteractionSFX('mailPickup');
+      }
+      useGameStore.getState().showNotification('mail', `Received: ${mail.description || mail.id}`);
+    });
+
+    dialogueManager.on('mailDelivered', (data) => {
+      console.log('[World] Mail delivered to:', data.recipientId);
+      const audio = getAudioManager();
+      if (audio && audio.initialized) {
+        audio.playInteractionSFX('mailDeliver');
+      }
+      useGameStore.getState().showNotification('success', 'Mail delivered!');
+    });
+
+    dialogueManager.on('coinsGiven', (data) => {
+      const audio = getAudioManager();
+      if (audio && audio.initialized) {
+        audio.playInteractionSFX('coinCollect');
+      }
+      useGameStore.getState().showNotification('success', `+${data.amount} coins!`);
     });
   }
 
-  // Audio disabled - keeping for future use
-  // async setupAudio() {
-  //   // Create audio manager
-  //   this.audioManager = createAudioManager(this.camera);
-  //
-  //   // Set up first user interaction handler to initialize and start audio
-  //   // (Browser autoplay policy requires user interaction before playing audio)
-  //   const startAudioOnInteraction = async () => {
-  //     if (this.audioManager && !this.audioManager.initialized) {
-  //       await this.audioManager.init();
-  //       this.audioManager.startMusic();
-  //       useGameStore.getState().setAudioInitialized(true);
-  //     }
-  //     // Remove listeners after first interaction
-  //     window.removeEventListener('click', startAudioOnInteraction);
-  //     window.removeEventListener('keydown', startAudioOnInteraction);
-  //     window.removeEventListener('touchstart', startAudioOnInteraction);
-  //   };
-  //
-  //   // Listen for any user interaction to start audio
-  //   window.addEventListener('click', startAudioOnInteraction);
-  //   window.addEventListener('keydown', startAudioOnInteraction);
-  //   window.addEventListener('touchstart', startAudioOnInteraction);
-  // }
+  /**
+   * Set up audio system with user-gesture resume pattern
+   */
+  setupAudio() {
+    // Only enable audio on medium/high quality
+    const quality = this.qualityLevel || 'high';
+    if (quality === 'low') return;
+
+    this.audioManager = createAudioManager(this.camera);
+
+    // User-gesture resume: init on first interaction (browser autoplay policy)
+    const startAudioOnInteraction = async () => {
+      if (this.audioManager && !this.audioManager.initialized) {
+        await this.audioManager.init();
+        this.audioManager.startMusic();
+      }
+      window.removeEventListener('click', startAudioOnInteraction);
+      window.removeEventListener('keydown', startAudioOnInteraction);
+      window.removeEventListener('touchstart', startAudioOnInteraction);
+    };
+
+    window.addEventListener('click', startAudioOnInteraction);
+    window.addEventListener('keydown', startAudioOnInteraction);
+    window.addEventListener('touchstart', startAudioOnInteraction);
+
+    // M key mute toggle
+    this.inputManager.on('toggleMute', () => {
+      if (!this.audioManager) return;
+      if (this.audioManager.musicPlaying) {
+        this.audioManager.stopMusic();
+      } else if (this.audioManager.initialized) {
+        this.audioManager.startMusic();
+      }
+    });
+  }
 
   /**
    * Update light direction (syncs with sun)
@@ -564,10 +608,18 @@ export class World {
           // Add mail to player inventory
           const added = store.addMail(mail);
 
-          if (!added) {
+          if (added) {
+            // Play pickup sound and show notification
+            const audio = getAudioManager();
+            if (audio && audio.initialized) {
+              audio.playInteractionSFX('mailPickup');
+            }
+            store.showNotification('mail', `Collected: ${mail.description || 'Mail'}`);
+          } else {
             // Inventory was full, put mail back
             mailbox.currentMail = mail;
             mailbox.hasNewMail = true;
+            store.showNotification('error', 'Inventory full!');
           }
         }
         return; // Interaction handled
@@ -692,10 +744,9 @@ export class World {
       });
     }
 
-    // Audio disabled
-    // if (this.audioManager && this.audioManager.initialized) {
-    //   this.audioManager.setTimeOfDay(this.timeOfDay);
-    // }
+    if (this.audioManager && this.audioManager.initialized) {
+      this.audioManager.setTimeOfDay(this.timeOfDay);
+    }
   }
 
   update(deltaTime) {
@@ -766,10 +817,9 @@ export class World {
       this.sky.update(deltaTime);
     }
 
-    // Audio disabled
-    // if (this.audioManager) {
-    //   this.audioManager.update(deltaTime);
-    // }
+    if (this.audioManager) {
+      this.audioManager.update(deltaTime);
+    }
 
     // Render
     this.render();
@@ -814,8 +864,7 @@ export class World {
     if (this.sky) this.sky.dispose();
     if (this.particleManager) this.particleManager.dispose();
     if (this.lodManager) this.lodManager.dispose();
-    // Audio disabled
-    // if (this.audioManager) this.audioManager.dispose();
+    if (this.audioManager) this.audioManager.dispose();
     if (this.npcManager) this.npcManager.dispose();
     if (this.mailboxManager) this.mailboxManager.dispose();
     if (dialogueManager) dialogueManager.dispose();

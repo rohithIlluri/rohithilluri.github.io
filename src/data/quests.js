@@ -228,6 +228,74 @@ export const QUESTS = [
     rewards: { coins: 100, reputation: 50 },
     unlocks: ['achievement_social_butterfly'],
     prerequisite: null
+  },
+  // --- New quests using actual NPC IDs from NPCData.js ---
+  {
+    id: 'quest_social_butterfly',
+    type: 'social',
+    title: 'Social Butterfly',
+    description: 'Talk to every resident on the planet and learn their stories.',
+    npcId: 'npc-townCenter1',
+    objectives: [
+      { type: 'talk', target: 'npc-townCenter1', count: 1, description: 'Talk to the Villager' },
+      { type: 'talk', target: 'npc-townCenter2', count: 1, description: 'Talk to the Shopkeeper' },
+      { type: 'talk', target: 'npc-student', count: 1, description: 'Talk to the Student' },
+      { type: 'talk', target: 'npc-artist', count: 1, description: 'Talk to the Artist' },
+      { type: 'talk', target: 'npc-mailCarrier', count: 1, description: 'Talk to the Mail Carrier' },
+      { type: 'talk', target: 'npc-wanderer', count: 1, description: 'Talk to the Wanderer' }
+    ],
+    rewards: { coins: 100, reputation: 50 },
+    unlocks: ['achievement_social_butterfly'],
+    prerequisite: null,
+    isStarter: true
+  },
+  {
+    id: 'quest_urgent_restock',
+    type: 'delivery',
+    title: 'Emergency Restock',
+    description: 'The Shopkeeper urgently needs supplies delivered before closing time!',
+    npcId: 'npc-townCenter2',
+    objectives: [
+      { type: 'collect', target: 'supply_crate', count: 1, description: 'Get the supply crate from the Mail Carrier' },
+      { type: 'deliver', target: 'npc-townCenter2', count: 1, description: 'Deliver supplies to the Shopkeeper' }
+    ],
+    rewards: { coins: 60, reputation: 15 },
+    unlocks: [],
+    prerequisite: null,
+    priority: 'urgent',
+    timeLimit: 120
+  },
+  {
+    id: 'quest_planet_tour',
+    type: 'delivery',
+    title: 'Grand Planet Tour',
+    description: 'Deliver welcome packets to residents across the whole planet.',
+    npcId: 'npc-townCenter1',
+    objectives: [
+      { type: 'deliver', target: 'npc-student', count: 1, description: 'Deliver packet to the Student' },
+      { type: 'deliver', target: 'npc-artist', count: 1, description: 'Deliver packet to the Artist' },
+      { type: 'deliver', target: 'npc-wanderer', count: 1, description: 'Deliver packet to the Wanderer' },
+      { type: 'talk', target: 'npc-townCenter1', count: 1, description: 'Return to the Villager' }
+    ],
+    rewards: { coins: 75, reputation: 30 },
+    unlocks: [],
+    prerequisite: null
+  },
+  {
+    id: 'quest_art_supplies',
+    type: 'collection',
+    title: 'Art Supply Run',
+    description: 'Collect art supplies scattered around the planet for the Artist.',
+    npcId: 'npc-artist',
+    objectives: [
+      { type: 'collect', target: 'paint_tubes', count: 1, description: 'Find paint tubes near the east path' },
+      { type: 'collect', target: 'brushes', count: 1, description: 'Find brushes near the north path' },
+      { type: 'collect', target: 'canvas', count: 1, description: 'Find canvas near the south path' },
+      { type: 'deliver', target: 'npc-artist', count: 1, description: 'Bring all supplies to the Artist' }
+    ],
+    rewards: { coins: 55, reputation: 20 },
+    unlocks: [],
+    prerequisite: null
   }
 ];
 
@@ -273,6 +341,34 @@ export const MAIL_ITEMS = [
     to: 'Factory Manager',
     priority: 'urgent',
     description: 'An urgent yellow telegram'
+  },
+  {
+    id: 'supply_crate',
+    from: 'Mail Carrier',
+    to: 'Shopkeeper',
+    priority: 'urgent',
+    description: 'A heavy supply crate'
+  },
+  {
+    id: 'welcome_packet_student',
+    from: 'Villager',
+    to: 'Student',
+    priority: 'normal',
+    description: 'A welcome packet with a hand-drawn map'
+  },
+  {
+    id: 'welcome_packet_artist',
+    from: 'Villager',
+    to: 'Artist',
+    priority: 'normal',
+    description: 'A welcome packet with flower seeds'
+  },
+  {
+    id: 'welcome_packet_wanderer',
+    from: 'Villager',
+    to: 'Wanderer',
+    priority: 'normal',
+    description: 'A welcome packet with trail mix'
   }
 ];
 

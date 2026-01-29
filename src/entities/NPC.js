@@ -1,6 +1,7 @@
 /**
  * NPC.js - Non-Player Character Controller
  * Handles individual NPC movement, animation, and behavior on the tiny planet
+ * Supports both procedural mesh and loaded GLB models
  */
 
 import * as THREE from 'three';
@@ -10,6 +11,15 @@ import {
 } from '../shaders/toon.js';
 import { getWaypoint, getAppearance } from './NPCData.js';
 import { MESSENGER_PALETTE } from '../constants/colors.js';
+import { loadModelWithFallback } from '../utils/ModelLoader.js';
+import {
+  applyCharacterToonShading,
+  updateModelLightDirection,
+  scaleModelToHeight,
+  centerModelAtGround,
+  setupModelAnimations,
+  createCharacterShadow,
+} from '../utils/ToonModelHelper.js';
 
 // NPC states
 const NPC_STATES = {
@@ -77,12 +87,110 @@ export class NPC {
     this.playerPosition = null;
     this.isNearPlayer = false;
 
-    // Create visual mesh
+    // Flag for model loading state
+    this.modelLoaded = false;
+
+    // Create visual mesh (procedural fallback)
     this.createMesh();
+
+    // Try to load external model
+    this.loadNPCModel();
 
     // Initialize orientation and start patrol
     this.updateOrientationFromPlanet();
     this.setNextWaypoint();
+  }
+
+  /**
+   * Load external NPC model if available
+   * Uses appearance.modelName or falls back to generic NPC model
+   */
+  async loadNPCModel() {
+    const modelName = this.appearance.modelName || `npc-${this.definition.id || 'default'}.glb`;
+    const modelPath = `characters/${modelName}`;
+
+    try {
+      const { model, isLoaded } = await loadModelWithFallback(
+        modelPath,
+        () => null,
+        { clone: true }
+      );
+
+      if (isLoaded && model) {
+        console.log(`Loaded NPC model: ${modelPath}`);
+
+        // Remove procedural mesh
+        this.characterGroup.traverse((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => m.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        });
+        this.container.remove(this.characterGroup);
+
+        // Apply toon shading with NPC appearance colors
+        applyCharacterToonShading(model, {
+          skinColor: this.appearance.skinColor,
+          hairColor: this.appearance.hairColor,
+          shirtColor: this.appearance.shirtColor,
+          pantsColor: this.appearance.pantsColor,
+          shoeColor: this.appearance.shoeColor,
+          bagColor: this.appearance.bagColor || 0x8B4513,
+        }, this.lightDirection);
+
+        // Scale model to NPC height (slightly shorter than player)
+        scaleModelToHeight(model, 1.7);
+        centerModelAtGround(model);
+
+        // Add shadow
+        const shadow = createCharacterShadow(0.25, 0.25);
+        shadow.position.y = 0.02;
+        model.add(shadow);
+
+        // Set up animations
+        const animSetup = setupModelAnimations(model);
+        if (animSetup) {
+          this.mixer = animSetup.mixer;
+          this.animations = animSetup.actions;
+        }
+
+        // Replace character group
+        this.characterGroup = model;
+        this.container.add(model);
+        this.modelLoaded = true;
+
+        // Find limb references for procedural animation fallback
+        this.findLimbReferences(model);
+      }
+    } catch (error) {
+      console.log(`Using procedural NPC mesh for ${this.definition.name}:`, error.message);
+    }
+  }
+
+  /**
+   * Find limb references in loaded model for animation
+   */
+  findLimbReferences(model) {
+    model.traverse((child) => {
+      const name = child.name?.toLowerCase() || '';
+
+      if (name.includes('arm') && name.includes('left')) {
+        this.leftArm = child;
+      }
+      if (name.includes('arm') && name.includes('right')) {
+        this.rightArm = child;
+      }
+      if (name.includes('leg') && name.includes('left')) {
+        this.leftLeg = child;
+      }
+      if (name.includes('leg') && name.includes('right')) {
+        this.rightLeg = child;
+      }
+    });
   }
 
   /**
@@ -318,6 +426,18 @@ export class NPC {
    */
   setLightDirection(direction) {
     this.lightDirection.copy(direction).normalize();
+
+    // Update loaded model materials
+    if (this.modelLoaded && this.characterGroup) {
+      updateModelLightDirection(this.characterGroup, this.lightDirection);
+    } else if (this.characterGroup) {
+      // Update procedural character materials
+      this.characterGroup.traverse((child) => {
+        if (child.isMesh && child.material?.uniforms?.lightDirection) {
+          child.material.uniforms.lightDirection.value.copy(this.lightDirection);
+        }
+      });
+    }
   }
 
   /**

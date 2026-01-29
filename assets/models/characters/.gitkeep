@@ -1,0 +1,19 @@
+# Place character GLB models here
+# Supported models:
+# - player.glb (main character)
+# - npc-1.glb, npc-2.glb, etc (NPC characters)
+#
+# Model requirements:
+# - Format: GLB (GLTF binary)
+# - Poly count: 3,000-5,000 triangles
+# - Animations: idle, walk, run (optional - procedural fallback available)
+# - Scale: 1 unit = 1 meter (models will be scaled to ~1.8m height)
+#
+# Color will be applied automatically via toon shader
+# Original material names can be used for color mapping:
+# - skin, body, face, hand, arm, leg
+# - hair
+# - shirt, top, jacket
+# - pants, skirt, bottom
+# - shoe, foot, boot
+# - bag, strap

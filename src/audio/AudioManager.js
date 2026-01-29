@@ -115,6 +115,12 @@ export class AudioManager {
     this.sfxBuffers.set('footstepGrass', this.generateFootstepBuffer('grass'));
     this.sfxBuffers.set('footstepPath', this.generateFootstepBuffer('path'));
     this.sfxBuffers.set('uiClick', this.generateUIClickBuffer());
+    this.sfxBuffers.set('mailPickup', this.generateToneBuffer(880, 0.15, 'sine', 0.3));
+    this.sfxBuffers.set('mailDeliver', this.generateChimeBuffer());
+    this.sfxBuffers.set('dialogueOpen', this.generateToneBuffer(523, 0.1, 'sine', 0.2));
+    this.sfxBuffers.set('dialogueClose', this.generateToneBuffer(392, 0.1, 'sine', 0.15));
+    this.sfxBuffers.set('coinCollect', this.generateCoinBuffer());
+    this.sfxBuffers.set('questAccept', this.generateToneBuffer(659, 0.2, 'triangle', 0.25));
 
     // Create music oscillators (lo-fi style)
     this.createLofiMusic();
@@ -263,6 +269,70 @@ export class AudioManager {
     }
 
     return buffer;
+  }
+
+  /**
+   * Generate a simple tone buffer
+   */
+  generateToneBuffer(freq, duration, type = 'sine', amplitude = 0.3) {
+    if (!this.audioContext) return null;
+    const sampleRate = this.audioContext.sampleRate;
+    const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sampleRate;
+      const envelope = Math.exp(-t * (1 / duration) * 3);
+      let wave;
+      if (type === 'sine') wave = Math.sin(2 * Math.PI * freq * t);
+      else if (type === 'triangle') wave = 2 * Math.abs(2 * (t * freq % 1) - 1) - 1;
+      else wave = Math.sin(2 * Math.PI * freq * t);
+      data[i] = wave * envelope * amplitude;
+    }
+    return buffer;
+  }
+
+  /**
+   * Generate delivery chime (ascending two-note)
+   */
+  generateChimeBuffer() {
+    if (!this.audioContext) return null;
+    const sampleRate = this.audioContext.sampleRate;
+    const duration = 0.4;
+    const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sampleRate;
+      const freq = t < 0.2 ? 523 : 784; // C5 then G5
+      const localT = t < 0.2 ? t : t - 0.2;
+      const envelope = Math.exp(-localT * 10);
+      data[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.25;
+    }
+    return buffer;
+  }
+
+  /**
+   * Generate coin collect jingle
+   */
+  generateCoinBuffer() {
+    if (!this.audioContext) return null;
+    const sampleRate = this.audioContext.sampleRate;
+    const duration = 0.25;
+    const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sampleRate;
+      const freq = 1200 + t * 800; // Rising pitch
+      const envelope = Math.exp(-t * 12);
+      data[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.2;
+    }
+    return buffer;
+  }
+
+  /**
+   * Play interaction SFX by name
+   */
+  playInteractionSFX(name) {
+    this.playSFX(name, 1.0);
   }
 
   /**

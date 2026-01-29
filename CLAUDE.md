@@ -10,7 +10,7 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 
 ---
 
-## Current Status Assessment (v0.8.0)
+## Current Status Assessment (v0.9.0)
 
 ### Completion Summary
 
@@ -23,15 +23,17 @@ A **Messenger clone** - a mail delivery game on a tiny planet inspired by [Messe
 | NPC Visuals/Animation | 85% | Good |
 | Day/Night Cycle | 100% | Excellent |
 | Post-Processing | 90% | Excellent |
-| **UI/HUD** | **85%** | **Good** |
-| **Dialogue System** | **80%** | **Good** |
-| **Mail Delivery Loop** | **75%** | **Functional** |
-| **Character Customization** | **15%** | **Store only** |
-| **Quest Integration** | **70%** | **Good** |
-| Audio | 0% | Disabled |
+| UI/HUD | 90% | Excellent |
+| Dialogue System | 95% | Excellent |
+| Mail Delivery Loop | 90% | Excellent |
+| Character Customization | 85% | Good (UI complete) |
+| Quest Integration | 90% | Excellent |
+| Audio | 80% | Good (procedural SFX) |
+| Test Infrastructure | 80% | Good (75 tests) |
+| Mobile Touch Controls | 75% | Good |
 | Multiplayer | 0% | Not started |
 
-**Overall: ~78% complete** (Target: 60%+ ACHIEVED)
+**Overall: ~90% complete** (Target: 60%+ ACHIEVED)
 
 ---
 
@@ -223,6 +225,9 @@ src/
 │   ├── QuestManager.js     # Quest logic + progress tracking
 │   ├── InventoryManager.js # Inventory management
 │   └── MailSystem.js       # Mail logic
+├── utils/
+│   ├── ModelLoader.js      # GLB/GLTF loading with caching
+│   └── ToonModelHelper.js  # Apply toon shading to loaded models
 └── ui/
     ├── UIManager.js        # Central UI controller
     ├── HUD.js              # Coins, mail, quest indicator
@@ -252,6 +257,8 @@ src/
 | E | Interact (NPCs, Mailboxes) |
 | N | Toggle day/night |
 | Q | Toggle quest log |
+| C | Character customization |
+| M | Mute/unmute audio |
 | 1-4 | Select dialogue choices |
 | ESC | Close dialogue/quest log |
 
@@ -260,16 +267,19 @@ src/
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Tiny Planet | DONE | Full spherical movement |
-| Character Visuals | DONE | Anime-style procedural mesh |
+| Character Visuals | DONE | Procedural mesh + GLB model support |
 | Cel-Shading | DONE | 4-band + outlines |
 | Day/Night | DONE | 1.5s smooth transition |
 | Camera | DONE | Frame-rate independent, smooth |
 | NPCs | DONE | Patrol + look-at + dialogue |
-| Mail Delivery | DONE | Collect → Deliver → Reward |
-| Dialogue System | DONE | Typewriter effect, choices |
-| Quest System | DONE | Quest log, tracker, objectives |
+| Mail Delivery | DONE | Collect → Deliver → Reward + SFX |
+| Dialogue System | DONE | Typewriter effect, choices, actions |
+| Quest System | DONE | 12 quests, quest log, tracker |
 | UI/HUD | DONE | Coins, mail, prompts, toasts |
-| Customization | PARTIAL | Store ready, no UI |
+| Customization | DONE | Color pickers for hair/skin/clothes |
+| Audio | DONE | Procedural SFX, ambient music, footsteps |
+| Touch Controls | DONE | Virtual joystick + action buttons |
+| Test Suite | DONE | 75 tests (Vitest) |
 | Multiplayer | NOT STARTED | Planned for v1.0 |
 
 ## Performance Targets
@@ -316,6 +326,43 @@ const mat = createToonMaterial({ color: 0xff0000 });
 3. Mobile emulation → Touch controls
 4. Network throttling → Load times
 
+## 3D Model Support
+
+The game supports loading external GLB models with automatic toon shader application.
+
+### Directory Structure
+```
+assets/models/
+├── characters/
+│   ├── player.glb      # Player character (auto-loaded)
+│   └── npc-*.glb       # NPC models
+├── buildings/
+│   └── *.glb           # Building models
+└── props/
+    └── *.glb           # Props (streetlights, trees, etc.)
+```
+
+### Model Loading Pattern
+```javascript
+import { loadModelWithFallback } from './utils/ModelLoader.js';
+import { applyCharacterToonShading } from './utils/ToonModelHelper.js';
+
+// Load with fallback to procedural geometry
+const { model, isLoaded } = await loadModelWithFallback(
+  'characters/player.glb',
+  () => createProceduralMesh(),
+  { clone: true }
+);
+
+// Apply toon shading if loaded
+if (isLoaded) {
+  applyCharacterToonShading(model, appearance, lightDirection);
+}
+```
+
+### Creating Models with Blender MCP
+See `docs/BLENDER_MCP_SETUP.md` for AI-assisted 3D modeling setup.
+
 ## Reference
 
 - **Live Reference**: https://messenger.abeto.co/
@@ -350,7 +397,6 @@ const mat = createToonMaterial({ color: 0xff0000 });
 
 ## Known Issues
 
-1. **Audio disabled** - Browser autoplay workaround pending
-2. **Character customization** - Store ready, UI not implemented
-3. **Mobile touch needs work** - Basic support only
-4. **Multiplayer** - Not started (planned for v1.0)
+1. **Multiplayer** - Not started (planned for v1.0)
+2. **Audio loading** - Uses procedural generation; no asset files yet
+3. **Quest NPC ID mismatch** - Legacy quests.json references NPCs (npc_postmaster, etc.) that don't exist in NPCData.js; new quests use correct IDs

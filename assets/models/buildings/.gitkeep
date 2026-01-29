@@ -1,0 +1,12 @@
+# Place building GLB models here
+# Supported models:
+# - shop.glb (2-story storefront with awning)
+# - apartment.glb (4-5 story residential)
+# - tower.glb (tall building with rooftop details)
+# - cafe.glb (small restaurant with outdoor seating)
+#
+# Model requirements:
+# - Format: GLB (GLTF binary)
+# - Poly count: 2,000-6,000 triangles per building
+# - Style: Low-poly Japanese urban
+# - Colors: Cream/beige walls work best with toon shader

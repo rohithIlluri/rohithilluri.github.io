@@ -183,4 +183,86 @@ export const CSS_VARS = `
 }
 `;
 
+// Japanese Machiya Building Colors (traditional wooden townhouse palette)
+export const MACHIYA_COLORS = {
+  // === WOOD TONES ===
+  WOOD_LIGHT: 0xB8A080,       // Light aged wood (hinoki cypress)
+  WOOD_MEDIUM: 0x8B7355,      // Medium brown (sugi cedar)
+  WOOD_DARK: 0x5D4037,        // Dark stained wood (kuri chestnut)
+  WOOD_WEATHERED: 0x6D5D4D,   // Weathered gray-brown
+  WOOD_REDDISH: 0xA0522D,     // Reddish sienna (beni-kara)
+
+  // === ROOF TILES ===
+  ROOF_GRAY: 0x4A4A4A,        // Traditional gray kawara
+  ROOF_DARK: 0x2F4F4F,        // Dark slate kawara
+  ROOF_BLUE: 0x3D5A6A,        // Blue-gray glazed tiles
+
+  // === LATTICE (KOSHI) ===
+  LATTICE_DARK: 0x3D2B1F,     // Dark lattice wood
+  LATTICE_MEDIUM: 0x5A4535,   // Medium lattice
+
+  // === PLASTER/PAPER ===
+  PLASTER_WHITE: 0xF5F5DC,    // Shikkui plaster (beige-white)
+  PLASTER_CREAM: 0xE8DFC8,    // Aged plaster
+  PAPER_SHOJI: 0xFAF8F0,      // Shoji screen paper
+
+  // === ACCENTS ===
+  ACCENT_RED: 0x8B0000,       // Deep red (bengara)
+  ACCENT_VERMILLION: 0xC41E3A, // Vermillion (shu)
+  ACCENT_GOLD: 0xD4AF37,      // Gold leaf
+  NOREN_INDIGO: 0x264653,     // Indigo noren curtain
+  NOREN_NAVY: 0x1C3A4D,       // Navy noren
+
+  // === FOUNDATION ===
+  STONE_BASE: 0x6B6B6B,       // Foundation stone
+  STONE_DARK: 0x4A4A4A,       // Dark foundation
+};
+
+// Building variation presets for machiya generation
+export const MACHIYA_PRESETS = {
+  // Traditional shop front
+  SHOP: {
+    wall: MACHIYA_COLORS.WOOD_MEDIUM,
+    roof: MACHIYA_COLORS.ROOF_GRAY,
+    lattice: MACHIYA_COLORS.LATTICE_DARK,
+    trim: MACHIYA_COLORS.WOOD_DARK,
+    accent: MACHIYA_COLORS.NOREN_INDIGO,
+  },
+  // Residential
+  RESIDENTIAL: {
+    wall: MACHIYA_COLORS.WOOD_LIGHT,
+    roof: MACHIYA_COLORS.ROOF_DARK,
+    lattice: MACHIYA_COLORS.LATTICE_MEDIUM,
+    trim: MACHIYA_COLORS.WOOD_MEDIUM,
+    accent: MACHIYA_COLORS.PLASTER_CREAM,
+  },
+  // Wealthy merchant
+  MERCHANT: {
+    wall: MACHIYA_COLORS.PLASTER_CREAM,
+    roof: MACHIYA_COLORS.ROOF_BLUE,
+    lattice: MACHIYA_COLORS.LATTICE_DARK,
+    trim: MACHIYA_COLORS.WOOD_DARK,
+    accent: MACHIYA_COLORS.ACCENT_GOLD,
+  },
+  // Weathered/aged
+  WEATHERED: {
+    wall: MACHIYA_COLORS.WOOD_WEATHERED,
+    roof: MACHIYA_COLORS.ROOF_GRAY,
+    lattice: MACHIYA_COLORS.LATTICE_MEDIUM,
+    trim: MACHIYA_COLORS.WOOD_DARK,
+    accent: MACHIYA_COLORS.PLASTER_WHITE,
+  },
+};
+
+// Street colors for Japanese downtown
+export const STREET_GRID_COLORS = {
+  MAIN_ROAD: 0x5A5A5A,        // Main street asphalt
+  SIDE_ROAD: 0x6A6A6A,        // Side street (slightly lighter)
+  COBBLESTONE: 0x7A7A70,      // Cobblestone alley
+  CURB: 0x808080,             // Concrete curb
+  GUTTER: 0x4A4A4A,           // Drainage gutter
+  MARKING_WHITE: 0xE8E8E0,    // White road marking
+  MARKING_YELLOW: 0xE8B84A,   // Yellow center line
+};
+
 export default MESSENGER_PALETTE;

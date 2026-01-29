@@ -9,6 +9,7 @@ import { InteractionPrompt } from './InteractionPrompt.js';
 import { NotificationToast } from './NotificationToast.js';
 import { QuestLog } from './QuestLog.js';
 import { QuestTracker } from './QuestTracker.js';
+import { CustomizationScreen } from './CustomizationScreen.js';
 import { questManager } from '../systems/QuestManager.js';
 
 /**
@@ -23,6 +24,7 @@ export class UIManager {
     this.notificationToast = null;
     this.questLog = null;
     this.questTracker = null;
+    this.customizationScreen = null;
     this.unsubscribers = [];
     this.isInitialized = false;
   }
@@ -49,6 +51,7 @@ export class UIManager {
     this.notificationToast = new NotificationToast(this.container);
     this.questLog = new QuestLog();
     this.questTracker = new QuestTracker();
+    this.customizationScreen = new CustomizationScreen();
 
     // Initialize all components
     this.hud.init();
@@ -56,6 +59,7 @@ export class UIManager {
     this.notificationToast.init();
     this.questLog.init();
     this.questTracker.init();
+    this.customizationScreen.init();
 
     // Subscribe to store for reactive updates
     this.subscribeToStore();
@@ -215,14 +219,22 @@ export class UIManager {
     switch (newState) {
       case 'playing':
         this.show();
+        if (this.customizationScreen) {
+          this.customizationScreen.hide();
+        }
         break;
       case 'dialogue':
         // Keep HUD visible but hide interaction prompt
         this.interactionPrompt.hide();
         break;
+      case 'customization':
+        this.hide();
+        if (this.customizationScreen) {
+          this.customizationScreen.show();
+        }
+        break;
       case 'paused':
       case 'menu':
-      case 'customization':
         this.hide();
         break;
       default:
@@ -327,6 +339,10 @@ export class UIManager {
     if (this.questTracker) {
       this.questTracker.dispose();
       this.questTracker = null;
+    }
+    if (this.customizationScreen) {
+      this.customizationScreen.dispose();
+      this.customizationScreen = null;
     }
 
     // Remove container

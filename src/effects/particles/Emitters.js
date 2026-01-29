@@ -358,83 +358,286 @@ export function createRainEmitter(particleManager, bounds, intensity = 1.0) {
 }
 
 /**
- * Flying Birds Emitter
- * Daytime ambient birds flying around the planet in flocking patterns
+ * Flying Birds Emitter - Enhanced with Toon Shading and Boids Flocking
+ * Daytime ambient birds flying around the planet with flocking behavior
  * Creates a sense of life and motion in the world
  */
-export function createBirdEmitter(scene, planetRadius = 50, count = 12) {
+export function createBirdEmitter(scene, planetRadius = 50, count = 20) {
   const birds = [];
   const birdGroup = new THREE.Group();
   scene.add(birdGroup);
 
-  // Create bird geometry (simple V-shape)
-  const createBirdMesh = () => {
-    const birdShape = new THREE.Group();
+  // Flocking parameters (Boids algorithm)
+  const BOIDS = {
+    VISUAL_RANGE: 15,         // How far birds can see each other
+    SEPARATION_DIST: 3,       // Minimum distance between birds
+    COHESION_FACTOR: 0.005,   // Strength of move toward center
+    ALIGNMENT_FACTOR: 0.05,   // Strength of matching velocity
+    SEPARATION_FACTOR: 0.08,  // Strength of avoiding crowding
+    WANDER_FACTOR: 0.02,      // Random direction change strength
+    MAX_SPEED: 0.8,           // Maximum bird speed
+    MIN_SPEED: 0.3,           // Minimum bird speed
+    TURN_FACTOR: 0.03,        // How fast birds turn back from boundaries
+  };
 
-    // Body
-    const bodyGeo = new THREE.ConeGeometry(0.15, 0.6, 4);
-    const bodyMat = new THREE.MeshBasicMaterial({ color: 0x2A2A2A });
+  // Bird colors (toon-style, slightly varied)
+  const BIRD_COLORS = [
+    0x2A2A2A, // Dark gray (crow-like)
+    0x3A3A4A, // Blue-gray
+    0x4A3A3A, // Brown-gray
+    0x2A3A3A, // Teal-gray
+    0x3A2A3A, // Purple-gray
+  ];
+
+  // Create toon material for birds
+  const createBirdToonMaterial = (color) => {
+    // Simple 3-band toon shader for birds
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        baseColor: { value: new THREE.Color(color) },
+        lightDirection: { value: new THREE.Vector3(1, 1, 1).normalize() },
+      },
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 baseColor;
+        uniform vec3 lightDirection;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+          // Calculate light intensity
+          float intensity = dot(vNormal, lightDirection);
+
+          // 3-band cel shading
+          vec3 color;
+          if (intensity > 0.6) {
+            color = baseColor * 1.1;
+          } else if (intensity > 0.2) {
+            color = baseColor;
+          } else {
+            color = baseColor * 0.6;
+          }
+
+          // Rim lighting for silhouette
+          vec3 viewDir = normalize(vViewPosition);
+          float rim = 1.0 - abs(dot(vNormal, viewDir));
+          rim = pow(rim, 3.0) * 0.3;
+          color += vec3(rim);
+
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `,
+      side: THREE.DoubleSide,
+    });
+  };
+
+  // Create bird geometry with toon materials
+  const createBirdMesh = (sizeScale = 1.0) => {
+    const birdShape = new THREE.Group();
+    const birdColor = BIRD_COLORS[Math.floor(Math.random() * BIRD_COLORS.length)];
+
+    // Body - streamlined
+    const bodyGeo = new THREE.ConeGeometry(0.12 * sizeScale, 0.5 * sizeScale, 6);
+    const bodyMat = createBirdToonMaterial(birdColor);
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.rotation.x = Math.PI / 2;
     birdShape.add(body);
 
+    // Head
+    const headGeo = new THREE.SphereGeometry(0.08 * sizeScale, 6, 6);
+    const headMat = createBirdToonMaterial(birdColor);
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.set(0, 0, 0.28 * sizeScale);
+    birdShape.add(head);
+
+    // Beak
+    const beakGeo = new THREE.ConeGeometry(0.03 * sizeScale, 0.1 * sizeScale, 4);
+    const beakMat = createBirdToonMaterial(0xE8A84A); // Orange beak
+    const beak = new THREE.Mesh(beakGeo, beakMat);
+    beak.position.set(0, 0, 0.35 * sizeScale);
+    beak.rotation.x = Math.PI / 2;
+    birdShape.add(beak);
+
+    // Wings - more detailed
+    const wingGeo = new THREE.BufferGeometry();
+    const wingVertices = new Float32Array([
+      0, 0, 0,                              // Base
+      -0.6 * sizeScale, 0.1, 0.1 * sizeScale,  // Tip front
+      -0.5 * sizeScale, 0, -0.15 * sizeScale,  // Tip back
+    ]);
+    wingGeo.setAttribute('position', new THREE.BufferAttribute(wingVertices, 3));
+    wingGeo.computeVertexNormals();
+
+    const wingMat = createBirdToonMaterial(birdColor * 0.9);
+
     // Left wing
-    const wingGeo = new THREE.PlaneGeometry(0.8, 0.25);
-    const wingMat = new THREE.MeshBasicMaterial({
-      color: 0x3A3A3A,
-      side: THREE.DoubleSide,
-    });
     const leftWing = new THREE.Mesh(wingGeo, wingMat);
-    leftWing.position.set(-0.35, 0, 0);
-    leftWing.rotation.z = 0.3;
+    leftWing.position.set(-0.05 * sizeScale, 0.05 * sizeScale, 0);
     birdShape.add(leftWing);
     birdShape.userData.leftWing = leftWing;
 
-    // Right wing
-    const rightWing = new THREE.Mesh(wingGeo, wingMat);
-    rightWing.position.set(0.35, 0, 0);
-    rightWing.rotation.z = -0.3;
+    // Right wing (mirrored)
+    const rightWingGeo = new THREE.BufferGeometry();
+    const rightWingVertices = new Float32Array([
+      0, 0, 0,
+      0.6 * sizeScale, 0.1, 0.1 * sizeScale,
+      0.5 * sizeScale, 0, -0.15 * sizeScale,
+    ]);
+    rightWingGeo.setAttribute('position', new THREE.BufferAttribute(rightWingVertices, 3));
+    rightWingGeo.computeVertexNormals();
+
+    const rightWing = new THREE.Mesh(rightWingGeo, wingMat);
+    rightWing.position.set(0.05 * sizeScale, 0.05 * sizeScale, 0);
     birdShape.add(rightWing);
     birdShape.userData.rightWing = rightWing;
+
+    // Tail
+    const tailGeo = new THREE.ConeGeometry(0.06 * sizeScale, 0.2 * sizeScale, 3);
+    const tailMat = createBirdToonMaterial(birdColor);
+    const tail = new THREE.Mesh(tailGeo, tailMat);
+    tail.position.set(0, 0, -0.3 * sizeScale);
+    tail.rotation.x = -Math.PI / 2;
+    birdShape.add(tail);
 
     return birdShape;
   };
 
-  // Create flocks (groups of 3-4 birds)
-  const flockCount = Math.ceil(count / 3);
+  // Create flocks with varied sizes
+  const flockCount = Math.ceil(count / 4);
 
   for (let f = 0; f < flockCount; f++) {
-    // Flock parameters
-    const flockLat = (Math.random() - 0.5) * 60; // -30 to 30 degrees
+    // Flock center parameters
+    const flockLat = (Math.random() - 0.5) * 80; // -40 to 40 degrees
     const flockLon = Math.random() * 360;
-    const flockHeight = planetRadius + 8 + Math.random() * 12; // 8-20 units above surface
-    const flockSpeed = 0.3 + Math.random() * 0.2; // Orbital speed
-    const flockDirection = Math.random() > 0.5 ? 1 : -1;
+    const flockHeight = planetRadius + 6 + Math.random() * 15; // 6-21 units above surface
 
     // Birds in this flock
-    const birdsInFlock = 2 + Math.floor(Math.random() * 3); // 2-4 birds
+    const birdsInFlock = 3 + Math.floor(Math.random() * 4); // 3-6 birds
 
     for (let i = 0; i < birdsInFlock; i++) {
-      const mesh = createBirdMesh();
+      // Size variation (0.8x to 1.2x)
+      const sizeScale = 0.8 + Math.random() * 0.4;
+      const mesh = createBirdMesh(sizeScale);
       birdGroup.add(mesh);
+
+      // Initial velocity
+      const angle = Math.random() * Math.PI * 2;
+      const speed = BOIDS.MIN_SPEED + Math.random() * (BOIDS.MAX_SPEED - BOIDS.MIN_SPEED);
 
       birds.push({
         mesh,
-        // Orbital parameters
-        lat: flockLat + (Math.random() - 0.5) * 5, // Slight variation within flock
-        lon: flockLon + (Math.random() - 0.5) * 10,
-        height: flockHeight + (Math.random() - 0.5) * 2,
-        speed: flockSpeed + (Math.random() - 0.5) * 0.05,
-        direction: flockDirection,
-        // Wing flap animation
+        sizeScale,
+        // 3D position (will be converted to spherical for rendering)
+        position: new THREE.Vector3(
+          (Math.random() - 0.5) * 10 + flockLon,  // Initial spread in lon
+          flockLat + (Math.random() - 0.5) * 8,   // Initial spread in lat
+          flockHeight + (Math.random() - 0.5) * 3 // Initial spread in height
+        ),
+        // Velocity in lat/lon/height space
+        velocity: new THREE.Vector3(
+          Math.cos(angle) * speed,
+          Math.sin(angle) * speed * 0.3,
+          (Math.random() - 0.5) * 0.1
+        ),
+        // Animation
         flapPhase: Math.random() * Math.PI * 2,
-        flapSpeed: 8 + Math.random() * 4,
-        // Vertical bob
-        bobPhase: Math.random() * Math.PI * 2,
-        bobAmount: 0.3 + Math.random() * 0.3,
+        flapSpeed: 10 + Math.random() * 5,
+        // Glide timer (birds sometimes glide without flapping)
+        glideTimer: 0,
+        isGliding: false,
       });
     }
   }
+
+  // Boids flocking behavior
+  const applyFlocking = (bird, deltaTime) => {
+    let cohesion = new THREE.Vector3();
+    let alignment = new THREE.Vector3();
+    let separation = new THREE.Vector3();
+    let neighborCount = 0;
+
+    birds.forEach(other => {
+      if (other === bird) return;
+
+      const dist = bird.position.distanceTo(other.position);
+
+      if (dist < BOIDS.VISUAL_RANGE) {
+        // Cohesion: steer toward center of nearby birds
+        cohesion.add(other.position);
+
+        // Alignment: match velocity of nearby birds
+        alignment.add(other.velocity);
+
+        neighborCount++;
+
+        // Separation: avoid crowding
+        if (dist < BOIDS.SEPARATION_DIST) {
+          const diff = bird.position.clone().sub(other.position);
+          diff.divideScalar(dist); // Weight by distance
+          separation.add(diff);
+        }
+      }
+    });
+
+    if (neighborCount > 0) {
+      // Cohesion
+      cohesion.divideScalar(neighborCount);
+      cohesion.sub(bird.position);
+      cohesion.multiplyScalar(BOIDS.COHESION_FACTOR);
+      bird.velocity.add(cohesion);
+
+      // Alignment
+      alignment.divideScalar(neighborCount);
+      alignment.sub(bird.velocity);
+      alignment.multiplyScalar(BOIDS.ALIGNMENT_FACTOR);
+      bird.velocity.add(alignment);
+
+      // Separation
+      separation.multiplyScalar(BOIDS.SEPARATION_FACTOR);
+      bird.velocity.add(separation);
+    }
+
+    // Wander: small random changes
+    bird.velocity.x += (Math.random() - 0.5) * BOIDS.WANDER_FACTOR;
+    bird.velocity.y += (Math.random() - 0.5) * BOIDS.WANDER_FACTOR * 0.5;
+    bird.velocity.z += (Math.random() - 0.5) * BOIDS.WANDER_FACTOR * 0.3;
+
+    // Keep birds within bounds
+    // Latitude bounds (-60 to 60)
+    if (bird.position.y < -50) bird.velocity.y += BOIDS.TURN_FACTOR;
+    if (bird.position.y > 50) bird.velocity.y -= BOIDS.TURN_FACTOR;
+
+    // Height bounds
+    const minHeight = planetRadius + 5;
+    const maxHeight = planetRadius + 25;
+    if (bird.position.z < minHeight) bird.velocity.z += BOIDS.TURN_FACTOR;
+    if (bird.position.z > maxHeight) bird.velocity.z -= BOIDS.TURN_FACTOR;
+
+    // Clamp velocity
+    const speed = bird.velocity.length();
+    if (speed > BOIDS.MAX_SPEED) {
+      bird.velocity.multiplyScalar(BOIDS.MAX_SPEED / speed);
+    } else if (speed < BOIDS.MIN_SPEED) {
+      bird.velocity.multiplyScalar(BOIDS.MIN_SPEED / speed);
+    }
+
+    // Update position
+    bird.position.add(bird.velocity.clone().multiplyScalar(deltaTime * 10));
+
+    // Wrap longitude
+    if (bird.position.x > 180) bird.position.x -= 360;
+    if (bird.position.x < -180) bird.position.x += 360;
+  };
 
   // Return update function
   return {
@@ -446,42 +649,61 @@ export function createBirdEmitter(scene, planetRadius = 50, count = 12) {
       if (isNight) return;
 
       birds.forEach((bird) => {
-        // Update orbital position
-        bird.lon += bird.speed * bird.direction * deltaTime * 10;
+        // Apply flocking behavior
+        applyFlocking(bird, deltaTime);
 
-        // Convert lat/lon to 3D position
-        const latRad = THREE.MathUtils.degToRad(bird.lat);
-        const lonRad = THREE.MathUtils.degToRad(bird.lon);
+        // Convert position (lon, lat, height) to 3D
+        const lat = bird.position.y;
+        const lon = bird.position.x;
+        const height = bird.position.z;
 
-        // Vertical bob
-        bird.bobPhase += deltaTime * 2;
-        const bob = Math.sin(bird.bobPhase) * bird.bobAmount;
+        const latRad = THREE.MathUtils.degToRad(lat);
+        const lonRad = THREE.MathUtils.degToRad(lon);
 
-        const r = bird.height + bob;
-        const x = r * Math.cos(latRad) * Math.cos(lonRad);
-        const y = r * Math.sin(latRad);
-        const z = r * Math.cos(latRad) * Math.sin(lonRad);
+        const x = height * Math.cos(latRad) * Math.cos(lonRad);
+        const y = height * Math.sin(latRad);
+        const z = height * Math.cos(latRad) * Math.sin(lonRad);
 
         bird.mesh.position.set(x, y, z);
 
         // Orient bird to face movement direction
-        const forwardLon = bird.lon + bird.direction * 5;
+        const forwardLon = lon + bird.velocity.x * 5;
+        const forwardLat = lat + bird.velocity.y * 5;
+        const forwardLatRad = THREE.MathUtils.degToRad(forwardLat);
         const forwardLonRad = THREE.MathUtils.degToRad(forwardLon);
-        const fx = r * Math.cos(latRad) * Math.cos(forwardLonRad);
-        const fy = r * Math.sin(latRad);
-        const fz = r * Math.cos(latRad) * Math.sin(forwardLonRad);
+
+        const fx = height * Math.cos(forwardLatRad) * Math.cos(forwardLonRad);
+        const fy = height * Math.sin(forwardLatRad);
+        const fz = height * Math.cos(forwardLatRad) * Math.sin(forwardLonRad);
 
         bird.mesh.lookAt(fx, fy, fz);
 
-        // Wing flap animation
-        bird.flapPhase += deltaTime * bird.flapSpeed;
-        const flapAngle = Math.sin(bird.flapPhase) * 0.4;
-
-        if (bird.mesh.userData.leftWing) {
-          bird.mesh.userData.leftWing.rotation.z = 0.3 + flapAngle;
+        // Gliding behavior (sometimes stop flapping)
+        bird.glideTimer += deltaTime;
+        if (bird.glideTimer > 2 + Math.random() * 3) {
+          bird.isGliding = !bird.isGliding;
+          bird.glideTimer = 0;
         }
-        if (bird.mesh.userData.rightWing) {
-          bird.mesh.userData.rightWing.rotation.z = -0.3 - flapAngle;
+
+        // Wing flap animation
+        if (!bird.isGliding) {
+          bird.flapPhase += deltaTime * bird.flapSpeed;
+          const flapAngle = Math.sin(bird.flapPhase) * 0.5;
+
+          if (bird.mesh.userData.leftWing) {
+            bird.mesh.userData.leftWing.rotation.y = -0.3 - flapAngle;
+          }
+          if (bird.mesh.userData.rightWing) {
+            bird.mesh.userData.rightWing.rotation.y = 0.3 + flapAngle;
+          }
+        } else {
+          // Gliding - wings slightly up
+          if (bird.mesh.userData.leftWing) {
+            bird.mesh.userData.leftWing.rotation.y = -0.15;
+          }
+          if (bird.mesh.userData.rightWing) {
+            bird.mesh.userData.rightWing.rotation.y = 0.15;
+          }
         }
       });
     },

@@ -79,6 +79,11 @@ export class InputManager {
           this.emit('escape');
         }
         break;
+      case 'KeyM':
+        if (!event.repeat) {
+          this.emit('toggleMute');
+        }
+        break;
     }
   }
 

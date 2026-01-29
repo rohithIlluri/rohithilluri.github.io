@@ -9,6 +9,7 @@ import { World } from './World.js';
 import { InputManager } from './InputManager.js';
 import { useGameStore } from './stores/gameStore.js';
 import { UIManager } from './ui/UIManager.js';
+import { TouchControls } from './ui/TouchControls.js';
 
 /**
  * Loading Planet Preview - Mini scene for the loading screen
@@ -226,6 +227,7 @@ class App {
     this.world = null;
     this.inputManager = null;
     this.uiManager = null;
+    this.touchControls = null;
     this.loadingPlanet = null;
     this.isRunning = false;
     this.isReady = false;
@@ -320,6 +322,13 @@ class App {
     // Initialize UI Manager after game starts
     this.uiManager = new UIManager();
     this.uiManager.init();
+
+    // Initialize touch controls for mobile
+    this.touchControls = new TouchControls(this.inputManager);
+    this.touchControls.init();
+
+    // Show customization screen before gameplay
+    useGameStore.getState().startNewGame();
   }
 
   showError(message) {
@@ -379,6 +388,9 @@ class App {
     }
     if (this.uiManager) {
       this.uiManager.dispose();
+    }
+    if (this.touchControls) {
+      this.touchControls.dispose();
     }
   }
 }

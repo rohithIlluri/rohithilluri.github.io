@@ -270,12 +270,14 @@ class DialogueManager {
         }
         break;
 
-      case 'give_coins':
+      case 'give_coins': {
         const amount = parseInt(param);
         if (!isNaN(amount)) {
           store.addCoins(amount);
+          this.emit('coinsGiven', { amount });
         }
         break;
+      }
 
       case 'deliver_mail':
       case 'deliverMail': {
