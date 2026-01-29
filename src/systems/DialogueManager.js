@@ -99,6 +99,8 @@ class DialogueManager {
       npcData,
       dialogueTree,
       currentNodeId: startNodeId,
+      visitedNodes: new Map(), // Track visit count per node for loop detection
+      maxNodeVisits: 3, // Max times a single node can be visited
     };
 
     // Update game state
@@ -202,11 +204,22 @@ class DialogueManager {
   advanceToNode(nodeId) {
     if (!this.currentConversation) return;
 
-    const { dialogueTree } = this.currentConversation;
+    const { dialogueTree, visitedNodes, maxNodeVisits } = this.currentConversation;
     const nextNode = dialogueTree.nodes[nodeId];
 
     if (!nextNode) {
       console.warn('[DialogueManager] Node not found:', nodeId);
+      this.endConversation();
+      return;
+    }
+
+    // Infinite loop detection: track how many times we've visited each node
+    const visitCount = (visitedNodes.get(nodeId) || 0) + 1;
+    visitedNodes.set(nodeId, visitCount);
+
+    if (visitCount > maxNodeVisits) {
+      console.warn('[DialogueManager] Possible infinite loop detected at node:', nodeId, 'visited', visitCount, 'times');
+      useGameStore.getState().showNotification('error', 'Conversation ended unexpectedly');
       this.endConversation();
       return;
     }

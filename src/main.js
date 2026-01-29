@@ -231,6 +231,7 @@ class App {
     this.loadingPlanet = null;
     this.isRunning = false;
     this.isReady = false;
+    this.isStarting = false; // Guard against multiple BEGIN clicks
   }
 
   async init() {
@@ -260,6 +261,17 @@ class App {
 
       // Set up window resize handler
       window.addEventListener('resize', () => this.onResize());
+
+      // Handle mobile orientation changes
+      window.addEventListener('orientationchange', () => {
+        // Wait for the orientation change to complete before resizing
+        setTimeout(() => this.onResize(), 100);
+      });
+
+      // Handle visual viewport changes (for soft keyboard, notch, etc.)
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => this.onResize());
+      }
 
       console.log('Messenger clone initialized successfully');
     } catch (error) {
@@ -295,7 +307,15 @@ class App {
   }
 
   onBeginClick() {
-    if (!this.isReady) return;
+    // Prevent multiple clicks (race condition guard)
+    if (!this.isReady || this.isStarting) return;
+    this.isStarting = true;
+
+    // Disable button immediately to prevent double-clicks
+    if (this.beginButton) {
+      this.beginButton.disabled = true;
+      this.beginButton.style.opacity = '0.5';
+    }
 
     // Stop the loading planet animation
     if (this.loadingPlanet) {

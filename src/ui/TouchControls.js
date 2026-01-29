@@ -1,12 +1,14 @@
 /**
  * TouchControls.js - Mobile Touch Input System
  * Virtual joystick for movement + action buttons for interaction
+ * Camera look area for camera rotation on mobile
  * Auto-detects touch devices and shows controls accordingly
  */
 
 export class TouchControls {
-  constructor(inputManager) {
+  constructor(inputManager, cameraController = null) {
     this.inputManager = inputManager;
+    this.cameraController = cameraController; // Optional camera reference for rotation
     this.element = null;
     this.isTouch = false;
     this.isVisible = false;
@@ -20,6 +22,22 @@ export class TouchControls {
 
     // Touch ID tracking
     this.joystickTouchId = null;
+    this.lookTouchId = null;
+
+    // Camera look state
+    this.lookActive = false;
+    this.lookOrigin = { x: 0, y: 0 };
+    this.lookSensitivity = 0.003;
+
+    // Camera rotation values (emitted to camera)
+    this.cameraRotation = { x: 0, y: 0 };
+  }
+
+  /**
+   * Set camera controller for direct rotation
+   */
+  setCameraController(camera) {
+    this.cameraController = camera;
   }
 
   init() {
@@ -48,6 +66,9 @@ export class TouchControls {
           <div class="touch-joystick-thumb" id="touch-joystick-thumb"></div>
         </div>
       </div>
+      <div class="touch-look-area" id="touch-look-area">
+        <div class="touch-look-hint">Swipe to look</div>
+      </div>
       <div class="touch-action-buttons">
         <button class="touch-btn touch-btn-interact" id="touch-btn-interact">E</button>
         <button class="touch-btn touch-btn-run" id="touch-btn-run">RUN</button>
@@ -56,10 +77,12 @@ export class TouchControls {
     document.body.appendChild(this.element);
 
     this.thumbEl = this.element.querySelector('#touch-joystick-thumb');
+    this.lookAreaEl = this.element.querySelector('#touch-look-area');
   }
 
   bindEvents() {
     const joystickArea = this.element.querySelector('#touch-joystick-area');
+    const lookArea = this.element.querySelector('#touch-look-area');
     const interactBtn = this.element.querySelector('#touch-btn-interact');
     const runBtn = this.element.querySelector('#touch-btn-run');
 
@@ -68,6 +91,12 @@ export class TouchControls {
     joystickArea.addEventListener('touchmove', (e) => this.onJoystickMove(e), { passive: false });
     joystickArea.addEventListener('touchend', (e) => this.onJoystickEnd(e), { passive: false });
     joystickArea.addEventListener('touchcancel', (e) => this.onJoystickEnd(e), { passive: false });
+
+    // Camera look area events
+    lookArea.addEventListener('touchstart', (e) => this.onLookStart(e), { passive: false });
+    lookArea.addEventListener('touchmove', (e) => this.onLookMove(e), { passive: false });
+    lookArea.addEventListener('touchend', (e) => this.onLookEnd(e), { passive: false });
+    lookArea.addEventListener('touchcancel', (e) => this.onLookEnd(e), { passive: false });
 
     // Interact button
     interactBtn.addEventListener('touchstart', (e) => {
@@ -91,6 +120,58 @@ export class TouchControls {
       runBtn.classList.toggle('active', isRunning);
       this.inputManager.keys.run = isRunning;
     }, { passive: false });
+  }
+
+  // ==========================================
+  // Camera Look Touch Handlers
+  // ==========================================
+
+  onLookStart(e) {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    this.lookTouchId = touch.identifier;
+    this.lookActive = true;
+    this.lookOrigin.x = touch.clientX;
+    this.lookOrigin.y = touch.clientY;
+
+    // Hide hint on first use
+    const hint = this.element.querySelector('.touch-look-hint');
+    if (hint) hint.style.opacity = '0';
+  }
+
+  onLookMove(e) {
+    e.preventDefault();
+    if (!this.lookActive) return;
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      if (touch.identifier === this.lookTouchId) {
+        const deltaX = touch.clientX - this.lookOrigin.x;
+        const deltaY = touch.clientY - this.lookOrigin.y;
+
+        // Emit camera rotation event via input manager
+        this.inputManager.emit('cameraRotate', {
+          deltaX: deltaX * this.lookSensitivity,
+          deltaY: deltaY * this.lookSensitivity,
+        });
+
+        // Update origin for continuous rotation
+        this.lookOrigin.x = touch.clientX;
+        this.lookOrigin.y = touch.clientY;
+        break;
+      }
+    }
+  }
+
+  onLookEnd(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === this.lookTouchId) {
+        this.lookActive = false;
+        this.lookTouchId = null;
+        break;
+      }
+    }
   }
 
   onJoystickStart(e) {

@@ -88,6 +88,25 @@ class QuestManager {
   }
 
   /**
+   * Detect circular prerequisites in quest chain
+   * @param {string} questId - Starting quest ID
+   * @param {Set} visited - Already visited quest IDs
+   * @returns {boolean} True if cycle detected
+   */
+  hasPrerequisiteCycle(questId, visited = new Set()) {
+    if (visited.has(questId)) {
+      console.warn('[QuestManager] Circular prerequisite detected:', Array.from(visited).join(' -> '), '->', questId);
+      return true;
+    }
+
+    const quest = this.getQuest(questId);
+    if (!quest || !quest.prerequisite) return false;
+
+    visited.add(questId);
+    return this.hasPrerequisiteCycle(quest.prerequisite, visited);
+  }
+
+  /**
    * Accept a quest
    * @param {string} questId
    * @returns {boolean} Success
@@ -99,14 +118,42 @@ class QuestManager {
       return false;
     }
 
+    const state = useGameStore.getState();
+
+    // Prevent re-accepting completed quests
+    if (state.quests.completed.includes(questId)) {
+      console.warn('[QuestManager] Quest already completed:', questId);
+      state.showNotification('info', 'Quest already completed!');
+      return false;
+    }
+
+    // Prevent accepting already active quests
+    if (state.quests.active.some(q => q.id === questId)) {
+      console.warn('[QuestManager] Quest already active:', questId);
+      return false;
+    }
+
+    // Check prerequisite is met
+    if (quest.prerequisite && !state.quests.completed.includes(quest.prerequisite)) {
+      console.warn('[QuestManager] Prerequisite not met:', quest.prerequisite);
+      state.showNotification('error', 'Complete the prerequisite quest first!');
+      return false;
+    }
+
+    // Check for circular prerequisites (safety check)
+    if (this.hasPrerequisiteCycle(questId)) {
+      console.error('[QuestManager] Quest has circular prerequisites:', questId);
+      return false;
+    }
+
     // Clone quest with fresh objectives
     const activeQuest = {
       ...quest,
-      objectives: quest.objectives.map(o => ({ ...o, complete: false })),
+      objectives: quest.objectives.map(o => ({ ...o, complete: false, progress: 0 })),
       acceptedAt: Date.now(),
     };
 
-    useGameStore.getState().acceptQuest(activeQuest);
+    state.acceptQuest(activeQuest);
 
     // Spawn any required mail items
     for (const objective of quest.objectives) {
