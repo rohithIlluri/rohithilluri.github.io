@@ -10,6 +10,9 @@ import { NotificationToast } from './NotificationToast.js';
 import { QuestLog } from './QuestLog.js';
 import { QuestTracker } from './QuestTracker.js';
 import { CustomizationScreen } from './CustomizationScreen.js';
+import { SettingsPanel } from './SettingsPanel.js';
+import { TutorialOverlay } from './TutorialOverlay.js';
+import { CelebrationEffect } from './CelebrationEffect.js';
 import { questManager } from '../systems/QuestManager.js';
 
 /**
@@ -25,6 +28,9 @@ export class UIManager {
     this.questLog = null;
     this.questTracker = null;
     this.customizationScreen = null;
+    this.settingsPanel = null;
+    this.tutorialOverlay = null;
+    this.celebrationEffect = null;
     this.unsubscribers = [];
     this.isInitialized = false;
   }
@@ -52,6 +58,9 @@ export class UIManager {
     this.questLog = new QuestLog();
     this.questTracker = new QuestTracker();
     this.customizationScreen = new CustomizationScreen();
+    this.settingsPanel = new SettingsPanel();
+    this.tutorialOverlay = new TutorialOverlay();
+    this.celebrationEffect = new CelebrationEffect();
 
     // Initialize all components
     this.hud.init();
@@ -60,6 +69,15 @@ export class UIManager {
     this.questLog.init();
     this.questTracker.init();
     this.customizationScreen.init();
+    this.settingsPanel.init();
+    this.tutorialOverlay.init();
+    this.celebrationEffect.init();
+
+    // Connect settings panel to HUD button
+    this.hud.setSettingsPanel(this.settingsPanel);
+
+    // Load saved settings from localStorage
+    this.settingsPanel.loadSettings();
 
     // Subscribe to store for reactive updates
     this.subscribeToStore();
@@ -147,6 +165,20 @@ export class UIManager {
             notification.message,
             notification.duration
           );
+
+          // Trigger celebration effects for achievements
+          if (this.celebrationEffect) {
+            const msg = notification.message.toLowerCase();
+            if (notification.type === 'success') {
+              if (msg.includes('delivered') || msg.includes('delivery')) {
+                this.celebrationEffect.mailDelivered();
+              } else if (msg.includes('quest') && msg.includes('complete')) {
+                this.celebrationEffect.questCompleted();
+              } else if (msg.includes('coin') || msg.includes('earned') || msg.includes('reward')) {
+                this.celebrationEffect.coinsEarned();
+              }
+            }
+          }
         }
         prevNotification = notification;
       }
@@ -221,6 +253,10 @@ export class UIManager {
         this.show();
         if (this.customizationScreen) {
           this.customizationScreen.hide();
+        }
+        // Show tutorial for first-time players when transitioning from customization
+        if (oldState === 'customization' && this.tutorialOverlay && this.tutorialOverlay.shouldShow()) {
+          this.tutorialOverlay.show();
         }
         break;
       case 'dialogue':
@@ -343,6 +379,18 @@ export class UIManager {
     if (this.customizationScreen) {
       this.customizationScreen.dispose();
       this.customizationScreen = null;
+    }
+    if (this.settingsPanel) {
+      this.settingsPanel.dispose();
+      this.settingsPanel = null;
+    }
+    if (this.tutorialOverlay) {
+      this.tutorialOverlay.dispose();
+      this.tutorialOverlay = null;
+    }
+    if (this.celebrationEffect) {
+      this.celebrationEffect.dispose();
+      this.celebrationEffect = null;
     }
 
     // Remove container
