@@ -13,6 +13,8 @@ export class NotificationToast {
     this.toastContainer = null;
     this.activeToasts = [];
     this.maxToasts = 5; // Maximum visible toasts
+    this.recentMessages = new Map(); // Track recent messages to prevent duplicates
+    this.duplicatePreventionWindow = 500; // ms window for duplicate prevention
   }
 
   /**
@@ -39,6 +41,24 @@ export class NotificationToast {
    */
   show(type, message, duration = 3000) {
     if (!this.toastContainer) return;
+
+    // Prevent duplicate notifications within the prevention window
+    const messageKey = `${type}:${message}`;
+    const now = Date.now();
+    const lastShown = this.recentMessages.get(messageKey);
+    if (lastShown && (now - lastShown) < this.duplicatePreventionWindow) {
+      return null; // Skip duplicate notification
+    }
+    this.recentMessages.set(messageKey, now);
+
+    // Clean up old entries from recentMessages
+    if (this.recentMessages.size > 50) {
+      for (const [key, time] of this.recentMessages) {
+        if (now - time > this.duplicatePreventionWindow * 2) {
+          this.recentMessages.delete(key);
+        }
+      }
+    }
 
     // Limit active toasts
     if (this.activeToasts.length >= this.maxToasts) {

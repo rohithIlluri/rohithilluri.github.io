@@ -184,7 +184,21 @@ const store = createStore((set, get) => ({
   // --- Inventory ---
   addMail: (mailItem) => {
     const inv = get().inventory;
-    if (inv.mail.length >= inv.maxMail) return false;
+    // Check if inventory is full
+    if (inv.mail.length >= inv.maxMail) {
+      get().showNotification('error', 'Inventory full!');
+      return false;
+    }
+    // Prevent duplicate mail (same ID)
+    if (inv.mail.some((m) => m.id === mailItem.id)) {
+      console.warn('[Store] Duplicate mail prevented:', mailItem.id);
+      return false;
+    }
+    // Validate mail item has required fields
+    if (!mailItem.id || !mailItem.to) {
+      console.warn('[Store] Invalid mail item:', mailItem);
+      return false;
+    }
     set({
       inventory: {
         ...inv,
@@ -208,10 +222,23 @@ const store = createStore((set, get) => ({
   deliverMail: (mailId, recipientId) => {
     const inv = get().inventory;
     const mail = inv.mail.find((m) => m.id === mailId);
-    if (!mail) return false;
+    if (!mail) {
+      console.warn('[Store] Mail not found:', mailId);
+      return false;
+    }
 
-    // Award coins based on priority
-    const reward = mail.priority === 'urgent' ? 25 : 10;
+    // Validate recipient matches mail.to (case-insensitive)
+    const mailTo = (mail.to || '').toLowerCase();
+    const recipient = (recipientId || '').toLowerCase();
+    if (mailTo && recipient && mailTo !== recipient) {
+      get().showNotification('error', `This mail is for ${mail.to}, not this NPC!`);
+      return false;
+    }
+
+    // Award coins based on priority (with validation)
+    const validPriorities = { urgent: 25, express: 20, normal: 10 };
+    const reward = validPriorities[mail.priority] || 10;
+
     set({
       inventory: {
         ...inv,
@@ -342,27 +369,46 @@ const store = createStore((set, get) => ({
   },
 
   // --- UI ---
+  // Debounce tracking for UI toggles (prevents rapid spam)
+  _lastUIToggle: 0,
+  _uiToggleDelay: 150, // ms between allowed toggles
+
+  _canToggleUI: () => {
+    const now = Date.now();
+    const state = get();
+    if (now - state._lastUIToggle < state._uiToggleDelay) {
+      return false;
+    }
+    set({ _lastUIToggle: now });
+    return true;
+  },
+
   toggleHUD: () => {
+    if (!get()._canToggleUI()) return;
     const ui = get().ui;
     set({ ui: { ...ui, showHUD: !ui.showHUD } });
   },
 
   toggleQuestLog: () => {
+    if (!get()._canToggleUI()) return;
     const ui = get().ui;
     set({ ui: { ...ui, showQuestLog: !ui.showQuestLog } });
   },
 
   toggleInventory: () => {
+    if (!get()._canToggleUI()) return;
     const ui = get().ui;
     set({ ui: { ...ui, showInventory: !ui.showInventory } });
   },
 
   toggleMap: () => {
+    if (!get()._canToggleUI()) return;
     const ui = get().ui;
     set({ ui: { ...ui, showMap: !ui.showMap } });
   },
 
   toggleSettings: () => {
+    if (!get()._canToggleUI()) return;
     const ui = get().ui;
     set({ ui: { ...ui, showSettings: !ui.showSettings } });
   },

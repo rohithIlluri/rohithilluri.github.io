@@ -229,8 +229,12 @@ describe('gameStore', () => {
 
   describe('UI State', () => {
     it('should toggle quest log', () => {
+      // Reset debounce timer before testing
+      useGameStore.setState({ _lastUIToggle: 0 });
       useGameStore.getState().toggleQuestLog();
       expect(useGameStore.getState().ui.showQuestLog).toBe(true);
+      // Reset debounce timer again for second toggle
+      useGameStore.setState({ _lastUIToggle: 0 });
       useGameStore.getState().toggleQuestLog();
       expect(useGameStore.getState().ui.showQuestLog).toBe(false);
     });
