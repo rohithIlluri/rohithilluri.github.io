@@ -7,15 +7,21 @@
 import * as THREE from 'three';
 
 export class Camera {
-  constructor(player, collisionMeshes = [], planet = null) {
+  constructor(player, collisionMeshes = [], planet = null, inputManager = null) {
     this.player = player;
     this.collisionMeshes = collisionMeshes;
     this.planet = planet; // TinyPlanet instance (null for flat world)
+    this.inputManager = inputManager;
 
     // Camera settings
     this.distance = 8; // Distance from player
     this.height = 4; // Height above player (in local "up" direction)
     this.angle = 0; // Current rotation angle (follows player)
+
+    // Manual camera offset (for touch/mouse camera control)
+    this.orbitOffset = 0; // Horizontal offset in radians
+    this.orbitOffsetTarget = 0;
+    this.orbitSmoothness = 0.1;
 
     // Smoothness values (consistent across all lerps for smooth movement)
     // Lower values = smoother/slower transitions
@@ -73,6 +79,36 @@ export class Camera {
 
     this.currentPosition.copy(this.camera.position);
     this.currentLookAt.copy(playerPos).add(this.lookAtOffset);
+
+    // Listen for camera rotation events (from touch controls)
+    if (this.inputManager) {
+      this.inputManager.on('cameraRotate', (data) => this.handleCameraRotate(data));
+    }
+  }
+
+  /**
+   * Handle camera rotation from touch input
+   * @param {Object} data { deltaX, deltaY }
+   */
+  handleCameraRotate(data) {
+    // Apply horizontal rotation (orbit around player)
+    this.orbitOffsetTarget += data.deltaX * 2;
+
+    // Clamp orbit offset to prevent extreme values
+    this.orbitOffsetTarget = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, this.orbitOffsetTarget));
+
+    // Slowly decay back to center when not actively controlling
+    // (handled in update)
+  }
+
+  /**
+   * Set input manager for event handling
+   */
+  setInputManager(inputManager) {
+    this.inputManager = inputManager;
+    if (inputManager) {
+      inputManager.on('cameraRotate', (data) => this.handleCameraRotate(data));
+    }
   }
 
   /**
@@ -116,13 +152,27 @@ export class Camera {
    * Update camera on spherical planet
    */
   updateSpherical(deltaTime, playerPos, playerRot) {
+    // Smoothly interpolate orbit offset
+    const orbitLerpFactor = 1 - Math.pow(1 - this.orbitSmoothness, deltaTime * 60);
+    this.orbitOffset = THREE.MathUtils.lerp(this.orbitOffset, this.orbitOffsetTarget, orbitLerpFactor);
+
+    // Slowly decay orbit offset back to center when not being actively controlled
+    this.orbitOffsetTarget *= 0.98;
+
     // Get local axes at player position
     const up = this.planet.getUpVector(playerPos);
     const axes = this.planet.getLocalAxes(playerPos, playerRot);
 
+    // Apply orbit offset to forward direction (rotate around up axis)
+    const rotatedForward = axes.forward.clone();
+    if (Math.abs(this.orbitOffset) > 0.001) {
+      // Rotate forward around the up axis by orbitOffset
+      rotatedForward.applyAxisAngle(up, this.orbitOffset);
+    }
+
     // Calculate camera position behind and above player in local space
-    // Behind = opposite of player's forward direction
-    const behindOffset = axes.forward.clone().multiplyScalar(-this.distance);
+    // Behind = opposite of player's forward direction (with orbit offset)
+    const behindOffset = rotatedForward.clone().multiplyScalar(-this.distance);
     const aboveOffset = up.clone().multiplyScalar(this.height);
 
     // Get player's surface position

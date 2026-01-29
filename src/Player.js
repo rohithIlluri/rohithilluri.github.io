@@ -247,11 +247,13 @@ export class Player {
     head.position.y = 1.62; // Adjusted for larger head
     head.scale.set(1.0, 1.15, 0.95); // Slightly taller, flatter face
     head.castShadow = true;
+    head.renderOrder = 10; // Render character meshes after outlines
     this.characterGroup.add(head);
 
     const headOutline = createOutlineMesh(head, 0.05);
     headOutline.position.copy(head.position);
     headOutline.scale.copy(head.scale);
+    headOutline.renderOrder = 5; // Outlines render before main meshes
     this.characterGroup.add(headOutline);
 
     // =====================================================
@@ -294,6 +296,7 @@ export class Player {
     const hairOutline = createOutlineMesh(hair, 0.045);
     hairOutline.position.copy(hair.position);
     hairOutline.scale.copy(hair.scale);
+    hairOutline.renderOrder = 5;
     this.characterGroup.add(hairOutline);
 
     // =====================================================
@@ -429,6 +432,7 @@ export class Player {
 
     const torsoOutline = createOutlineMesh(upperTorso, 0.04);
     torsoOutline.position.copy(upperTorso.position);
+    torsoOutline.renderOrder = 5;
     this.characterGroup.add(torsoOutline);
 
     // RED SKIRT (signature messenger.abeto.co look)
@@ -441,6 +445,7 @@ export class Player {
 
     const skirtOutline = createOutlineMesh(skirt, 0.04);
     skirtOutline.position.copy(skirt.position);
+    skirtOutline.renderOrder = 5;
     this.characterGroup.add(skirtOutline);
 
     // =====================================================
@@ -465,6 +470,7 @@ export class Player {
     const bagOutline = createOutlineMesh(bagBody, 0.04);
     bagOutline.position.copy(bagBody.position);
     bagOutline.rotation.copy(bagBody.rotation);
+    bagOutline.renderOrder = 5;
     this.characterGroup.add(bagOutline);
 
     // Bag flap (larger)
@@ -594,6 +600,7 @@ export class Player {
 
     const leftFootOutline = createOutlineMesh(leftFoot, 0.035);
     leftFootOutline.position.copy(leftFoot.position);
+    leftFootOutline.renderOrder = 5;
     this.characterGroup.add(leftFootOutline);
 
     const rightFoot = new THREE.Mesh(footGeo, shoeMaterial);
@@ -603,6 +610,7 @@ export class Player {
 
     const rightFootOutline = createOutlineMesh(rightFoot, 0.035);
     rightFootOutline.position.copy(rightFoot.position);
+    rightFootOutline.renderOrder = 5;
     this.characterGroup.add(rightFootOutline);
 
     // Shoe sole (white for chunky sneaker look)
@@ -802,11 +810,17 @@ export class Player {
       updateModelLightDirection(this.characterModel, this.lightDirection);
     } else if (this.characterGroup) {
       // Update procedural character materials
+      let updatedCount = 0;
       this.characterGroup.traverse((child) => {
         if (child.isMesh && child.material?.uniforms?.lightDirection) {
-          child.material.uniforms.lightDirection.value = this.lightDirection;
+          child.material.uniforms.lightDirection.value.copy(this.lightDirection);
+          updatedCount++;
         }
       });
+      // Log warning if no materials were updated (helps with debugging)
+      if (updatedCount === 0 && this.characterGroup.children.length > 0) {
+        console.warn('[Player] No toon materials found to update light direction');
+      }
     }
   }
 
@@ -892,7 +906,8 @@ export class Player {
     if (isMoving) {
       // Walk/run cycle timing
       const cycleSpeed = isRunning ? 14 : 9;
-      this.walkCycle += deltaTime * cycleSpeed;
+      // Wrap walk cycle to prevent NaN after long sessions (2*PI for full cycle)
+      this.walkCycle = (this.walkCycle + deltaTime * cycleSpeed) % (Math.PI * 2);
 
       // Leg swing amplitude (larger for running)
       const legSwingAmp = isRunning ? 0.5 : 0.35;

@@ -21,6 +21,9 @@ export class InputManager {
     // Bind handlers
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
+    this.onBlur = this.onBlur.bind(this);
+    this.onFocus = this.onFocus.bind(this);
+    this.onVisibilityChange = this.onVisibilityChange.bind(this);
 
     // Set up event listeners
     this.init();
@@ -29,6 +32,47 @@ export class InputManager {
   init() {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
+
+    // Reset input state when window loses focus (prevents stuck keys)
+    window.addEventListener('blur', this.onBlur);
+    window.addEventListener('focus', this.onFocus);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
+  }
+
+  /**
+   * Reset all input state when window loses focus
+   * Prevents player from walking forever when alt-tabbing
+   */
+  onBlur() {
+    this.resetAllKeys();
+  }
+
+  /**
+   * Handle focus regain (optional logging/state)
+   */
+  onFocus() {
+    // Keys are already reset, nothing special needed
+  }
+
+  /**
+   * Handle visibility change (tab switching)
+   */
+  onVisibilityChange() {
+    if (document.hidden) {
+      this.resetAllKeys();
+    }
+  }
+
+  /**
+   * Reset all movement keys to false
+   */
+  resetAllKeys() {
+    this.keys.forward = false;
+    this.keys.backward = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.keys.run = false;
+    this.keys.interact = false;
   }
 
   onKeyDown(event) {
@@ -193,6 +237,9 @@ export class InputManager {
   dispose() {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.onBlur);
+    window.removeEventListener('focus', this.onFocus);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.listeners.clear();
   }
 }

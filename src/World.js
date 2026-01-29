@@ -319,9 +319,9 @@ export class World {
 
   setupCamera() {
     if (this.worldMode === 'planet') {
-      this.camera = new Camera(this.player, this.collisionMeshes, this.tinyPlanet);
+      this.camera = new Camera(this.player, this.collisionMeshes, this.tinyPlanet, this.inputManager);
     } else {
-      this.camera = new Camera(this.player, this.collisionMeshes, null);
+      this.camera = new Camera(this.player, this.collisionMeshes, null, this.inputManager);
     }
     this.camera.init();
   }
@@ -800,6 +800,11 @@ export class World {
     if (this.birdEmitter) {
       const store = useGameStore.getState();
       this.birdEmitter.update(deltaTime, store.isNight);
+    }
+
+    // Update dust motes (planet mode ambient particles)
+    if (this.dustMoteEmitter) {
+      this.dustMoteEmitter.update(deltaTime);
     }
 
     // Update LOD system

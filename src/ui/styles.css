@@ -1672,6 +1672,30 @@ button:disabled {
   letter-spacing: 0.05em;
 }
 
+/* Touch Look Area (Camera rotation on mobile) */
+.touch-look-area {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 60%;
+  pointer-events: auto;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.touch-look-hint {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
 @media (min-width: 769px) {
   .touch-controls {
     display: none;
