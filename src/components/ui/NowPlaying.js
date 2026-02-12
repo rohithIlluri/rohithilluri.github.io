@@ -16,6 +16,7 @@ export default function NowPlaying({
   const [toastExiting, setToastExiting] = useState(false);
   const prevTrackRef = useRef(null);
   const toastTimer = useRef(null);
+  const exitTimer = useRef(null);
 
   // Show toast notification on track change
   useEffect(() => {
@@ -27,12 +28,13 @@ export default function NowPlaying({
     if (isSame) return;
 
     if (toastTimer.current) clearTimeout(toastTimer.current);
+    if (exitTimer.current) clearTimeout(exitTimer.current);
     setToastExiting(false);
     setShowToast(true);
 
     toastTimer.current = setTimeout(() => {
       setToastExiting(true);
-      setTimeout(() => {
+      exitTimer.current = setTimeout(() => {
         setShowToast(false);
         setToastExiting(false);
       }, 400);
@@ -40,6 +42,7 @@ export default function NowPlaying({
 
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
+      if (exitTimer.current) clearTimeout(exitTimer.current);
     };
   }, [track, isPlaying]);
 

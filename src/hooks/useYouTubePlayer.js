@@ -48,25 +48,28 @@ export default function useYouTubePlayer() {
       let attempts = 0;
 
       const check = () => {
-        // Bail out if the component unmounted while we were waiting.
-        if (!isMountedRef.current) {
-          reject(new Error('Component unmounted'));
-          return;
-        }
+        try {
+          if (!isMountedRef.current) {
+            reject(new Error('Component unmounted'));
+            return;
+          }
 
-        const playlist = player.getPlaylist();
-        if (playlist && playlist.length > 0) {
-          resolve(playlist);
-          return;
-        }
+          const playlist = player.getPlaylist();
+          if (playlist && playlist.length > 0) {
+            resolve(playlist);
+            return;
+          }
 
-        attempts += 1;
-        if (attempts >= maxAttempts) {
-          reject(new Error('Timed out waiting for playlist data'));
-          return;
-        }
+          attempts += 1;
+          if (attempts >= maxAttempts) {
+            reject(new Error('Timed out waiting for playlist data'));
+            return;
+          }
 
-        setTimeout(check, interval);
+          setTimeout(check, interval);
+        } catch (err) {
+          reject(err);
+        }
       };
 
       check();
@@ -167,9 +170,12 @@ export default function useYouTubePlayer() {
       // Try to start playback (may be blocked by the browser).
       setupAutoplay(player);
     } catch (error) {
-      // If the playlist never loaded we still try to play whatever is cued.
+      // If the playlist never loaded we still try to play whatever is cued,
+      // but only if the component is still mounted.
       console.warn('[useYouTubePlayer] Could not load playlist:', error.message);
-      setupAutoplay(player);
+      if (isMountedRef.current) {
+        setupAutoplay(player);
+      }
     }
   }, [waitForPlaylist, pickRandom, setupAutoplay]);
 
@@ -198,7 +204,11 @@ export default function useYouTubePlayer() {
       }
 
       // YT.PlayerState.PAUSED === 2
-      case 2: {
+      case 2:
+      // YT.PlayerState.ENDED === 0
+      case 0:
+      // YT.PlayerState.BUFFERING === 3
+      case 3: {
         setIsPlaying(false);
         break;
       }
@@ -238,6 +248,9 @@ export default function useYouTubePlayer() {
       initializePlayer();
     };
 
+    // Track our callback so we only clean up our own reference.
+    let ourCallback = null;
+
     if (window.YT && window.YT.Player) {
       // API already available – initialise straight away.
       onYTReady();
@@ -245,13 +258,14 @@ export default function useYouTubePlayer() {
       // Stash any existing callback so we do not clobber other consumers.
       const previousCallback = window.onYouTubeIframeAPIReady;
 
-      window.onYouTubeIframeAPIReady = () => {
+      ourCallback = () => {
         // Honour any callback that was registered before us.
         if (typeof previousCallback === 'function') {
           previousCallback();
         }
         onYTReady();
       };
+      window.onYouTubeIframeAPIReady = ourCallback;
 
       // Only inject the script tag if it has not been added yet.
       if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
@@ -274,16 +288,18 @@ export default function useYouTubePlayer() {
       });
       interactionListenersRef.current = [];
 
-      // Destroy the player instance.
+      // Destroy the player instance and remove its DOM node.
       try {
         playerRef.current?.destroy();
       } catch (_) {
         // Ignore errors during teardown.
       }
       playerRef.current = null;
+      const el = document.getElementById('yt-bg-player');
+      if (el) el.remove();
 
-      // Clean up the global callback if it is still ours.
-      if (typeof window.onYouTubeIframeAPIReady === 'function') {
+      // Only clear the global callback if it is still the one we registered.
+      if (ourCallback && window.onYouTubeIframeAPIReady === ourCallback) {
         window.onYouTubeIframeAPIReady = undefined;
       }
 
