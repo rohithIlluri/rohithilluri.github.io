@@ -1,6 +1,8 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import useYouTubePlayer from './hooks/useYouTubePlayer';
+import NowPlaying from './components/ui/NowPlaying';
 
 // Lazy load components for better performance with prefetch
 const Hero = lazy(() => import("./components/sections/Hero"));
@@ -27,6 +29,9 @@ function App() {
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Background music player
+  const { currentTrack, isPlaying, togglePlayPause, nextTrack, previousTrack } = useYouTubePlayer();
 
   // Memoize GitHub data fetching to prevent unnecessary re-fetches
   const fetchGitHubData = useCallback(async () => {
@@ -110,6 +115,15 @@ function App() {
       }>
         <Footer />
       </Suspense>
+
+      {/* Background music player bar */}
+      <NowPlaying
+        track={currentTrack}
+        isPlaying={isPlaying}
+        onTogglePlayPause={togglePlayPause}
+        onNext={nextTrack}
+        onPrevious={previousTrack}
+      />
     </div>
   );
 }
