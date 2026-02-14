@@ -203,12 +203,13 @@ export default function useYouTubePlayer() {
         break;
       }
 
-      // YT.PlayerState.PAUSED === 2
+      // YT.PlayerState.PAUSED (2), ENDED (0), BUFFERING (3)
+      /* eslint-disable no-fallthrough */
       case 2:
-      // YT.PlayerState.ENDED === 0
       case 0:
-      // YT.PlayerState.BUFFERING === 3
-      case 3: {
+      case 3:
+      /* eslint-enable no-fallthrough */
+      {
         setIsPlaying(false);
         break;
       }
