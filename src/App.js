@@ -16,6 +16,7 @@ const Music = lazy(() => import("./components/sections/Music"));
 const FavoriteMovies = lazy(() => import("./components/sections/FavoriteMovies"));
 // const GitHubStats = lazy(() => import("./components/sections/GitHubStats"));
 const Stats = lazy(() => import("./components/sections/Stats"));
+const TerminalGame = lazy(() => import("./components/sections/TerminalGame"));
 
 // Optimized loading component
 const LoadingSpinner = () => (
@@ -86,6 +87,7 @@ function App() {
                       <Music />
                       <FavoriteMovies />
                       <Stats />
+                      <TerminalGame />
                     </ErrorBoundary>
                   </Suspense>
                 }
