@@ -1,51 +1,36 @@
-import React from 'react';
-import { COMPONENT_STYLES } from '../../constants/theme';
+import React, { memo } from 'react';
 
-const Stats = () => {
-  const stats = [
-    { label: 'Deadlift PR', value: '340 lbs' },
-    { label: 'Bench Press', value: '180 lbs' },
-    { label: 'Run', value: '11.32 miles' },
-    { label: 'Typing 30s', value: '95 wpm' },
-    { label: 'Typing 15s', value: '103.13 wpm' },
-  ];
+const STATS = [
+  { key: 'deadlift_pr',  value: '340 lbs' },
+  { key: 'bench_press',  value: '180 lbs' },
+  { key: 'run',          value: '11.32 miles' },
+  { key: 'typing_30s',   value: '95 wpm' },
+  { key: 'typing_15s',   value: '103.13 wpm' },
+];
 
-  return (
-    <section id="stats" className={COMPONENT_STYLES.section.base} aria-label="Stats section">
-      <div className={COMPONENT_STYLES.section.container}>
-        <h2 className="text-2xl font-black text-black dark:text-white mb-8 tracking-[0.4em] uppercase" style={{ 
-          fontFamily: '"Courier New", monospace',
-          fontSize: '1.5rem',
-          fontWeight: '900',
-          letterSpacing: '0.4em',
-          textTransform: 'uppercase'
-        }}>STATS</h2>
-        
-        <div className="space-y-4">
-          {stats.map((stat, index) => (
-            <div key={index} className="flex justify-between items-center">
-              <span className="text-black dark:text-white text-sm font-bold" style={{ 
-                fontFamily: '"Courier New", monospace',
-                fontSize: '0.875rem',
-                fontWeight: '700',
-                letterSpacing: '0.2em'
-              }}>
-                {stat.label}
-              </span>
-              <span className="text-black dark:text-white text-sm font-bold" style={{ 
-                fontFamily: '"Courier New", monospace',
-                fontSize: '0.875rem',
-                fontWeight: '700',
-                letterSpacing: '0.2em'
-              }}>
-                {stat.value}
-              </span>
+const Stats = () => (
+  <section id="stats" aria-label="Stats" style={{ marginBottom: '0.5rem' }}>
+    <div className="term-block">
+      <div className="term-cmd">
+        <span className="term-prompt">❯</span>
+        <span className="term-command">cat stats.json</span>
+      </div>
+      <div className="term-output">
+        <div className="term-json-block">
+          <span style={{ color: '#6b6b6b' }}>{'{'}</span>
+          {STATS.map((s, i) => (
+            <div key={s.key} style={{ paddingLeft: '1.25rem' }}>
+              <span style={{ color: '#c084fc' }}>"{s.key}"</span>
+              <span style={{ color: '#6b6b6b' }}>: </span>
+              <span style={{ color: '#4ade80' }}>"{s.value}"</span>
+              {i < STATS.length - 1 && <span style={{ color: '#6b6b6b' }}>,</span>}
             </div>
           ))}
+          <span style={{ color: '#6b6b6b' }}>{'}'}</span>
         </div>
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
-export default Stats;
+export default memo(Stats);

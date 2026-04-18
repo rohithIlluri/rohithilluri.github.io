@@ -67,53 +67,83 @@ class ErrorBoundary extends React.Component {
       const isDevelopment = process.env.NODE_ENV === 'development';
 
       return (
-        <div className="bg-white/90 p-8 border border-red-200 rounded-2xl shadow-xl text-center max-w-md mx-auto my-8">
-          <div className="text-red-500 text-2xl mb-4">⚠️</div>
-          <h3 className="text-lg font-bold text-gray-800 mb-2">Oops! Something went wrong</h3>
-
-          <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-            We encountered an unexpected error. This has been automatically reported to help us improve the application.
-          </p>
+        <div style={{
+          background: '#141414',
+          border: '1px solid #f87171',
+          borderRadius: '2px',
+          padding: '1.5rem',
+          maxWidth: '560px',
+          margin: '2rem auto',
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '13px',
+        }}>
+          <div style={{ color: '#f87171', marginBottom: '8px' }}>
+            <span style={{ color: '#4ade80' }}>❯</span>{' '}
+            <span style={{ color: '#22d3ee' }}>error</span>
+            {' ─ '}
+            <span style={{ color: '#f87171' }}>something went wrong</span>
+          </div>
 
           {isDevelopment && this.state.error && (
-            <details className="text-left mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <summary className="cursor-pointer font-medium text-gray-700 mb-2">
-                Error Details (Development)
+            <details style={{ margin: '12px 0' }}>
+              <summary style={{ color: '#6b6b6b', cursor: 'pointer', marginBottom: '6px' }}>
+                stack trace
               </summary>
-              <pre className="text-xs text-red-600 overflow-auto bg-white p-2 rounded border border-red-100">
+              <pre style={{
+                color: '#f87171',
+                fontSize: '11px',
+                overflowX: 'auto',
+                background: '#0c0c0c',
+                padding: '10px',
+                border: '1px solid #2a2a2a',
+                borderRadius: '2px',
+                lineHeight: 1.5,
+              }}>
                 {this.state.error.toString()}
-                {this.state.errorInfo?.componentStack && (
-                  <>
-                    {'\n\nComponent Stack:'}
-                    {this.state.errorInfo.componentStack}
-                  </>
-                )}
+                {this.state.errorInfo?.componentStack}
               </pre>
             </details>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
             <button
               onClick={this.handleRetry}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-              aria-label="Retry loading the component"
+              aria-label="Retry"
+              style={{
+                padding: '4px 14px',
+                border: '1px solid #4ade80',
+                borderRadius: '2px',
+                background: 'transparent',
+                color: '#4ade80',
+                fontFamily: 'inherit',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
             >
-              Try Again
+              [retry]
             </button>
-
             {isDevelopment && (
               <button
                 onClick={this.handleReportError}
-                className="px-6 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
-                aria-label="Copy error details to clipboard"
+                aria-label="Copy error details"
+                style={{
+                  padding: '4px 14px',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: '2px',
+                  background: 'transparent',
+                  color: '#6b6b6b',
+                  fontFamily: 'inherit',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
               >
-                Copy Error Details
+                [copy details]
               </button>
             )}
           </div>
 
-          <p className="text-xs text-gray-500 mt-4">
-            Error ID: {this.state.errorId}
+          <p style={{ color: '#444', fontSize: '10px', marginTop: '10px' }}>
+            id: {this.state.errorId}
           </p>
         </div>
       );
