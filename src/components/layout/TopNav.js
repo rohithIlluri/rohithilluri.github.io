@@ -17,7 +17,9 @@ const navLinkStyle = (isActive) => ({
 
 const TopNav = () => {
   const location = useLocation();
-  const cwd = location.pathname === '/' ? '~' : '~/projects';
+  const cwd =
+    location.pathname === '/terminal' ? '~/terminal' :
+    location.pathname === '/projects'  ? '~/projects'  : '~';
 
   return (
     <nav
@@ -49,6 +51,9 @@ const TopNav = () => {
         </NavLink>
         <NavLink to="/projects" style={({ isActive }) => navLinkStyle(isActive)}>
           projects
+        </NavLink>
+        <NavLink to="/terminal" style={({ isActive }) => navLinkStyle(isActive)}>
+          terminal
         </NavLink>
       </div>
     </nav>

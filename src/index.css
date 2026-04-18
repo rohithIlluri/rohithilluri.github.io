@@ -431,3 +431,306 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ════════════════════════════════════════════════════
+   INTERACTIVE TERMINAL PAGE
+   ════════════════════════════════════════════════════ */
+
+/* Title bar (decorative macOS-style dots) */
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--term-surface);
+  border: 1px solid var(--term-border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  padding: 8px 14px;
+  user-select: none;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.terminal-dot--red    { background: #f87171; }
+.terminal-dot--yellow { background: #fbbf24; }
+.terminal-dot--green  { background: #4ade80; }
+
+.terminal-titlebar-label {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--term-dim);
+  flex: 1;
+  text-align: center;
+  padding-right: 58px; /* offset the dots */
+}
+
+/* Main terminal container */
+.terminal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: calc(100vh - 200px);
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  position: relative;
+  cursor: text;
+  overflow: hidden;
+}
+
+/* Scrollable output area */
+.terminal-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 80px 20px;
+  position: relative;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Individual output lines */
+.terminal-output {
+  font-size: inherit;
+}
+
+/* Sticky input line at bottom */
+.terminal-input-wrapper {
+  position: sticky;
+  bottom: 0;
+  background: var(--term-surface);
+  border-top: 1px solid var(--term-border);
+  padding: 10px 20px;
+  z-index: 5;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 13px;
+  cursor: text;
+}
+
+/* ════════════════════════════════════════════════════
+   CLAUDE CREATURE MASCOT
+   ════════════════════════════════════════════════════ */
+
+/* Creature container — lives in bottom-right of scroll area */
+.creature-wrapper {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+  cursor: default;
+  user-select: none;
+  will-change: transform;
+}
+
+/* ── Body ────────────────────────────────────────── */
+.creature-body {
+  width: 68px;
+  height: 72px;
+  background: #DA7756;
+  border-radius: 60% 40% 55% 45% / 50% 45% 55% 50%;
+  position: relative;
+  animation: creature-breathe 3s ease-in-out infinite,
+             creature-float   4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.creature-body--happy {
+  border-radius: 50% 50% 60% 40% / 45% 45% 55% 55% !important;
+}
+
+.creature-body--sad {
+  border-radius: 40% 60% 45% 55% / 55% 55% 45% 45% !important;
+}
+
+.creature-body--thinking {
+  animation: creature-think 1.2s ease-in-out infinite !important;
+}
+
+/* ── Highlight sheen ─────────────────────────────── */
+.creature-highlight {
+  position: absolute;
+  width: 18px;
+  height: 10px;
+  background: rgba(255,255,255,0.22);
+  border-radius: 50%;
+  top: 10px;
+  left: 10px;
+  transform: rotate(-30deg);
+  pointer-events: none;
+}
+
+/* ── Eyes ────────────────────────────────────────── */
+.creature-eyes {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: creature-blink 4s ease-in-out infinite;
+}
+
+.creature-eye {
+  width: 14px;
+  height: 14px;
+  background: #1a1a1a;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.creature-pupil {
+  width: 7px;
+  height: 7px;
+  background: #0c0c0c;
+  border-radius: 50%;
+  position: absolute;
+  top: 3.5px;
+  left: 3.5px;
+  animation: creature-look 6s ease-in-out infinite;
+}
+
+.creature-eye-right .creature-pupil {
+  animation-delay: 0.4s;
+}
+
+.creature-shine {
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+/* ── Mouth ───────────────────────────────────────── */
+.creature-mouth {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 11px;
+  overflow: hidden;
+}
+
+.creature-mouth::after {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 22px;
+  border: 2.5px solid #1a1a1a;
+  border-radius: 50%;
+  margin-top: -11px;
+}
+
+.creature-mouth--sad {
+  transform: translateX(-50%) scaleY(-1);
+}
+
+/* ── Arms ────────────────────────────────────────── */
+.creature-arm-left,
+.creature-arm-right {
+  position: absolute;
+  width: 11px;
+  height: 22px;
+  background: #C96644;
+  border-radius: 5px;
+  top: 36px;
+}
+
+.creature-arm-left  { left: -6px;  transform-origin: bottom center; }
+.creature-arm-right { right: -6px; transform-origin: bottom center; }
+
+/* ── Feet ────────────────────────────────────────── */
+.creature-feet {
+  display: flex;
+  gap: 12px;
+  margin-top: -4px;
+}
+
+.creature-foot {
+  width: 22px;
+  height: 11px;
+  background: #C96644;
+  border-radius: 50%;
+}
+
+/* ── Thinking bubble ─────────────────────────────── */
+.creature-bubble {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  background: var(--term-surface);
+  border: 1px solid var(--term-border);
+  border-radius: 4px 4px 0 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--term-dim);
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ════════════════════════════════════════════════════
+   CREATURE KEYFRAME ANIMATIONS
+   ════════════════════════════════════════════════════ */
+
+@keyframes creature-breathe {
+  0%, 100% { transform: scaleY(1)    scaleX(1); }
+  50%       { transform: scaleY(1.04) scaleX(0.97); }
+}
+
+@keyframes creature-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+@keyframes creature-blink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  92%            { transform: scaleY(0.06); }
+}
+
+@keyframes creature-look {
+  0%,  20%       { transform: translate(0, 0); }
+  25%, 45%       { transform: translate(-2px, 1px); }
+  50%, 70%       { transform: translate(2px, -1px); }
+  75%, 95%       { transform: translate(0, 1px); }
+  100%            { transform: translate(0, 0); }
+}
+
+@keyframes creature-think {
+  0%, 100% { transform: rotate(0deg)   translateY(0); }
+  25%       { transform: rotate(-4deg) translateY(-3px); }
+  75%       { transform: rotate(4deg)  translateY(-3px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive (mobile) ────────────────────────── */
+@media (max-width: 640px) {
+  .creature-wrapper {
+    transform: scale(0.75);
+    transform-origin: bottom right;
+  }
+
+  .terminal-scroll-area {
+    padding: 12px 14px 80px 14px;
+  }
+}

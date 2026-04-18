@@ -7,6 +7,7 @@ import NowPlaying from './components/ui/NowPlaying';
 const Hero = lazy(() => import("./components/sections/Hero"));
 const Skills = lazy(() => import("./components/sections/Skills"));
 const Projects = lazy(() => import("./components/sections/Projects"));
+const Terminal = lazy(() => import("./components/sections/Terminal"));
 const Footer = lazy(() => import("./components/layout/Footer"));
 const TopNav = lazy(() => import("./components/layout/TopNav"));
 const Music = lazy(() => import("./components/sections/Music"));
@@ -77,6 +78,16 @@ function App() {
                 <Suspense fallback={<LoadingLine />}>
                   <ErrorBoundary>
                     <Projects {...projectsProps} />
+                  </ErrorBoundary>
+                </Suspense>
+              }
+            />
+            <Route
+              path="/terminal"
+              element={
+                <Suspense fallback={<LoadingLine />}>
+                  <ErrorBoundary>
+                    <Terminal />
                   </ErrorBoundary>
                 </Suspense>
               }
