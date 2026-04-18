@@ -8,11 +8,28 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Fira Code"', '"Cascadia Code"', 'Menlo', 'Monaco', '"Courier New"', 'monospace'],
+        sans: ['"JetBrains Mono"', 'monospace'],
       },
-      gridTemplateColumns: {
-        '53': 'repeat(53, minmax(0, 1fr))',
-      },
+      colors: {
+        term: {
+          bg: '#0c0c0c',
+          surface: '#141414',
+          'surface-2': '#1a1a1a',
+          border: '#2a2a2a',
+          text: '#e4e4e4',
+          dim: '#6b6b6b',
+          muted: '#444444',
+          green: '#4ade80',
+          cyan: '#22d3ee',
+          purple: '#c084fc',
+          yellow: '#fbbf24',
+          red: '#f87171',
+          orange: '#fb923c',
+          blue: '#60a5fa',
+          pink: '#f472b6',
+        }
+      }
     },
   },
   plugins: [],
