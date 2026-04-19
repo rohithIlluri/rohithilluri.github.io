@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const PROMPT = (
-  <span className="t-prompt">song $ </span>
-);
+const PROMPT = <span className="t-prompt">rohith $ </span>;
 
 export default function TerminalOutput({ lines }) {
   const bottomRef = useRef(null);
@@ -20,14 +18,10 @@ export default function TerminalOutput({ lines }) {
             line.isCommand ? 't-line t-line--cmd' :
             line.green     ? 't-line t-line--green' :
             line.dim       ? 't-line t-line--dim' :
-            't-line'
+                             't-line'
           }
         >
-          {line.isCommand ? (
-            <>{PROMPT}<span>{line.text}</span></>
-          ) : (
-            line.text
-          )}
+          {line.isCommand ? <>{PROMPT}<span>{line.text}</span></> : line.text}
         </div>
       ))}
       <div ref={bottomRef} />

@@ -12,7 +12,7 @@ export default function TerminalInput({ value, onChange, onKeyDown, disabled }) 
 
   return (
     <div className="t-input-line" onClick={() => inputRef.current?.focus()}>
-      <span className="t-prompt">song $ </span>
+      <span className="t-prompt">rohith $ </span>
       <input
         ref={inputRef}
         type="text"

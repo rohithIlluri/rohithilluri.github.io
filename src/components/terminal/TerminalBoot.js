@@ -15,16 +15,14 @@ export default function TerminalBoot({ onComplete }) {
       setDisplayed(BOOT_TEXT.slice(0, i));
       if (i >= BOOT_TEXT.length) {
         clearInterval(iv);
-        setTimeout(onComplete, 400);
+        setTimeout(onComplete, 500);
       }
-    }, 14);
+    }, 10);
 
     return () => clearInterval(iv);
   }, [onComplete]);
 
   return (
-    <pre className="boot-text">
-      {displayed}
-    </pre>
+    <pre className="boot-text">{displayed}</pre>
   );
 }

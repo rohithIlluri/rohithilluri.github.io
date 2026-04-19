@@ -248,15 +248,6 @@ body {
 .creature-feet { display: flex; gap: 12px; margin-top: -4px; }
 .creature-foot { width: 22px; height: 11px; background: #C96644; border-radius: 50%; }
 
-/* Name label */
-.creature-name {
-  margin-top: 4px;
-  font-size: 10px;
-  color: var(--dim);
-  letter-spacing: 0.08em;
-  text-transform: lowercase;
-}
-
 /* Thinking bubble */
 .creature-bubble {
   position: absolute;

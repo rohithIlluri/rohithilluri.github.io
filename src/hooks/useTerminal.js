@@ -1,17 +1,18 @@
 import { useState, useCallback, useRef } from 'react';
 import { runCommand, TAB_COMPLETIONS } from '../constants/terminalCommands';
 
-let lineIdCounter = 0;
-const makeId = () => `l${++lineIdCounter}`;
+let uid = 0;
+const makeId = () => `l${++uid}`;
 
 export default function useTerminal() {
-  const [lines, setLines]             = useState([]);
-  const [inputValue, setInputValue]   = useState('');
-  const [cmdHistory, setCmdHistory]   = useState([]);
+  const [lines, setLines]               = useState([]);
+  const [inputValue, setInputValue]     = useState('');
+  const [cmdHistory, setCmdHistory]     = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [creatureState, setCreatureState] = useState('boot');
-  const [isBooting, setIsBooting]     = useState(true);
+  const [isBooting, setIsBooting]       = useState(true);
   const creatureTimer = useRef(null);
+  const historyRef    = useRef([]);   // mirror of cmdHistory for sync reads
 
   const triggerCreature = useCallback((state) => {
     if (!state || state === 'idle') return;
@@ -32,30 +33,23 @@ export default function useTerminal() {
     const trimmed = raw.trim();
     if (!trimmed) return;
 
-    setLines(prev => [
-      ...prev,
-      { id: makeId(), text: trimmed, isCommand: true },
-    ]);
+    // echo the command
+    setLines(prev => [...prev, { id: makeId(), text: trimmed, isCommand: true }]);
 
-    setCmdHistory(prev => {
-      const next = [trimmed, ...prev];
-      return next;
-    });
+    // update history (ref stays in sync for immediate reads)
+    historyRef.current = [trimmed, ...historyRef.current];
+    setCmdHistory(historyRef.current);
     setHistoryIndex(-1);
     setCreatureState('thinking');
 
-    const snapshot = await new Promise(resolve => {
-      setCmdHistory(h => { resolve(h); return h; });
+    const { lines: out, creatureHint } = await runCommand(trimmed, {
+      history: historyRef.current,
     });
 
-    const { lines: outLines, creatureHint } = await runCommand(trimmed, {
-      history: snapshot,
-    });
-
-    if (outLines === null) {
+    if (out === null) {
       setLines([]);
-    } else if (outLines && outLines.length) {
-      appendLines(outLines);
+    } else if (out && out.length) {
+      appendLines(out);
     }
 
     triggerCreature(creatureHint || 'celebrate');
@@ -69,24 +63,19 @@ export default function useTerminal() {
 
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setCmdHistory(hist => {
-        const next = Math.min(historyIndex + 1, hist.length - 1);
-        setHistoryIndex(next);
-        if (hist[next] !== undefined) setInputValue(hist[next]);
-        return hist;
-      });
+      const next = Math.min(historyIndex + 1, historyRef.current.length - 1);
+      setHistoryIndex(next);
+      if (historyRef.current[next] !== undefined) setInputValue(historyRef.current[next]);
 
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       const next = historyIndex - 1;
       setHistoryIndex(next);
-      setInputValue(next < 0 ? '' : cmdHistory[next] || '');
+      setInputValue(next < 0 ? '' : historyRef.current[next] || '');
 
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const matches = TAB_COMPLETIONS.filter(
-        c => c.startsWith(inputValue) && c !== inputValue
-      );
+      const matches = TAB_COMPLETIONS.filter(c => c.startsWith(inputValue) && c !== inputValue);
       if (matches.length === 1) {
         setInputValue(matches[0]);
       } else if (matches.length > 1) {
@@ -98,7 +87,7 @@ export default function useTerminal() {
       if (inputValue) {
         setLines(prev => [
           ...prev,
-          { id: makeId(), text: `${inputValue}^C`, isCommand: true, dim: true },
+          { id: makeId(), text: `${inputValue} ^C`, isCommand: true, dim: true },
         ]);
       }
       setInputValue('');
@@ -108,7 +97,7 @@ export default function useTerminal() {
       e.preventDefault();
       setLines([]);
     }
-  }, [inputValue, historyIndex, cmdHistory, executeCommand, appendLines]);
+  }, [inputValue, historyIndex, executeCommand, appendLines]);
 
   const handleBootComplete = useCallback(() => {
     setIsBooting(false);
@@ -116,12 +105,8 @@ export default function useTerminal() {
   }, []);
 
   return {
-    lines,
-    inputValue,
-    setInputValue,
-    creatureState,
-    isBooting,
-    handleKeyDown,
-    handleBootComplete,
+    lines, inputValue, setInputValue,
+    creatureState, isBooting,
+    handleKeyDown, handleBootComplete,
   };
 }

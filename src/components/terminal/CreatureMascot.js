@@ -108,7 +108,6 @@ export default function CreatureMascot({ animationState }) {
         <div className="creature-foot" />
       </div>
 
-      <div className="creature-name">song</div>
     </div>
   );
 }
