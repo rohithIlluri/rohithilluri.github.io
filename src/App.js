@@ -1,13 +1,13 @@
 import React, { Suspense, lazy } from 'react';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
-const Terminal = lazy(() => import('./components/sections/Terminal'));
+const TUI = lazy(() => import('./components/sections/TUI'));
 
 function App() {
   return (
     <ErrorBoundary>
       <Suspense fallback={null}>
-        <Terminal />
+        <TUI />
       </Suspense>
     </ErrorBoundary>
   );
