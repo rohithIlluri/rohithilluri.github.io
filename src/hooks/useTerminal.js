@@ -2,23 +2,23 @@ import { useState, useCallback, useRef } from 'react';
 import { runCommand, TAB_COMPLETIONS } from '../constants/terminalCommands';
 
 let lineIdCounter = 0;
-function makeId() { return `l${++lineIdCounter}`; }
+const makeId = () => `l${++lineIdCounter}`;
 
 export default function useTerminal() {
-  const [lines, setLines] = useState([]);
-  const [inputValue, setInputValue] = useState('');
-  const [cmdHistory, setCmdHistory] = useState([]);
+  const [lines, setLines]             = useState([]);
+  const [inputValue, setInputValue]   = useState('');
+  const [cmdHistory, setCmdHistory]   = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [creatureState, setCreatureState] = useState('boot');
-  const [isBooting, setIsBooting] = useState(true);
-  const creatureTimerRef = useRef(null);
+  const [isBooting, setIsBooting]     = useState(true);
+  const creatureTimer = useRef(null);
 
   const triggerCreature = useCallback((state) => {
-    if (state === 'idle') return;
-    clearTimeout(creatureTimerRef.current);
+    if (!state || state === 'idle') return;
+    clearTimeout(creatureTimer.current);
     setCreatureState(state);
-    const duration = state === 'spin' ? 1500 : state === 'celebrate' ? 1200 : 1000;
-    creatureTimerRef.current = setTimeout(() => setCreatureState('idle'), duration);
+    const dur = state === 'spin' ? 1500 : state === 'celebrate' ? 1200 : 1000;
+    creatureTimer.current = setTimeout(() => setCreatureState('idle'), dur);
   }, []);
 
   const appendLines = useCallback((newLines) => {
@@ -28,42 +28,45 @@ export default function useTerminal() {
     ]);
   }, []);
 
-  const executeCommand = useCallback((raw) => {
+  const executeCommand = useCallback(async (raw) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
 
-    // Echo the command line
     setLines(prev => [
       ...prev,
-      { id: makeId(), text: trimmed, color: 'var(--term-cyan)', isCommand: true },
+      { id: makeId(), text: trimmed, isCommand: true },
     ]);
 
-    setCmdHistory(prev => [trimmed, ...prev]);
+    setCmdHistory(prev => {
+      const next = [trimmed, ...prev];
+      return next;
+    });
     setHistoryIndex(-1);
-
-    // Brief thinking state
     setCreatureState('thinking');
 
-    setTimeout(() => {
-      const { lines: outLines, creatureHint } = runCommand(trimmed, {
-        history: cmdHistory,
-      });
+    const snapshot = await new Promise(resolve => {
+      setCmdHistory(h => { resolve(h); return h; });
+    });
 
-      if (outLines === null) {
-        // clear command
-        setLines([]);
-      } else if (outLines && outLines.length > 0) {
-        appendLines(outLines);
-      }
+    const { lines: outLines, creatureHint } = await runCommand(trimmed, {
+      history: snapshot,
+    });
 
-      triggerCreature(creatureHint || 'celebrate');
-    }, 180);
-  }, [cmdHistory, appendLines, triggerCreature]);
+    if (outLines === null) {
+      setLines([]);
+    } else if (outLines && outLines.length) {
+      appendLines(outLines);
+    }
+
+    triggerCreature(creatureHint || 'celebrate');
+  }, [appendLines, triggerCreature]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
-      executeCommand(inputValue);
+      const val = inputValue;
       setInputValue('');
+      executeCommand(val);
+
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setCmdHistory(hist => {
@@ -72,31 +75,35 @@ export default function useTerminal() {
         if (hist[next] !== undefined) setInputValue(hist[next]);
         return hist;
       });
+
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       const next = historyIndex - 1;
       setHistoryIndex(next);
       setInputValue(next < 0 ? '' : cmdHistory[next] || '');
+
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const matches = TAB_COMPLETIONS.filter(c =>
-        c.startsWith(inputValue) && c !== inputValue
+      const matches = TAB_COMPLETIONS.filter(
+        c => c.startsWith(inputValue) && c !== inputValue
       );
       if (matches.length === 1) {
         setInputValue(matches[0]);
       } else if (matches.length > 1) {
-        appendLines([{ text: matches.join('   '), color: 'var(--term-dim)' }]);
+        appendLines([{ text: matches.join('   '), dim: true }]);
       }
+
     } else if (e.key === 'c' && e.ctrlKey) {
       e.preventDefault();
       if (inputValue) {
         setLines(prev => [
           ...prev,
-          { id: makeId(), text: inputValue + '^C', color: 'var(--term-dim)', isCommand: true },
+          { id: makeId(), text: `${inputValue}^C`, isCommand: true, dim: true },
         ]);
       }
       setInputValue('');
       setHistoryIndex(-1);
+
     } else if (e.key === 'l' && e.ctrlKey) {
       e.preventDefault();
       setLines([]);
@@ -106,8 +113,7 @@ export default function useTerminal() {
   const handleBootComplete = useCallback(() => {
     setIsBooting(false);
     setCreatureState('idle');
-    appendLines([{ text: '', color: '' }]);
-  }, [appendLines]);
+  }, []);
 
   return {
     lines,

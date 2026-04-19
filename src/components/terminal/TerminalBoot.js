@@ -3,36 +3,28 @@ import { BOOT_TEXT } from '../../constants/terminalCommands';
 
 export default function TerminalBoot({ onComplete }) {
   const [displayed, setDisplayed] = useState('');
-  const hasStarted = useRef(false);
+  const started = useRef(false);
 
   useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
+    if (started.current) return;
+    started.current = true;
 
     let i = 0;
-    const interval = setInterval(() => {
+    const iv = setInterval(() => {
       i++;
       setDisplayed(BOOT_TEXT.slice(0, i));
       if (i >= BOOT_TEXT.length) {
-        clearInterval(interval);
-        setTimeout(onComplete, 300);
+        clearInterval(iv);
+        setTimeout(onComplete, 400);
       }
-    }, 12);
+    }, 14);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(iv);
   }, [onComplete]);
 
   return (
-    <pre style={{
-      color: 'var(--term-green)',
-      fontFamily: 'inherit',
-      fontSize: 'inherit',
-      margin: '0 0 8px 0',
-      whiteSpace: 'pre-wrap',
-      lineHeight: 1.5,
-    }}>
+    <pre className="boot-text">
       {displayed}
-      <span className="term-cursor" />
     </pre>
   );
 }
