@@ -1,14 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 
 const PROMPT = (
-  <span>
-    <span style={{ color: 'var(--term-purple)', fontWeight: 600 }}>rohith</span>
-    <span style={{ color: '#444' }}>@</span>
-    <span style={{ color: 'var(--term-green)', fontWeight: 600 }}>portfolio</span>
-    <span style={{ color: '#444' }}>:</span>
-    <span style={{ color: 'var(--term-purple)' }}>~</span>
-    <span style={{ color: '#e4e4e4' }}>$ </span>
-  </span>
+  <span className="t-prompt">song $ </span>
 );
 
 export default function TerminalOutput({ lines }) {
@@ -19,22 +12,25 @@ export default function TerminalOutput({ lines }) {
   }, [lines]);
 
   return (
-    <div className="terminal-output">
+    <div className="t-output">
       {lines.map(line => (
-        <div key={line.id} style={{ lineHeight: 1.6, minHeight: '1.2em' }}>
+        <div
+          key={line.id}
+          className={
+            line.isCommand ? 't-line t-line--cmd' :
+            line.green     ? 't-line t-line--green' :
+            line.dim       ? 't-line t-line--dim' :
+            't-line'
+          }
+        >
           {line.isCommand ? (
-            <span>
-              {PROMPT}
-              <span style={{ color: line.color || 'var(--term-cyan)' }}>{line.text}</span>
-            </span>
+            <>{PROMPT}<span>{line.text}</span></>
           ) : (
-            <span style={{ color: line.color || 'var(--term-text)' }}>
-              {line.text}
-            </span>
+            line.text
           )}
         </div>
       ))}
-      <div ref={bottomRef} style={{ height: 1 }} />
+      <div ref={bottomRef} />
     </div>
   );
 }

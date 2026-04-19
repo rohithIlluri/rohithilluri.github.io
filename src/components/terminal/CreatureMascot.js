@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 
-const STATE_BODY_CLASS = {
+const BODY_CLASS = {
   celebrate: 'creature-body creature-body--happy',
   error:     'creature-body creature-body--sad',
   wave:      'creature-body creature-body--happy',
@@ -15,25 +15,22 @@ export default function CreatureMascot({ animationState }) {
   const wrapperRef = useRef(null);
   const bodyRef    = useRef(null);
   const armRRef    = useRef(null);
-  const bubbleRef  = useRef(null);
 
   // Pop in on mount
   useEffect(() => {
     if (!wrapperRef.current) return;
     gsap.fromTo(
       wrapperRef.current,
-      { scale: 0.1, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.7, ease: 'elastic.out(1.2, 0.5)', delay: 0.2 }
+      { scale: 0.05, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.7, ease: 'elastic.out(1.2, 0.5)', delay: 0.3 }
     );
   }, []);
 
   useEffect(() => {
-    if (!bodyRef.current || !wrapperRef.current) return;
+    if (!bodyRef.current) return;
 
     gsap.killTweensOf([bodyRef.current, armRRef.current, wrapperRef.current]);
-
-    // Update body class
-    bodyRef.current.className = STATE_BODY_CLASS[animationState] || 'creature-body';
+    bodyRef.current.className = BODY_CLASS[animationState] || 'creature-body';
 
     switch (animationState) {
       case 'celebrate':
@@ -46,12 +43,9 @@ export default function CreatureMascot({ animationState }) {
 
       case 'error':
         gsap.to(bodyRef.current, {
-          keyframes: [
-            { x: -7 }, { x: 7 }, { x: -5 }, { x: 5 }, { x: 0 },
-          ],
+          keyframes: [{ x: -7 }, { x: 7 }, { x: -5 }, { x: 5 }, { x: 0 }],
           duration: 0.08,
           ease: 'none',
-          repeat: 0,
         });
         break;
 
@@ -60,7 +54,9 @@ export default function CreatureMascot({ animationState }) {
           rotation: 360,
           duration: 0.75,
           ease: 'power1.inOut',
-          onComplete: () => { wrapperRef.current && (wrapperRef.current.style.transform = ''); },
+          onComplete: () => {
+            if (wrapperRef.current) wrapperRef.current.style.transform = '';
+          },
         });
         break;
 
@@ -78,29 +74,21 @@ export default function CreatureMascot({ animationState }) {
       default:
         gsap.set(bodyRef.current, { y: 0, x: 0 });
         if (armRRef.current) gsap.set(armRRef.current, { rotation: 0 });
-        break;
     }
   }, [animationState]);
 
-  const isThinking = animationState === 'thinking';
-
   return (
     <div className="creature-wrapper" ref={wrapperRef} aria-hidden="true">
-      {isThinking && (
-        <div className="creature-bubble" ref={bubbleRef}>...</div>
+      {animationState === 'thinking' && (
+        <div className="creature-bubble">...</div>
       )}
 
-      {/* Arms (behind body visually) */}
       <div style={{ position: 'relative' }}>
         <div className="creature-arm-left" />
         <div className="creature-arm-right" ref={armRRef} />
 
-        {/* Body */}
         <div className="creature-body" ref={bodyRef}>
-          {/* Highlight sheen */}
           <div className="creature-highlight" />
-
-          {/* Eyes */}
           <div className="creature-eyes">
             <div className="creature-eye creature-eye-left">
               <div className="creature-pupil" />
@@ -111,17 +99,16 @@ export default function CreatureMascot({ animationState }) {
               <div className="creature-shine" />
             </div>
           </div>
-
-          {/* Mouth */}
           <div className={`creature-mouth${animationState === 'error' ? ' creature-mouth--sad' : ''}`} />
         </div>
       </div>
 
-      {/* Feet */}
       <div className="creature-feet">
         <div className="creature-foot" />
         <div className="creature-foot" />
       </div>
+
+      <div className="creature-name">song</div>
     </div>
   );
 }

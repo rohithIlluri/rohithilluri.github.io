@@ -2,577 +2,178 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Variables ─────────────────────────────────── */
+/* ── Variables ───────────────────────────────────────── */
 :root {
-  --term-bg:        #0c0c0c;
-  --term-surface:   #141414;
-  --term-surface-2: #1a1a1a;
-  --term-border:    #2a2a2a;
-  --term-text:      #e4e4e4;
-  --term-dim:       #6b6b6b;
-  --term-muted:     #444444;
-  --term-green:     #4ade80;
-  --term-cyan:      #22d3ee;
-  --term-purple:    #c084fc;
-  --term-yellow:    #fbbf24;
-  --term-red:       #f87171;
-  --term-orange:    #fb923c;
-  --term-blue:      #60a5fa;
-  --term-pink:      #f472b6;
+  --bg:      #0c0c0c;
+  --text:    #c8c8c8;
+  --dim:     #444;
+  --green:   #4ade80;
+  --border:  #1e1e1e;
+  --surface: #111;
 }
 
-/* ── Base ───────────────────────────────────────────── */
+/* ── Base ────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
 html {
   font-size: 14px;
-  background-color: var(--term-bg);
+  background: var(--bg);
 }
 
 body {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace;
-  background-color: var(--term-bg);
-  color: var(--term-text);
-  line-height: 1.65;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: 48px;
+  margin: 0;
+  padding: 0;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-/* ── Scrollbar ──────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--term-bg); }
-::-webkit-scrollbar-thumb { background: var(--term-muted); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--term-dim); }
-
-/* ── Selection ──────────────────────────────────────── */
 ::selection {
-  background: rgba(34, 211, 238, 0.2);
-  color: var(--term-text);
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--text);
 }
 
-/* ── Focus ──────────────────────────────────────────── */
-*:focus-visible {
-  outline: 1px solid var(--term-cyan);
-  outline-offset: 2px;
-}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
 
-/* ── Terminal Block ─────────────────────────────────── */
-.term-block {
-  margin-bottom: 2rem;
-}
-
-.term-cmd {
+/* ── Terminal root (full page) ───────────────────────── */
+.t-root {
+  min-height: 100vh;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.875rem;
+  flex-direction: column;
+  cursor: text;
+  padding: 0 20px;
+  max-width: 820px;
+  margin: 0 auto;
 }
 
-.term-prompt {
-  color: var(--term-green);
-  font-weight: 600;
+/* ── Scrollable output area ──────────────────────────── */
+.t-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 0 120px;
+  position: relative;
+}
+
+/* ── Output lines ────────────────────────────────────── */
+.t-output {
+  font-size: 13px;
+}
+
+.t-line {
+  line-height: 1.65;
+  min-height: 1.4em;
+  color: var(--text);
+  white-space: pre;
+  font-family: inherit;
+}
+
+.t-line--green { color: var(--green); }
+.t-line--dim   { color: var(--dim); }
+.t-line--cmd   { color: var(--text); }
+
+/* ── Prompt ──────────────────────────────────────────── */
+.t-prompt {
+  color: var(--green);
   user-select: none;
   flex-shrink: 0;
 }
 
-.term-command {
-  color: var(--term-cyan);
-}
-
-.term-output {
-  padding-left: 1.5rem;
-  border-left: 2px solid var(--term-border);
-  margin-left: 0.25rem;
-}
-
-/* ── Cursor ─────────────────────────────────────────── */
-.term-cursor {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  background: var(--term-green);
-  animation: blink 1.2s step-end infinite;
-  vertical-align: text-bottom;
-  margin-left: 2px;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
-
-/* ── Divider ────────────────────────────────────────── */
-.term-divider {
-  border: none;
-  border-top: 1px solid var(--term-border);
-  margin: 2rem 0;
-}
-
-/* ── Social Link ────────────────────────────────────── */
-.term-social {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.2rem 0.65rem;
-  border: 1px solid var(--term-border);
-  border-radius: 2px;
-  color: var(--term-dim);
-  text-decoration: none;
-  font-size: 0.8rem;
-  transition: border-color 120ms, color 120ms, background 120ms;
-  cursor: pointer;
-}
-
-.term-social:hover {
-  border-color: var(--term-green);
-  color: var(--term-green);
-  background: rgba(74, 222, 128, 0.06);
-}
-
-/* ── Skill Tag ──────────────────────────────────────── */
-.term-skill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.65rem;
-  border: 1px solid var(--term-border);
-  border-radius: 2px;
-  background: var(--term-surface);
-  font-size: 0.78rem;
-  transition: border-color 120ms, background 120ms;
-  cursor: default;
-}
-
-/* ── Project Row ─────────────────────────────────────── */
-.term-project-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--term-border);
-  font-size: 0.8rem;
-}
-
-.term-project-row:last-child {
-  border-bottom: none;
-}
-
-.term-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.15rem 0.55rem;
-  border: 1px solid var(--term-border);
-  border-radius: 2px;
-  font-size: 0.75rem;
-  color: var(--term-dim);
-  background: transparent;
-  cursor: pointer;
-  text-decoration: none;
-  font-family: inherit;
-  transition: border-color 120ms, color 120ms, background 120ms;
-}
-
-.term-btn:hover {
-  border-color: var(--term-cyan);
-  color: var(--term-cyan);
-  background: rgba(34, 211, 238, 0.05);
-}
-
-.term-btn-primary {
-  border-color: var(--term-green);
-  color: var(--term-green);
-}
-
-.term-btn-primary:hover {
-  background: rgba(74, 222, 128, 0.08);
-  border-color: var(--term-green);
-  color: var(--term-green);
-}
-
-/* ── List Item ──────────────────────────────────────── */
-.term-list-item {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 0.4rem 0;
-  font-size: 0.82rem;
-  border-bottom: 1px solid var(--term-border);
-  transition: background 120ms;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
-}
-
-.term-list-item:last-child {
-  border-bottom: none;
-}
-
-.term-list-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-/* ── Stats JSON ─────────────────────────────────────── */
-.term-json-block {
-  background: var(--term-surface);
-  border: 1px solid var(--term-border);
-  border-radius: 2px;
-  padding: 1rem 1.25rem;
-  font-size: 0.82rem;
-}
-
-/* ── Music Player Bar ───────────────────────────────── */
-.music-bar {
+/* ── Input line (sticky bottom) ─────────────────────── */
+.t-input-wrapper {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9998;
-  pointer-events: auto;
-  background: var(--term-surface);
-  border-top: 1px solid var(--term-border);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  z-index: 10;
 }
 
-.music-bar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 16px;
-  font-size: 11px;
-  max-width: 800px;
+/* Center align the input with the content */
+.t-input-wrapper > * {
+  max-width: 820px;
   margin: 0 auto;
 }
 
-.music-bar-left {
+.t-input-line {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
+  font-size: 13px;
+  cursor: text;
+}
+
+.t-input {
   flex: 1;
-}
-
-.music-bar-eq {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-.music-bar-info {
-  min-width: 0;
-  flex: 1;
-}
-
-.music-bar-title {
-  margin: 0;
-  font-size: 11px;
-  color: var(--term-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.music-bar-author {
-  margin: 0;
-  font-size: 10px;
-  color: var(--term-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.music-bar-controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  margin-left: 10px;
-}
-
-.music-bar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: none;
   background: transparent;
-  color: var(--term-dim);
-  border-radius: 2px;
-  cursor: pointer;
-  padding: 0;
+  border: none;
   outline: none;
-  transition: color 120ms;
-}
-
-.music-bar-btn:hover {
-  color: var(--term-green);
-}
-
-.music-bar-btn-play {
-  color: var(--term-green);
-  border: 1px solid var(--term-border);
-  width: 28px;
-  height: 28px;
-}
-
-.music-bar-btn-play:hover {
-  background: rgba(74, 222, 128, 0.1);
-  border-color: var(--term-green);
-}
-
-.music-bar-btn:active { opacity: 0.7; }
-
-/* ── EQ Bars ────────────────────────────────────────── */
-.eq-bar {
-  width: 2px;
-  background: var(--term-green);
-  border-radius: 1px;
-  animation: eqBounce 0.8s ease-in-out infinite;
-}
-
-.eq-bar:nth-child(1) { animation-delay: 0s;    height: 7px; }
-.eq-bar:nth-child(2) { animation-delay: 0.2s;  height: 11px; }
-.eq-bar:nth-child(3) { animation-delay: 0.4s;  height: 5px; }
-
-@keyframes eqBounce {
-  0%, 100% { transform: scaleY(0.3); }
-  50%       { transform: scaleY(1); }
-}
-
-.eq-bar-paused { animation-play-state: paused !important; }
-
-/* ── Now Playing Toast ───────────────────────────────── */
-.now-playing-toast {
-  position: fixed;
-  bottom: 58px;
-  right: 16px;
-  z-index: 10000;
-  pointer-events: none;
-}
-
-.now-playing-toast-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--term-surface);
-  border: 1px solid var(--term-green);
-  border-radius: 2px;
-  padding: 7px 11px;
-  max-width: 260px;
-}
-
-.now-playing-toast-note {
-  color: var(--term-green);
-  flex-shrink: 0;
-  font-size: 13px;
-}
-
-.now-playing-toast-text {
-  display: flex;
-  flex-direction: column;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  caret-color: var(--green);
   min-width: 0;
 }
 
-.now-playing-toast-label {
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--term-dim);
-  margin-bottom: 2px;
-}
-
-.now-playing-toast-title {
-  font-size: 11px;
-  color: var(--term-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.now-playing-enter {
-  animation: slideIn 0.25s ease forwards;
-}
-
-.now-playing-exit {
-  animation: slideOut 0.2s ease forwards;
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideOut {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(6px); }
-}
-
-/* ── Hidden YouTube player ──────────────────────────── */
-#yt-bg-player {
-  position: fixed;
-  top: -9999px;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ── Responsive ─────────────────────────────────────── */
-@media (max-width: 640px) {
-  html { font-size: 13px; }
-
-  .term-project-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ════════════════════════════════════════════════════
-   INTERACTIVE TERMINAL PAGE
-   ════════════════════════════════════════════════════ */
-
-/* Title bar (decorative macOS-style dots) */
-.terminal-titlebar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--term-surface);
-  border: 1px solid var(--term-border);
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
-  padding: 8px 14px;
-  user-select: none;
-}
-
-.terminal-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.terminal-dot--red    { background: #f87171; }
-.terminal-dot--yellow { background: #fbbf24; }
-.terminal-dot--green  { background: #4ade80; }
-
-.terminal-titlebar-label {
-  margin-left: 8px;
-  font-size: 11px;
-  color: var(--term-dim);
-  flex: 1;
-  text-align: center;
-  padding-right: 58px; /* offset the dots */
-}
-
-/* Main terminal container */
-.terminal-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: calc(100vh - 200px);
-  background: var(--term-bg);
-  border: 1px solid var(--term-border);
-  border-top: none;
-  border-radius: 0 0 4px 4px;
-  position: relative;
-  cursor: text;
-  overflow: hidden;
-}
-
-/* Scrollable output area */
-.terminal-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px 80px 20px;
-  position: relative;
+/* ── Boot text ───────────────────────────────────────── */
+.boot-text {
+  color: var(--green);
+  font-family: inherit;
   font-size: 13px;
-  line-height: 1.6;
+  margin: 0 0 4px 0;
+  white-space: pre;
+  line-height: 1.5;
 }
 
-/* Individual output lines */
-.terminal-output {
-  font-size: inherit;
-}
+/* ══════════════════════════════════════════════════════
+   SONG — THE CREATURE
+   ══════════════════════════════════════════════════════ */
 
-/* Sticky input line at bottom */
-.terminal-input-wrapper {
-  position: sticky;
-  bottom: 0;
-  background: var(--term-surface);
-  border-top: 1px solid var(--term-border);
-  padding: 10px 20px;
-  z-index: 5;
-}
-
-.terminal-input-line {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  font-size: 13px;
-  cursor: text;
-}
-
-/* ════════════════════════════════════════════════════
-   CLAUDE CREATURE MASCOT
-   ════════════════════════════════════════════════════ */
-
-/* Creature container — lives in bottom-right of scroll area */
 .creature-wrapper {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 80px;
+  right: 0;
   width: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 10;
-  cursor: default;
   user-select: none;
   will-change: transform;
 }
 
-/* ── Body ────────────────────────────────────────── */
+/* Body */
 .creature-body {
   width: 68px;
   height: 72px;
   background: #DA7756;
   border-radius: 60% 40% 55% 45% / 50% 45% 55% 50%;
   position: relative;
-  animation: creature-breathe 3s ease-in-out infinite,
-             creature-float   4s ease-in-out infinite;
+  animation: c-breathe 3s ease-in-out infinite,
+             c-float   4s ease-in-out infinite;
   will-change: transform;
 }
 
-.creature-body--happy {
-  border-radius: 50% 50% 60% 40% / 45% 45% 55% 55% !important;
-}
+.creature-body--happy   { border-radius: 50% 50% 60% 40% / 45% 45% 55% 55% !important; }
+.creature-body--sad     { border-radius: 40% 60% 45% 55% / 55% 55% 45% 45% !important; }
+.creature-body--thinking { animation: c-think 1.2s ease-in-out infinite !important; }
 
-.creature-body--sad {
-  border-radius: 40% 60% 45% 55% / 55% 55% 45% 45% !important;
-}
-
-.creature-body--thinking {
-  animation: creature-think 1.2s ease-in-out infinite !important;
-}
-
-/* ── Highlight sheen ─────────────────────────────── */
+/* Highlight */
 .creature-highlight {
   position: absolute;
-  width: 18px;
-  height: 10px;
+  width: 18px; height: 10px;
   background: rgba(255,255,255,0.22);
   border-radius: 50%;
-  top: 10px;
-  left: 10px;
+  top: 10px; left: 10px;
   transform: rotate(-30deg);
   pointer-events: none;
 }
 
-/* ── Eyes ────────────────────────────────────────── */
+/* Eyes */
 .creature-eyes {
   display: flex;
   gap: 10px;
@@ -580,74 +181,61 @@ body {
   top: 22px;
   left: 50%;
   transform: translateX(-50%);
-  animation: creature-blink 4s ease-in-out infinite;
+  animation: c-blink 4s ease-in-out infinite;
 }
 
 .creature-eye {
-  width: 14px;
-  height: 14px;
-  background: #1a1a1a;
+  width: 14px; height: 14px;
+  background: #111;
   border-radius: 50%;
   position: relative;
   overflow: hidden;
 }
 
 .creature-pupil {
-  width: 7px;
-  height: 7px;
-  background: #0c0c0c;
+  width: 7px; height: 7px;
+  background: #0a0a0a;
   border-radius: 50%;
   position: absolute;
-  top: 3.5px;
-  left: 3.5px;
-  animation: creature-look 6s ease-in-out infinite;
+  top: 3.5px; left: 3.5px;
+  animation: c-look 6s ease-in-out infinite;
 }
 
-.creature-eye-right .creature-pupil {
-  animation-delay: 0.4s;
-}
+.creature-eye-right .creature-pupil { animation-delay: 0.4s; }
 
 .creature-shine {
-  width: 4px;
-  height: 4px;
+  width: 4px; height: 4px;
   background: white;
   border-radius: 50%;
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 2px; left: 2px;
 }
 
-/* ── Mouth ───────────────────────────────────────── */
+/* Mouth */
 .creature-mouth {
   position: absolute;
   bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
-  width: 24px;
-  height: 11px;
+  width: 24px; height: 11px;
   overflow: hidden;
 }
 
 .creature-mouth::after {
   content: '';
   display: block;
-  width: 24px;
-  height: 22px;
-  border: 2.5px solid #1a1a1a;
+  width: 24px; height: 22px;
+  border: 2.5px solid #111;
   border-radius: 50%;
   margin-top: -11px;
 }
 
-.creature-mouth--sad {
-  transform: translateX(-50%) scaleY(-1);
-}
+.creature-mouth--sad { transform: translateX(-50%) scaleY(-1); }
 
-/* ── Arms ────────────────────────────────────────── */
-.creature-arm-left,
-.creature-arm-right {
+/* Arms */
+.creature-arm-left, .creature-arm-right {
   position: absolute;
-  width: 11px;
-  height: 22px;
+  width: 11px; height: 22px;
   background: #C96644;
   border-radius: 5px;
   top: 36px;
@@ -656,63 +244,60 @@ body {
 .creature-arm-left  { left: -6px;  transform-origin: bottom center; }
 .creature-arm-right { right: -6px; transform-origin: bottom center; }
 
-/* ── Feet ────────────────────────────────────────── */
-.creature-feet {
-  display: flex;
-  gap: 12px;
-  margin-top: -4px;
+/* Feet */
+.creature-feet { display: flex; gap: 12px; margin-top: -4px; }
+.creature-foot { width: 22px; height: 11px; background: #C96644; border-radius: 50%; }
+
+/* Name label */
+.creature-name {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
 }
 
-.creature-foot {
-  width: 22px;
-  height: 11px;
-  background: #C96644;
-  border-radius: 50%;
-}
-
-/* ── Thinking bubble ─────────────────────────────── */
+/* Thinking bubble */
 .creature-bubble {
   position: absolute;
   bottom: calc(100% + 4px);
   right: 0;
-  background: var(--term-surface);
-  border: 1px solid var(--term-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px 4px 0 4px;
   padding: 3px 8px;
-  font-size: 12px;
-  color: var(--term-dim);
+  font-size: 11px;
+  color: var(--dim);
   white-space: nowrap;
   animation: fadeIn 0.2s ease;
 }
 
-/* ════════════════════════════════════════════════════
-   CREATURE KEYFRAME ANIMATIONS
-   ════════════════════════════════════════════════════ */
+/* ── Keyframes ───────────────────────────────────────── */
 
-@keyframes creature-breathe {
+@keyframes c-breathe {
   0%, 100% { transform: scaleY(1)    scaleX(1); }
   50%       { transform: scaleY(1.04) scaleX(0.97); }
 }
 
-@keyframes creature-float {
+@keyframes c-float {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-5px); }
 }
 
-@keyframes creature-blink {
+@keyframes c-blink {
   0%, 88%, 100% { transform: scaleY(1); }
   92%            { transform: scaleY(0.06); }
 }
 
-@keyframes creature-look {
-  0%,  20%       { transform: translate(0, 0); }
-  25%, 45%       { transform: translate(-2px, 1px); }
-  50%, 70%       { transform: translate(2px, -1px); }
-  75%, 95%       { transform: translate(0, 1px); }
-  100%            { transform: translate(0, 0); }
+@keyframes c-look {
+  0%,  20%  { transform: translate(0, 0); }
+  25%, 45%  { transform: translate(-2px, 1px); }
+  50%, 70%  { transform: translate(2px, -1px); }
+  75%, 95%  { transform: translate(0, 1px); }
+  100%       { transform: translate(0, 0); }
 }
 
-@keyframes creature-think {
+@keyframes c-think {
   0%, 100% { transform: rotate(0deg)   translateY(0); }
   25%       { transform: rotate(-4deg) translateY(-3px); }
   75%       { transform: rotate(4deg)  translateY(-3px); }
@@ -723,14 +308,14 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Responsive (mobile) ────────────────────────── */
+/* ── Mobile ──────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .creature-wrapper {
-    transform: scale(0.75);
-    transform-origin: bottom right;
-  }
+  html { font-size: 12px; }
 
-  .terminal-scroll-area {
-    padding: 12px 14px 80px 14px;
+  .t-root { padding: 0 14px; }
+
+  .creature-wrapper {
+    transform: scale(0.7);
+    transform-origin: bottom right;
   }
 }
