@@ -1,0 +1,27 @@
+# Rohith Illuri
+
+> Self-taught developer. Portfolio rendered as a terminal-style UI (TUI) — single-page React app with sections for about, skills, projects, music, movies, and stats. Built for speed, clarity, and keyboard-first navigation.
+
+## About
+
+Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
+
+## Sections
+
+- [About](https://rohithilluri.github.io/#about): bio and social links (github, twitter, linkedin, email)
+- [Skills](https://rohithilluri.github.io/#skills): technical stack — JavaScript, TypeScript, React, Node.js, Python, Java, AWS, PostgreSQL, MongoDB, Docker, GraphQL
+- [Projects](https://rohithilluri.github.io/#projects): Crave (food marketplace), CryptoApp (live market dashboard), Toronto Project (community platform), Nnets (neural network experiments)
+- [Music](https://rohithilluri.github.io/#music): favorite artists (AC/DC, The Beatles, A.R. Rahman, Linkin Park)
+- [Movies](https://rohithilluri.github.io/#movies): favorite films (Kill Bill, The Dark Knight, Interstellar, Pulp Fiction)
+- [Stats](https://rohithilluri.github.io/#stats): personal records and habits
+
+## Links
+
+- GitHub: https://github.com/rohithIlluri
+- Twitter: https://twitter.com/rohithilluri
+- LinkedIn: https://linkedin.com/in/rohithilluri
+- Email: rohithilluri@gmail.com
+
+## Tech
+
+This site is a single-page React 18 app with Tailwind, GSAP, and React Router. Source: https://github.com/rohithIlluri/rohithilluri.github.io

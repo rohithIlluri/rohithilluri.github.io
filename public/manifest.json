@@ -1,11 +1,13 @@
 {
-  "short_name": "Just Ship It",
-  "name": "Just Ship It",
+  "short_name": "rohith.dev",
+  "name": "Rohith Illuri — Portfolio",
+  "description": "Self-taught developer. Terminal-style portfolio with projects, skills, and a creature mascot.",
   "icons": [
     {
       "src": "artists/appimage.jpeg",
       "sizes": "192x192 512x512",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any"
     },
     {
       "src": "favicon.ico",
@@ -13,9 +15,12 @@
       "type": "image/x-icon"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff",
-  "_comment": "Redeploy trigger - updated 2025"
-} 
+  "orientation": "portrait-primary",
+  "theme_color": "#0c0c0c",
+  "background_color": "#0c0c0c",
+  "categories": ["portfolio", "developer", "personal"],
+  "lang": "en-US"
+}

@@ -2,24 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0c0c0c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0c0c0c" media="(prefers-color-scheme: light)" />
+
+    <title>Rohith Illuri — Self-taught developer</title>
+    <meta name="description" content="Rohith Illuri — self-taught developer. Portfolio in a terminal-style UI: projects, skills, and things I'm into. Built for speed and clarity." />
+    <meta name="author" content="Rohith Illuri" />
+    <meta name="application-name" content="rohith.dev" />
+    <meta name="generator" content="React" />
+    <meta name="keywords" content="Rohith Illuri, developer portfolio, software engineer, React, TypeScript, full-stack, terminal UI, TUI portfolio" />
+    <link rel="canonical" href="https://rohithilluri.github.io/" />
+
+    <!-- Icons & PWA -->
     <link rel="icon" href="%PUBLIC_URL%/artists/appimage.jpeg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Just Ship It - Portfolio and Projects" />
-    <meta name="application-name" content="Just Ship It" />
-    <meta property="og:title" content="Just Ship It" />
-    <meta property="og:description" content="Just Ship It - Portfolio and Projects" />
-    <meta property="og:image" content="%PUBLIC_URL%/artists/appimage.jpeg" />
-    <meta property="og:type" content="website" />
-    <title>Just Ship It</title>
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/artists/appimage.jpeg" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="rohith.dev" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Rohith Illuri — Self-taught developer" />
+    <meta property="og:description" content="Portfolio in a terminal-style UI: projects, skills, and things I'm into. Built for speed and clarity." />
+    <meta property="og:image" content="%PUBLIC_URL%/artists/appimage.jpeg" />
+    <meta property="og:image:alt" content="Rohith Illuri portfolio cover" />
+    <meta property="og:url" content="https://rohithilluri.github.io/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="rohith.dev" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rohith Illuri — Self-taught developer" />
+    <meta name="twitter:description" content="Portfolio in a terminal-style UI: projects, skills, and things I'm into." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/artists/appimage.jpeg" />
+    <meta name="twitter:creator" content="@rohithilluri" />
+
+    <!-- Performance hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Structured data (Person + WebSite) for AI/LLM crawlers and search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "https://rohithilluri.github.io/#person",
+          "name": "Rohith Illuri",
+          "url": "https://rohithilluri.github.io/",
+          "image": "https://rohithilluri.github.io/artists/appimage.jpeg",
+          "jobTitle": "Software Developer",
+          "description": "Self-taught developer focused on performance, clean UIs, and shipping things.",
+          "knowsAbout": ["JavaScript", "TypeScript", "React", "Node.js", "Python", "Distributed Systems"],
+          "sameAs": [
+            "https://github.com/rohithIlluri",
+            "https://twitter.com/rohithilluri",
+            "https://linkedin.com/in/rohithilluri"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://rohithilluri.github.io/#website",
+          "url": "https://rohithilluri.github.io/",
+          "name": "Rohith Illuri — Portfolio",
+          "publisher": { "@id": "https://rohithilluri.github.io/#person" },
+          "inLanguage": "en-US"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Inline boot styles to avoid FOUC -->
+    <style>
+      html, body { background: #0c0c0c; }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <a href="#main" class="skip-link">Skip to content</a>
     <div id="root"></div>
   </body>
 </html>
