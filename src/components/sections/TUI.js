@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import CreatureMascot from '../terminal/CreatureMascot';
+import CommandPalette from '../ui/CommandPalette';
+import HelpOverlay from '../ui/HelpOverlay';
 
 // ── Data ─────────────────────────────────────────────────
 const SOCIALS = [
@@ -68,8 +70,8 @@ const MOVIES = [
 
 function AboutSection() {
   return (
-    <div className="tui-panel">
-      <div className="tui-panel-title">whoami</div>
+    <section className="tui-panel" aria-labelledby="sec-about">
+      <h2 id="sec-about" className="tui-panel-title">whoami</h2>
 
       <p className="tui-body-line" style={{ marginBottom: '1.2rem' }}>
         self-taught developer.<br />
@@ -92,14 +94,14 @@ function AboutSection() {
           </a>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 function SkillsSection() {
   return (
-    <div className="tui-panel">
-      <div className="tui-panel-title">skills</div>
+    <section className="tui-panel" aria-labelledby="sec-skills">
+      <h2 id="sec-skills" className="tui-panel-title">skills</h2>
       <div className="tui-skills-grid">
         {SKILLS.map(([name, color]) => (
           <span key={name} className="tui-skill-tag" style={{ '--tag-color': color }}>
@@ -107,17 +109,17 @@ function SkillsSection() {
           </span>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 function ProjectsSection() {
   return (
-    <div className="tui-panel">
-      <div className="tui-panel-title">projects</div>
+    <section className="tui-panel" aria-labelledby="sec-projects">
+      <h2 id="sec-projects" className="tui-panel-title">projects</h2>
       <div className="tui-project-list">
         {PROJECTS.map(p => (
-          <div key={p.name} className="tui-project-row">
+          <article key={p.name} className="tui-project-row">
             <div className="tui-project-header">
               <span className="tui-project-name">{p.name}</span>
               <span className="tui-dim tui-project-desc">{p.desc}</span>
@@ -135,21 +137,21 @@ function ProjectsSection() {
                 </a>
               )}
             </div>
-          </div>
+          </article>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 function MusicSection() {
   return (
-    <div className="tui-panel">
-      <div className="tui-panel-title">music</div>
+    <section className="tui-panel" aria-labelledby="sec-music">
+      <h2 id="sec-music" className="tui-panel-title">music</h2>
       <div className="tui-list">
         {ARTISTS.map(a => (
           <a key={a.name} href={a.url} target="_blank" rel="noreferrer" className="tui-list-row tui-link">
-            <img src={a.img} alt={a.name} className="tui-thumb" />
+            <img src={a.img} alt="" loading="lazy" decoding="async" className="tui-thumb" />
             <span className="tui-list-num tui-dim">{a.n}</span>
             <span className="tui-list-name">{a.name}</span>
             <span className="tui-list-desc tui-dim">{a.desc}</span>
@@ -157,14 +159,14 @@ function MusicSection() {
           </a>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 function MoviesSection() {
   return (
-    <div className="tui-panel">
-      <div className="tui-panel-title">movies</div>
+    <section className="tui-panel" aria-labelledby="sec-movies">
+      <h2 id="sec-movies" className="tui-panel-title">movies</h2>
       <div className="tui-list">
         {MOVIES.map(m => (
           <a key={m.name} href={m.url} target="_blank" rel="noreferrer" className="tui-list-row tui-link">
@@ -176,7 +178,7 @@ function MoviesSection() {
           </a>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -190,8 +192,8 @@ function StatsSection() {
     ['coffee / day',   '3'],
   ];
   return (
-    <div className="tui-panel">
-      <div className="tui-panel-title">stats</div>
+    <section className="tui-panel" aria-labelledby="sec-stats">
+      <h2 id="sec-stats" className="tui-panel-title">stats</h2>
       <div className="tui-kv-block">
         {stats.map(([k, v]) => (
           <div key={k} className="tui-kv-row">
@@ -200,90 +202,270 @@ function StatsSection() {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 // ── Section registry ──────────────────────────────────────
 const SECTIONS = [
-  { id: 'about',    label: 'about',    Component: AboutSection    },
-  { id: 'skills',   label: 'skills',   Component: SkillsSection   },
-  { id: 'projects', label: 'projects', Component: ProjectsSection },
-  { id: 'music',    label: 'music',    Component: MusicSection    },
-  { id: 'movies',   label: 'movies',   Component: MoviesSection   },
-  { id: 'stats',    label: 'stats',    Component: StatsSection    },
+  { id: 'about',    label: 'about',    Component: AboutSection,    icon: '◉' },
+  { id: 'skills',   label: 'skills',   Component: SkillsSection,   icon: '◇' },
+  { id: 'projects', label: 'projects', Component: ProjectsSection, icon: '▸' },
+  { id: 'music',    label: 'music',    Component: MusicSection,    icon: '♪' },
+  { id: 'movies',   label: 'movies',   Component: MoviesSection,   icon: '▶' },
+  { id: 'stats',    label: 'stats',    Component: StatsSection,    icon: '▦' },
 ];
+
+// View Transitions API helper — gracefully no-ops where unsupported
+const startViewTransition = (cb) => {
+  if (typeof document !== 'undefined' && document.startViewTransition) {
+    document.startViewTransition(cb);
+  } else {
+    cb();
+  }
+};
 
 // ── Main TUI ──────────────────────────────────────────────
 export default function TUI() {
   const [active, setActive]     = useState(0);
   const [creature, setCreature] = useState('idle');
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
   const creatureTimer = useRef(null);
+  const contentRef = useRef(null);
 
-  const goTo = useCallback((idx) => {
-    setActive(idx);
+  const triggerCelebrate = useCallback(() => {
     clearTimeout(creatureTimer.current);
     setCreature('celebrate');
     creatureTimer.current = setTimeout(() => setCreature('idle'), 1200);
   }, []);
 
+  const goTo = useCallback((idx) => {
+    if (idx === active || idx < 0 || idx >= SECTIONS.length) return;
+    startViewTransition(() => setActive(idx));
+    triggerCelebrate();
+  }, [active, triggerCelebrate]);
+
+  const goToId = useCallback((id) => {
+    const idx = SECTIONS.findIndex(s => s.id === id);
+    if (idx >= 0) goTo(idx);
+  }, [goTo]);
+
+  // Hash routing — sync URL ↔ active tab
   useEffect(() => {
+    const h = (window.location.hash || '').replace('#', '');
+    const idx = SECTIONS.findIndex(s => s.id === h);
+    if (idx >= 0) setActive(idx);
+
+    const onHash = () => {
+      const id = (window.location.hash || '').replace('#', '');
+      const i = SECTIONS.findIndex(s => s.id === id);
+      if (i >= 0) setActive(i);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  useEffect(() => {
+    const id = SECTIONS[active]?.id;
+    if (id) {
+      const newHash = `#${id}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    }
+  }, [active]);
+
+  // Reading progress for the active section
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const max = el.scrollHeight - el.clientHeight;
+      setProgress(max > 0 ? Math.min(1, el.scrollTop / max) : 0);
+    };
+    onScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [active]);
+
+  // Reset scroll & progress on tab change
+  useEffect(() => {
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+    setProgress(0);
+  }, [active]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    let pendingG = false;
+    let gTimer = null;
+
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+      // Cmd/Ctrl + K → command palette
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setPaletteOpen(o => !o);
+        return;
+      }
+
+      if (paletteOpen || helpOpen) return;
+
+      if (e.key === '/') {
+        e.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+
+      if (e.key === '?') {
+        e.preventDefault();
+        setHelpOpen(o => !o);
+        return;
+      }
+
       if (e.key === 'ArrowRight' || e.key === 'l') {
-        setActive(a => {
-          const n = (a + 1) % SECTIONS.length;
-          clearTimeout(creatureTimer.current);
-          setCreature('celebrate');
-          creatureTimer.current = setTimeout(() => setCreature('idle'), 1200);
-          return n;
-        });
+        goTo((active + 1) % SECTIONS.length);
       } else if (e.key === 'ArrowLeft' || e.key === 'h') {
-        setActive(a => {
-          const n = (a - 1 + SECTIONS.length) % SECTIONS.length;
-          clearTimeout(creatureTimer.current);
-          setCreature('celebrate');
-          creatureTimer.current = setTimeout(() => setCreature('idle'), 1200);
-          return n;
-        });
+        // 'g' chord handling for vim-style 'gh'
+        if (pendingG) {
+          pendingG = false;
+          clearTimeout(gTimer);
+          goToId('about');
+          return;
+        }
+        goTo((active - 1 + SECTIONS.length) % SECTIONS.length);
       } else if (e.key >= '1' && e.key <= '6') {
         goTo(parseInt(e.key, 10) - 1);
+      } else if (e.key === 'g') {
+        pendingG = true;
+        clearTimeout(gTimer);
+        gTimer = setTimeout(() => { pendingG = false; }, 600);
       }
     };
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      clearTimeout(gTimer);
+    };
+  }, [active, goTo, goToId, paletteOpen, helpOpen]);
+
+  // Build command palette commands
+  const commands = useMemo(() => {
+    const sectionCmds = SECTIONS.map((s, i) => ({
+      id: `go-${s.id}`,
+      label: `Go to ${s.label}`,
+      hint: `section ${i + 1}`,
+      icon: s.icon,
+      shortcut: String(i + 1),
+      keywords: [s.id, s.label, 'navigate', 'go'],
+      run: () => goTo(i),
+    }));
+
+    const linkCmds = SOCIALS.map(s => ({
+      id: `open-${s.label}`,
+      label: `Open ${s.label}`,
+      hint: s.href.replace(/^https?:\/\//, '').replace(/^mailto:/, ''),
+      icon: '↗',
+      keywords: ['open', 'link', s.label, 'social'],
+      run: () => window.open(s.href, '_blank', 'noreferrer'),
+    }));
+
+    const utilityCmds = [
+      {
+        id: 'show-help',
+        label: 'Show keyboard shortcuts',
+        icon: '?',
+        shortcut: '?',
+        keywords: ['help', 'shortcuts', 'keys'],
+        run: () => setHelpOpen(true),
+      },
+      {
+        id: 'view-source',
+        label: 'View source on GitHub',
+        icon: '⌘',
+        keywords: ['source', 'repo', 'github', 'code'],
+        run: () => window.open('https://github.com/rohithIlluri/rohithilluri.github.io', '_blank', 'noreferrer'),
+      },
+      {
+        id: 'copy-email',
+        label: 'Copy email address',
+        icon: '@',
+        hint: 'rohithilluri@gmail.com',
+        keywords: ['email', 'copy', 'contact'],
+        run: () => navigator.clipboard?.writeText('rohithilluri@gmail.com').catch(() => {}),
+      },
+    ];
+
+    return [...sectionCmds, ...utilityCmds, ...linkCmds];
   }, [goTo]);
 
   const { Component } = SECTIONS[active];
+  const activeId = SECTIONS[active].id;
 
   return (
     <div className="tui-root">
 
       {/* Header */}
       <header className="tui-header">
-        <span className="tui-header-name">rohith illuri</span>
-        <span className="tui-header-sub">self-taught developer</span>
+        <div className="tui-header-left">
+          <span className="tui-header-dot" aria-hidden="true" />
+          <span className="tui-header-name">rohith illuri</span>
+          <span className="tui-header-sub tui-dim">· self-taught dev</span>
+        </div>
+        <div className="tui-header-right">
+          <button
+            className="tui-cmdk-trigger"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Open command palette"
+          >
+            <span className="tui-dim">search…</span>
+            <kbd className="cmdk-kbd">⌘K</kbd>
+          </button>
+        </div>
       </header>
 
       {/* Tab bar */}
-      <nav className="tui-tabs" role="tablist">
+      <nav className="tui-tabs" role="tablist" aria-label="Sections">
         {SECTIONS.map((s, i) => (
           <button
             key={s.id}
+            id={`tab-${s.id}`}
             role="tab"
             aria-selected={i === active}
+            aria-controls={`panel-${s.id}`}
+            tabIndex={i === active ? 0 : -1}
             onClick={() => goTo(i)}
             className={`tui-tab${i === active ? ' tui-tab--active' : ''}`}
           >
-            <span className="tui-tab-num">{i + 1}</span>
+            <span className="tui-tab-num" aria-hidden="true">{i + 1}</span>
             {s.label}
           </button>
         ))}
       </nav>
 
+      {/* Reading progress */}
+      <div
+        className="tui-progress"
+        role="progressbar"
+        aria-valuenow={Math.round(progress * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div className="tui-progress-bar" style={{ transform: `scaleX(${progress})` }} />
+      </div>
+
       {/* Content */}
-      <main className="tui-content" role="tabpanel">
+      <main
+        id="main"
+        ref={contentRef}
+        className="tui-content"
+        role="tabpanel"
+        aria-labelledby={`tab-${activeId}`}
+        data-panel={`panel-${activeId}`}
+        style={{ viewTransitionName: 'tui-panel' }}
+      >
         <div key={active} className="tui-fade">
           <Component />
         </div>
@@ -293,11 +475,21 @@ export default function TUI() {
 
       {/* Status bar */}
       <footer className="tui-status">
-        <span>← → navigate</span>
-        <span className="tui-dim">1 – 6 jump to section</span>
-        <span className="tui-status-right">rohith@portfolio</span>
+        <span><kbd className="cmdk-kbd">←</kbd><kbd className="cmdk-kbd">→</kbd> navigate</span>
+        <span className="tui-dim"><kbd className="cmdk-kbd">⌘K</kbd> palette</span>
+        <span className="tui-dim"><kbd className="cmdk-kbd">?</kbd> help</span>
+        <span className="tui-status-right">
+          <span className="tui-status-pulse" aria-hidden="true" />
+          rohith@portfolio
+        </span>
       </footer>
 
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        commands={commands}
+      />
+      <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
