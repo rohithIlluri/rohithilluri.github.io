@@ -379,140 +379,93 @@ a { color: inherit; text-decoration: none; }
 .tui-list-arrow { flex-shrink: 0; font-size: 11px; }
 
 /* ══════════════════════════════════════════════════════
-   CREATURE — Song
+   LUFFY MASCOT — auto-playing ASCII scenes
    ══════════════════════════════════════════════════════ */
 
-.creature-wrapper {
+.luffy-wrapper {
   position: fixed;
-  bottom: 38px;   /* sit above status bar */
+  bottom: 36px;
   right: calc((100vw - 860px) / 2 + 12px);
-  width: 72px;
+  width: 280px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   z-index: 20;
   user-select: none;
-  will-change: transform;
   pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.35));
 }
 
 @media (max-width: 860px) {
-  .creature-wrapper { right: 12px; }
+  .luffy-wrapper { right: 12px; }
 }
 
-.creature-body {
-  width: 68px;
-  height: 72px;
-  background: #DA7756;
-  border-radius: 60% 40% 55% 45% / 50% 45% 55% 50%;
+.luffy-stage {
   position: relative;
-  animation: c-breathe 3s ease-in-out infinite,
-             c-float   4s ease-in-out infinite;
-  will-change: transform;
+  min-height: 180px;
+  width: 100%;
 }
 
-.creature-body--happy   { border-radius: 50% 50% 60% 40% / 45% 45% 55% 55% !important; }
-.creature-body--sad     { border-radius: 40% 60% 45% 55% / 55% 55% 45% 45% !important; }
-.creature-body--thinking { animation: c-think 1.2s ease-in-out infinite !important; }
-
-.creature-highlight {
-  position: absolute; width: 18px; height: 10px;
-  background: rgba(255,255,255,0.22); border-radius: 50%;
-  top: 10px; left: 10px; transform: rotate(-30deg);
-  pointer-events: none;
+.luffy-status {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 10px;
+  margin-top: 4px;
+  letter-spacing: 0.04em;
 }
 
-.creature-eyes {
-  display: flex; gap: 10px;
-  position: absolute; top: 22px; left: 50%;
-  transform: translateX(-50%);
-  animation: c-blink 4s ease-in-out infinite;
+.luffy-status-name { color: var(--dim); }
+.luffy-status-idx  { color: var(--dim); opacity: 0.6; }
+
+/* Section anchor offset so smooth-scroll lands below the sticky header/nav */
+[id^="section-"] { scroll-margin-top: 24px; }
+
+/* Stack sections with breathing room */
+.tui-content > .tui-panel + .tui-panel {
+  margin-top: 56px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
 }
 
-.creature-eye {
-  width: 14px; height: 14px;
-  background: #111; border-radius: 50%;
-  position: relative; overflow: hidden;
+/* ASCII frame renderer */
+.ac-frame {
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.0;
+  letter-spacing: 0;
+  white-space: pre;
+  margin: 0;
+  color: var(--text);
+  position: absolute;
+  inset: 0;
+  transition: opacity 400ms ease;
+  opacity: 0;
 }
 
-.creature-pupil {
-  width: 7px; height: 7px;
-  background: #0a0a0a; border-radius: 50%;
-  position: absolute; top: 3.5px; left: 3.5px;
-  animation: c-look 6s ease-in-out infinite;
+.ac-frame.is-active  { opacity: 1; }
+.ac-frame.is-leaving { opacity: 0; }
+
+.ac-row { display: block; }
+
+/* Color palette — keep in sync with src/constants/asciiPalette.js */
+.ac-r { color: #e63946; }   /* red vest, sunset */
+.ac-y { color: #ffd166; }   /* straw hat band */
+.ac-b { color: #3a86ff; }   /* shorts, ocean */
+.ac-s { color: #f4a261; }   /* skin */
+.ac-o { color: #fb8500; }   /* haki, fire */
+.ac-w { color: #f1faee; }   /* sail, foam */
+.ac-g { color: #4ade80; }   /* terminal green */
+.ac-k { color: #1d1d1d; }   /* deep shadow */
+.ac-c { color: #22d3ee; }
+.ac-p { color: #c084fc; }
+
+.tui-status-luffy {
+  margin-left: auto;
+  margin-right: 12px;
 }
 
-.creature-eye-right .creature-pupil { animation-delay: 0.4s; }
-
-.creature-shine {
-  width: 4px; height: 4px; background: white; border-radius: 50%;
-  position: absolute; top: 2px; left: 2px;
-}
-
-.creature-mouth {
-  position: absolute; bottom: 14px; left: 50%;
-  transform: translateX(-50%);
-  width: 24px; height: 11px; overflow: hidden;
-}
-
-.creature-mouth::after {
-  content: ''; display: block;
-  width: 24px; height: 22px;
-  border: 2.5px solid #111; border-radius: 50%; margin-top: -11px;
-}
-
-.creature-mouth--sad { transform: translateX(-50%) scaleY(-1); }
-
-.creature-arm-left, .creature-arm-right {
-  position: absolute; width: 11px; height: 22px;
-  background: #C96644; border-radius: 5px; top: 36px;
-}
-
-.creature-arm-left  { left: -6px;  transform-origin: bottom center; }
-.creature-arm-right { right: -6px; transform-origin: bottom center; }
-
-.creature-feet { display: flex; gap: 12px; margin-top: -4px; }
-.creature-foot { width: 22px; height: 11px; background: #C96644; border-radius: 50%; }
-
-.creature-bubble {
-  position: absolute; bottom: calc(100% + 4px); right: 0;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 4px 4px 0 4px; padding: 3px 8px;
-  font-size: 11px; color: var(--dim); white-space: nowrap;
-  animation: fadeIn 0.2s ease;
-}
-
-/* ── Keyframes ───────────────────────────────────────── */
-
-@keyframes c-breathe {
-  0%, 100% { transform: scaleY(1)    scaleX(1); }
-  50%       { transform: scaleY(1.04) scaleX(0.97); }
-}
-
-@keyframes c-float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-5px); }
-}
-
-@keyframes c-blink {
-  0%, 88%, 100% { transform: scaleY(1); }
-  92%            { transform: scaleY(0.06); }
-}
-
-@keyframes c-look {
-  0%,  20%  { transform: translate(0, 0); }
-  25%, 45%  { transform: translate(-2px, 1px); }
-  50%, 70%  { transform: translate(2px, -1px); }
-  75%, 95%  { transform: translate(0, 1px); }
-  100%       { transform: translate(0, 0); }
-}
-
-@keyframes c-think {
-  0%, 100% { transform: rotate(0deg)   translateY(0); }
-  25%       { transform: rotate(-4deg) translateY(-3px); }
-  75%       { transform: rotate(4deg)  translateY(-3px); }
-}
-
+/* Animations preserved */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -521,15 +474,18 @@ a { color: inherit; text-decoration: none; }
 /* ── Mobile ──────────────────────────────────────────── */
 @media (max-width: 600px) {
   html { font-size: 12px; }
-  .tui-content { padding: 20px 16px 100px; }
+  .tui-content { padding: 20px 16px 220px; }
   .tui-tab     { padding: 8px 12px; }
 
-  .creature-wrapper {
-    transform: scale(0.72);
-    transform-origin: bottom right;
+  .luffy-wrapper {
+    width: 220px;
+    bottom: 30px;
   }
+  .ac-frame { font-size: 9px; }
+  .luffy-stage { min-height: 140px; }
 
   .tui-list-desc { display: none; }
+  .tui-status-luffy { display: none; }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -820,9 +776,7 @@ a { color: inherit; text-decoration: none; }
     transition-duration: 0.001ms !important;
   }
   .tui-fade,
-  .creature-body,
-  .creature-pupil,
-  .creature-eyes,
+  .ac-frame,
   .tui-status-pulse,
   .tui-header-dot {
     animation: none !important;

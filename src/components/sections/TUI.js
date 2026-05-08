@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import CreatureMascot from '../terminal/CreatureMascot';
+import LuffyMascot from '../art/LuffyMascot';
 import CommandPalette from '../ui/CommandPalette';
 import HelpOverlay from '../ui/HelpOverlay';
 
@@ -70,7 +70,7 @@ const MOVIES = [
 
 function AboutSection() {
   return (
-    <section className="tui-panel" aria-labelledby="sec-about">
+    <section id="section-about" className="tui-panel" aria-labelledby="sec-about">
       <h2 id="sec-about" className="tui-panel-title">whoami</h2>
 
       <p className="tui-body-line" style={{ marginBottom: '1.2rem' }}>
@@ -100,7 +100,7 @@ function AboutSection() {
 
 function SkillsSection() {
   return (
-    <section className="tui-panel" aria-labelledby="sec-skills">
+    <section id="section-skills" className="tui-panel" aria-labelledby="sec-skills">
       <h2 id="sec-skills" className="tui-panel-title">skills</h2>
       <div className="tui-skills-grid">
         {SKILLS.map(([name, color]) => (
@@ -115,7 +115,7 @@ function SkillsSection() {
 
 function ProjectsSection() {
   return (
-    <section className="tui-panel" aria-labelledby="sec-projects">
+    <section id="section-projects" className="tui-panel" aria-labelledby="sec-projects">
       <h2 id="sec-projects" className="tui-panel-title">projects</h2>
       <div className="tui-project-list">
         {PROJECTS.map(p => (
@@ -146,7 +146,7 @@ function ProjectsSection() {
 
 function MusicSection() {
   return (
-    <section className="tui-panel" aria-labelledby="sec-music">
+    <section id="section-music" className="tui-panel" aria-labelledby="sec-music">
       <h2 id="sec-music" className="tui-panel-title">music</h2>
       <div className="tui-list">
         {ARTISTS.map(a => (
@@ -165,7 +165,7 @@ function MusicSection() {
 
 function MoviesSection() {
   return (
-    <section className="tui-panel" aria-labelledby="sec-movies">
+    <section id="section-movies" className="tui-panel" aria-labelledby="sec-movies">
       <h2 id="sec-movies" className="tui-panel-title">movies</h2>
       <div className="tui-list">
         {MOVIES.map(m => (
@@ -192,7 +192,7 @@ function StatsSection() {
     ['coffee / day',   '3'],
   ];
   return (
-    <section className="tui-panel" aria-labelledby="sec-stats">
+    <section id="section-stats" className="tui-panel" aria-labelledby="sec-stats">
       <h2 id="sec-stats" className="tui-panel-title">stats</h2>
       <div className="tui-kv-block">
         {stats.map(([k, v]) => (
@@ -212,72 +212,78 @@ const SECTIONS = [
   { id: 'skills',   label: 'skills',   Component: SkillsSection,   icon: '◇' },
   { id: 'projects', label: 'projects', Component: ProjectsSection, icon: '▸' },
   { id: 'music',    label: 'music',    Component: MusicSection,    icon: '♪' },
-  { id: 'movies',   label: 'movies',   Component: MoviesSection,   icon: '▶' },
+  { id: 'movies',   label: 'movies',   Component: MoviesSection,    icon: '▶' },
   { id: 'stats',    label: 'stats',    Component: StatsSection,    icon: '▦' },
 ];
 
-// View Transitions API helper — gracefully no-ops where unsupported
-const startViewTransition = (cb) => {
-  if (typeof document !== 'undefined' && document.startViewTransition) {
-    document.startViewTransition(cb);
-  } else {
-    cb();
-  }
-};
-
 // ── Main TUI ──────────────────────────────────────────────
 export default function TUI() {
-  const [active, setActive]     = useState(0);
-  const [creature, setCreature] = useState('idle');
+  const [activeId, setActiveId] = useState(SECTIONS[0].id);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [progress, setProgress] = useState(0);
-  const creatureTimer = useRef(null);
+  const [scene, setScene] = useState(null);
   const contentRef = useRef(null);
 
-  const triggerCelebrate = useCallback(() => {
-    clearTimeout(creatureTimer.current);
-    setCreature('celebrate');
-    creatureTimer.current = setTimeout(() => setCreature('idle'), 1200);
+  const scrollToId = useCallback((id) => {
+    const el = document.getElementById(`section-${id}`);
+    if (!el || !contentRef.current) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  const goTo = useCallback((idx) => {
-    if (idx === active || idx < 0 || idx >= SECTIONS.length) return;
-    startViewTransition(() => setActive(idx));
-    triggerCelebrate();
-  }, [active, triggerCelebrate]);
+  const scrollByIndex = useCallback((dir) => {
+    const idx = SECTIONS.findIndex(s => s.id === activeId);
+    const next = (idx + dir + SECTIONS.length) % SECTIONS.length;
+    scrollToId(SECTIONS[next].id);
+  }, [activeId, scrollToId]);
 
-  const goToId = useCallback((id) => {
-    const idx = SECTIONS.findIndex(s => s.id === id);
-    if (idx >= 0) goTo(idx);
-  }, [goTo]);
-
-  // Hash routing — sync URL ↔ active tab
+  // Initial hash deep-link
   useEffect(() => {
     const h = (window.location.hash || '').replace('#', '');
-    const idx = SECTIONS.findIndex(s => s.id === h);
-    if (idx >= 0) setActive(idx);
-
+    if (SECTIONS.some(s => s.id === h)) {
+      // Slight delay so layout is settled
+      requestAnimationFrame(() => scrollToId(h));
+    }
     const onHash = () => {
       const id = (window.location.hash || '').replace('#', '');
-      const i = SECTIONS.findIndex(s => s.id === id);
-      if (i >= 0) setActive(i);
+      if (SECTIONS.some(s => s.id === id)) scrollToId(id);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
+  }, [scrollToId]);
+
+  // IntersectionObserver: track active section + sync hash
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    const els = SECTIONS
+      .map(s => document.getElementById(`section-${s.id}`))
+      .filter(Boolean);
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        // Pick the entry with highest intersectionRatio that's intersecting
+        let best = null;
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+        }
+        if (best) {
+          const id = best.target.id.replace(/^section-/, '');
+          setActiveId(id);
+          const newHash = `#${id}`;
+          if (window.location.hash !== newHash) {
+            window.history.replaceState(null, '', newHash);
+          }
+        }
+      },
+      { root, threshold: [0.25, 0.5, 0.75] }
+    );
+    els.forEach(el => obs.observe(el));
+    return () => obs.disconnect();
   }, []);
 
-  useEffect(() => {
-    const id = SECTIONS[active]?.id;
-    if (id) {
-      const newHash = `#${id}`;
-      if (window.location.hash !== newHash) {
-        window.history.replaceState(null, '', newHash);
-      }
-    }
-  }, [active]);
-
-  // Reading progress for the active section
+  // Reading progress for the whole page
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
@@ -288,13 +294,7 @@ export default function TUI() {
     onScroll();
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, [active]);
-
-  // Reset scroll & progress on tab change
-  useEffect(() => {
-    if (contentRef.current) contentRef.current.scrollTop = 0;
-    setProgress(0);
-  }, [active]);
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -304,7 +304,6 @@ export default function TUI() {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-      // Cmd/Ctrl + K → command palette
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         setPaletteOpen(o => !o);
@@ -325,23 +324,26 @@ export default function TUI() {
         return;
       }
 
-      if (e.key === 'ArrowRight' || e.key === 'l') {
-        goTo((active + 1) % SECTIONS.length);
-      } else if (e.key === 'ArrowLeft' || e.key === 'h') {
-        // 'g' chord handling for vim-style 'gh'
+      if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'l' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        scrollByIndex(1);
+      } else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'h' || e.key === 'ArrowLeft') {
         if (pendingG) {
           pendingG = false;
           clearTimeout(gTimer);
-          goToId('about');
+          scrollToId('about');
           return;
         }
-        goTo((active - 1 + SECTIONS.length) % SECTIONS.length);
+        e.preventDefault();
+        scrollByIndex(-1);
       } else if (e.key >= '1' && e.key <= '6') {
-        goTo(parseInt(e.key, 10) - 1);
+        scrollToId(SECTIONS[parseInt(e.key, 10) - 1].id);
       } else if (e.key === 'g') {
         pendingG = true;
         clearTimeout(gTimer);
         gTimer = setTimeout(() => { pendingG = false; }, 600);
+      } else if (e.key === 'G') {
+        scrollToId(SECTIONS[SECTIONS.length - 1].id);
       }
     };
     window.addEventListener('keydown', handler);
@@ -349,7 +351,7 @@ export default function TUI() {
       window.removeEventListener('keydown', handler);
       clearTimeout(gTimer);
     };
-  }, [active, goTo, goToId, paletteOpen, helpOpen]);
+  }, [scrollByIndex, scrollToId, paletteOpen, helpOpen]);
 
   // Build command palette commands
   const commands = useMemo(() => {
@@ -359,8 +361,8 @@ export default function TUI() {
       hint: `section ${i + 1}`,
       icon: s.icon,
       shortcut: String(i + 1),
-      keywords: [s.id, s.label, 'navigate', 'go'],
-      run: () => goTo(i),
+      keywords: [s.id, s.label, 'navigate', 'go', 'scroll'],
+      run: () => scrollToId(s.id),
     }));
 
     const linkCmds = SOCIALS.map(s => ({
@@ -399,10 +401,7 @@ export default function TUI() {
     ];
 
     return [...sectionCmds, ...utilityCmds, ...linkCmds];
-  }, [goTo]);
-
-  const { Component } = SECTIONS[active];
-  const activeId = SECTIONS[active].id;
+  }, [scrollToId]);
 
   return (
     <div className="tui-root">
@@ -426,18 +425,13 @@ export default function TUI() {
         </div>
       </header>
 
-      {/* Tab bar */}
-      <nav className="tui-tabs" role="tablist" aria-label="Sections">
+      {/* Section nav (jumps via scroll) */}
+      <nav className="tui-tabs" aria-label="Sections">
         {SECTIONS.map((s, i) => (
           <button
             key={s.id}
-            id={`tab-${s.id}`}
-            role="tab"
-            aria-selected={i === active}
-            aria-controls={`panel-${s.id}`}
-            tabIndex={i === active ? 0 : -1}
-            onClick={() => goTo(i)}
-            className={`tui-tab${i === active ? ' tui-tab--active' : ''}`}
+            onClick={() => scrollToId(s.id)}
+            className={`tui-tab${activeId === s.id ? ' tui-tab--active' : ''}`}
           >
             <span className="tui-tab-num" aria-hidden="true">{i + 1}</span>
             {s.label}
@@ -456,28 +450,29 @@ export default function TUI() {
         <div className="tui-progress-bar" style={{ transform: `scaleX(${progress})` }} />
       </div>
 
-      {/* Content */}
+      {/* Content — single scrolling page */}
       <main
         id="main"
         ref={contentRef}
         className="tui-content"
-        role="tabpanel"
-        aria-labelledby={`tab-${activeId}`}
-        data-panel={`panel-${activeId}`}
-        style={{ viewTransitionName: 'tui-panel' }}
       >
-        <div key={active} className="tui-fade">
-          <Component />
-        </div>
+        {SECTIONS.map(({ id, Component }) => (
+          <Component key={id} />
+        ))}
 
-        <CreatureMascot animationState={creature} />
+        <LuffyMascot onSceneChange={setScene} />
       </main>
 
       {/* Status bar */}
       <footer className="tui-status">
-        <span><kbd className="cmdk-kbd">←</kbd><kbd className="cmdk-kbd">→</kbd> navigate</span>
+        <span><kbd className="cmdk-kbd">↑</kbd><kbd className="cmdk-kbd">↓</kbd> scroll</span>
         <span className="tui-dim"><kbd className="cmdk-kbd">⌘K</kbd> palette</span>
         <span className="tui-dim"><kbd className="cmdk-kbd">?</kbd> help</span>
+        {scene && (
+          <span className="tui-dim tui-status-luffy">
+            ⚓ {scene.name}
+          </span>
+        )}
         <span className="tui-status-right">
           <span className="tui-status-pulse" aria-hidden="true" />
           rohith@portfolio

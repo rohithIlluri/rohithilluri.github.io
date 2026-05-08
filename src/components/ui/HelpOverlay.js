@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 
 const SHORTCUTS = [
-  { keys: ['←', '→'], label: 'navigate sections' },
-  { keys: ['h', 'l'], label: 'vim-style navigate' },
+  { keys: ['↑', '↓'], label: 'scroll between sections' },
+  { keys: ['j', 'k'], label: 'vim-style scroll' },
   { keys: ['1', '–', '6'], label: 'jump to section' },
   { keys: ['⌘', 'K'], label: 'command palette' },
   { keys: ['/'], label: 'open search' },
   { keys: ['?'], label: 'toggle this help' },
-  { keys: ['g', 'h'], label: 'go to about' },
+  { keys: ['g'], label: 'top (about)' },
+  { keys: ['G'], label: 'bottom (stats)' },
   { keys: ['Esc'], label: 'close overlay' },
 ];
 
