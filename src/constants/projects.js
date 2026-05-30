@@ -17,6 +17,10 @@ export const PROJECT_REPOS = [
   'Nnets'            // Neural network implementation (Micrograd)
 ];
 
+export const WIP_PROJECTS = [
+  'agent-registry',  // Cross-agent registry for AI skills & MCP servers (in progress)
+];
+
 // ========================================
 // CUSTOM PROJECT DESCRIPTIONS
 // ========================================
@@ -50,5 +54,12 @@ export const CUSTOM_PROJECTS = {
   'Nnets': {
     description: 'A minimalistic neural network implementation inspired by Micrograd. Built from scratch using Jupyter notebooks, featuring automatic differentiation, backpropagation, and educational examples for understanding deep learning fundamentals.',
     language: 'Python'
+  },
+
+  'agent-registry': {
+    description: 'A free, CLI-first, cross-agent registry for AI skills, MCP servers, slash commands, subagents, and hooks. One artifact installs into both Claude Code and OpenAI Codex via per-agent adapters. Git-repo static index (PR-based publish, CI scanning), zero-cost hosting, tiered trust model with Sigstore provenance.',
+    language: 'Go',
+    wip: true,
+    tags: ['mcp', 'claude-code', 'codex', 'cli', 'ai-agents', 'registry', 'skill.md'],
   }
 };

@@ -73,6 +73,9 @@ const SKILLS = [
 ];
 
 const FAKE_GIT_LOG = [
+  { hash: 'e9f1c3a', date: '2026-05-30', msg: 'feat: agent-registry — ClaudeCodeAdapter + CodexAdapter with SKILL.md install routing' },
+  { hash: 'b7d2e40', date: '2026-05-28', msg: 'feat: agent-registry — static JSON index + CI schema validation + sha256 checksums' },
+  { hash: 'c5a8f12', date: '2026-05-24', msg: 'feat: agent-registry — cross-agent CLI (search/install/publish) scaffolding in Go' },
   { hash: 'a3f7b2e', date: '2024-12-01', msg: 'feat: add GSAP animations' },
   { hash: '9c1d8f4', date: '2024-11-20', msg: 'fix: mobile nav overflow' },
   { hash: '4e2a71b', date: '2024-11-15', msg: 'feat: YouTube background player' },
@@ -158,14 +161,18 @@ export async function runCommand(raw, context = {}) {
         L('projects', { green: true }),
         L('─────────────────────────────────────'),
         L(''),
+        L('  agent-registry  cross-agent CLI registry  [WIP]', { green: true }),
+        L('                  Go · MCP · SKILL.md · Sigstore'),
+        L('                  type: cat agent-registry.txt for details'),
+        L(''),
         L('  Crave           food marketplace'),
         L('                  React · Node · PostgreSQL'),
         L(''),
         L('  CryptoApp       live market dashboard'),
         L('                  React · WebSocket API'),
         L(''),
-        L('  Toronto Proj    community platform'),
-        L('                  full-stack'),
+        L('  Toronto Proj    city data analysis'),
+        L('                  Python · pandas'),
         L(''),
         L('  Nnets           neural network experiments'),
         L('                  Python'),
@@ -236,7 +243,7 @@ export async function runCommand(raw, context = {}) {
       if (args === 'movies/' || args === 'movies')
         return ok(MOVIES.map(m => L(`${m.name} (${m.year})`)));
       if (args === 'projects/' || args === 'projects')
-        return ok([L('Crave/   CryptoApp/   toronto-project/   Nnets/')]);
+        return ok([L('agent-registry/   Crave/   CryptoApp/   toronto-project/   Nnets/')]);
       return er(`ls: ${args}: no such file or directory`);
     }
 
@@ -247,9 +254,46 @@ export async function runCommand(raw, context = {}) {
           L('rohith illuri — self-taught developer', { green: true }),
           L(''),
           L('  builds things with react, node, and whatever gets the job done.'),
-          L('  projects: crave · cryptoapp · toronto-project · nnets'),
+          L('  projects: agent-registry · crave · cryptoapp · toronto-project · nnets'),
           L('  github:   github.com/rohithIlluri'),
           L('  license:  mit'),
+        ]);
+      }
+      if (args === 'agent-registry.txt') {
+        return ok([
+          L('agent-registry', { green: true }),
+          L('─────────────────────────────────────'),
+          L(''),
+          L('  free, cli-first, cross-agent registry for AI skills,'),
+          L('  MCP servers, slash commands, subagents, and hooks.'),
+          L(''),
+          L('  status:  [WIP]  —  in active development'),
+          L('  lang:    Go'),
+          L('  arch:    static JSON index (git-repo/PR-based publish)'),
+          L('           + per-agent adapters (ClaudeCode, Codex)'),
+          L('           + optional Sigstore/cosign provenance'),
+          L(''),
+          L('  one artifact → installs into both Claude Code and'),
+          L('  OpenAI Codex via adapter layer that detects ~/.claude'),
+          L('  or ~/.codex and writes SKILL.md / MCP config to the'),
+          L('  correct path and dialect (JSON vs TOML).'),
+          L(''),
+          L('  portable units:'),
+          L('    → MCP servers   (cross-agent tool protocol)'),
+          L('    → SKILL.md      (cross-agent procedural knowledge)'),
+          L('    → slash-commands, subagents, hooks, plugin bundles'),
+          L(''),
+          L('  trust model:'),
+          L('    community → verified publisher → curated/official'),
+          L('    sha256 checksums · Sigstore bundles · mcp-scan CI'),
+          L('    install-time permission disclosure before any write'),
+          L(''),
+          L('  hosting: $0/month — GitHub index + Cloudflare R2/Pages'),
+          L(''),
+          L('  inspired by: Homebrew taps · crates.io sparse index'),
+          L('               Vercel skills.sh · MCP Registry v0.1'),
+          L(''),
+          L('  → github.com/rohithIlluri/agent-registry  (coming soon)', { dim: true }),
         ]);
       }
       if (args === 'about.txt') return runCommand('about', context);
@@ -371,7 +415,7 @@ export async function runCommand(raw, context = {}) {
 
 export const TAB_COMPLETIONS = [
   'help', 'about', 'whoami', 'skills', 'projects', 'music', 'movies', 'stats',
-  'ls', 'cat readme.txt', 'cat about.txt', 'cat stats.json',
+  'ls', 'cat readme.txt', 'cat about.txt', 'cat stats.json', 'cat agent-registry.txt',
   'git log', 'git log --oneline', 'git status',
   'history', 'date', 'echo ', 'pwd', 'man rohith',
   'ping ', 'wave', 'spin', 'dance', 'matrix', 'clear', 'exit',
