@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rohith Illuri — Portfolio</title>
+<meta name="description" content="Self-taught developer. Deeds, not words." />
+<meta name="theme-color" content="#0c0a07" />
+<meta property="og:title" content="Rohith Illuri — Portfolio" />
+<meta property="og:description" content="Self-taught developer. Deeds, not words." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- paintings redirect commons -> upload; warm both connections early -->
+<link rel="preconnect" href="https://commons.wikimedia.org" />
+<link rel="preconnect" href="https://upload.wikimedia.org" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet" />
+<script>document.documentElement.className += ' js';</script>
+<style>
+  :root {
+    --abyss: #131008;
+    --umber: #1d160c;
+    --parchment: #d9c9a3;
+    --parchment-dim: #9a8b6a;
+    --gold: #c8a24a;
+    --gold-bright: #e8c876;
+    --ember: #d4762c;
+    --blood: #7a2a1f;
+    --lapis: #3d6a8a;
+    --verdigris: #4a8a78;
+    --tyrian: #6e3a64;
+    --saffron: #d9912a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    overflow-x: hidden;
+    background-color: var(--abyss);
+    /* aged leather grain */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 0.78 0 0 0 0 0.63 0 0 0 0 0.29 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23l)'/%3E%3C/svg%3E");
+    color: var(--parchment);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.7;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--gold); color: var(--abyss); }
+  :focus-visible { outline: 2px dotted var(--gold); outline-offset: 4px; }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--umber); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 5px; }
+
+  .skip-link {
+    position: absolute; left: -9999px; top: 0;
+    background: var(--gold); color: var(--abyss);
+    padding: 10px 18px; z-index: 200; font-family: 'Cinzel', serif; font-size: 13px;
+  }
+  .skip-link:focus { left: 12px; top: 12px; }
+
+  /* ---------- GILT THREAD (scroll progress) ---------- */
+  #progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 2px; z-index: 120;
+    background: linear-gradient(90deg, var(--gold), var(--gold-bright), var(--ember));
+    box-shadow: 0 0 8px rgba(232,200,118,0.6);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+
+  /* ---------- EMBERS (canvas, JS enhancement) ---------- */
+  #dust { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+
+  /* ---------- AGED PATINA ----------
+     vignette + foxing stains + parchment grain, like a page handled
+     for four hundred years. Pure CSS, sits beneath the embers.       */
+  .patina {
+    position: fixed; inset: 0; z-index: 85; pointer-events: none;
+    background:
+      radial-gradient(ellipse 115% 90% at 50% 48%, transparent 52%, rgba(16,9,2,0.55) 100%),
+      radial-gradient(ellipse 30% 20% at 12% 16%, rgba(146,96,44,0.10), transparent 70%),
+      radial-gradient(ellipse 24% 17% at 88% 68%, rgba(146,96,44,0.09), transparent 70%),
+      radial-gradient(ellipse 19% 14% at 76% 10%, rgba(126,84,40,0.08), transparent 70%),
+      radial-gradient(ellipse 22% 16% at 22% 86%, rgba(146,96,44,0.09), transparent 70%);
+  }
+  .patina::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.72 0 0 0 0 0.45 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23p)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- MANUSCRIPT FRAME ---------- */
+  .frame {
+    position: fixed; inset: 12px; z-index: 118; pointer-events: none;
+    border: 1px solid rgba(200,162,74,0.3);
+  }
+  .frame::before {
+    content: ''; position: absolute; inset: 4px;
+    border: 1px solid rgba(200,162,74,0.14);
+  }
+
+  /* ---------- NAV ---------- */
+  nav.frieze {
+    position: sticky; top: 0; z-index: 110;
+    display: flex; justify-content: center; gap: 2.2em;
+    padding: 18px 6vw 14px;
+    flex-wrap: wrap;
+    font-family: 'Cinzel', serif;
+    font-size: 12px; letter-spacing: 0.3em;
+    color: var(--parchment-dim);
+    background: rgba(12,10,7,0.92);
+    border-bottom: 1px solid rgba(200,162,74,0.18);
+  }
+  nav.frieze a {
+    position: relative; padding: 4px 2px;
+    transition: color 0.25s ease, text-shadow 0.25s ease;
+  }
+  nav.frieze a::after {
+    content: ''; position: absolute; left: 0; right: 100%; bottom: -2px;
+    height: 1px; background: var(--gold-bright);
+    box-shadow: 0 0 6px rgba(232,200,118,0.8);
+    transition: right 0.3s ease;
+  }
+  nav.frieze a:hover, nav.frieze a.active {
+    color: var(--gold-bright);
+    text-shadow: 0 0 12px rgba(232,200,118,0.5);
+  }
+  nav.frieze a:hover::after, nav.frieze a.active::after { right: 0; }
+
+  /* ---------- LIVING BACKDROPS ----------
+     The underpaint is the primary artwork: pure CSS, no network, and its
+     motion is CSS-only so it lives even where JS is blocked.            */
+  .scene { position: relative; overflow: hidden; }
+  .fresco { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .fresco .underpaint {
+    position: absolute; inset: -12%;
+    opacity: 1;
+    /* static filter, rasterized once — brightens the glow colors */
+    filter: brightness(1.7) saturate(1.15);
+    animation: drift 36s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(-2.5%, -1.5%) scale(1.06); }
+  }
+  /* a second vapor layer breathing over the paint */
+  .fresco .smoke {
+    position: absolute; inset: -15%;
+    background:
+      radial-gradient(ellipse 45% 35% at 30% 30%, rgba(232,200,118,0.10), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 70% 65%, rgba(212,118,44,0.07), transparent 70%);
+    filter: brightness(1.6);
+    animation: breathe 14s ease-in-out infinite alternate;
+  }
+  @keyframes breathe {
+    from { opacity: 0.5; transform: translateX(0); }
+    to   { opacity: 1;   transform: translateX(3%); }
+  }
+  /* museum painting — optional enhancement when the network allows */
+  .fresco img {
+    position: absolute; left: 50%; top: 50%;
+    min-width: 114%; min-height: 114%;
+    width: auto; height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    opacity: 0.4;
+    /* no blend modes — they jank low-end WebViews; warm aged tone instead */
+    filter: brightness(0.82) saturate(0.95) sepia(0.22);
+  }
+  .js .fresco img { opacity: 0; transition: opacity 2.5s ease; }
+  .js .fresco img.loaded { opacity: 0.4; animation: kenburns 52s ease-in-out infinite alternate; }
+  @keyframes kenburns {
+    from { transform: translate(-50%, -50%) scale(1); }
+    to   { transform: translate(-51.5%, -49%) scale(1.08); }
+  }
+  /* dark glaze keeps the text luminous */
+  .fresco .glaze {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 100% 80% at 50% 42%, transparent 30%, var(--abyss) 100%),
+      linear-gradient(var(--abyss) 0%, transparent 12%, transparent 88%, var(--abyss) 100%);
+  }
+  .provenance {
+    position: absolute; right: 10px; top: 50%;
+    transform: rotate(90deg) translateX(-50%);
+    transform-origin: right top;
+    font-style: italic; font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--parchment-dim); opacity: 0.55;
+    z-index: 2; white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .page { max-width: 920px; margin: 0 auto; padding: 0 6vw; }
+
+  /* ---------- TITLE ---------- */
+  header.scene { text-align: center; padding: 15vh 6vw 12vh; }
+  header .inner { position: relative; z-index: 2; }
+
+  /* rune ring slowly turning behind the name — CSS only */
+  .rune-ring {
+    position: absolute; left: 50%; top: 42%;
+    width: min(72vw, 560px); height: min(72vw, 560px);
+    margin: calc(min(72vw, 560px) / -2) 0 0 calc(min(72vw, 560px) / -2);
+    z-index: 1; pointer-events: none;
+    color: var(--gold);
+    opacity: 0.16;
+    animation: ringspin 140s linear infinite;
+  }
+  @keyframes ringspin { to { transform: rotate(360deg); } }
+
+  .epigraph {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(11px, 1.3vw, 14px);
+    letter-spacing: 0.55em;
+    color: var(--gold);
+    text-shadow: 0 0 14px rgba(200,162,74,0.5);
+    margin-bottom: 5vh;
+  }
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: clamp(34px, 8.6vw, 104px);
+    line-height: 1.15;
+    letter-spacing: 0.12em;
+    color: var(--gold-bright);
+    /* the Erdtree bloom */
+    text-shadow:
+      0 0 18px rgba(232,200,118,0.45),
+      0 0 60px rgba(200,162,74,0.25),
+      0 1px 0 rgba(0,0,0,0.6);
+  }
+  h1 .word { display: inline-block; }
+  h1 .dot { color: var(--ember); }
+
+  /* location-reveal: tracking breathes wider as it fades in */
+  .js .loc-reveal {
+    opacity: 0;
+    letter-spacing: 0.3em;
+    filter: blur(6px);
+    transition: opacity 1.6s ease, letter-spacing 1.6s ease, filter 1.6s ease;
+  }
+  .js .loc-reveal.visible { opacity: 1; letter-spacing: 0.12em; filter: blur(0); }
+
+  /* flourish rule: ── ◆ ── */
+  .flourish {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin: 4.5vh auto 0;
+    width: min(70%, 520px);
+  }
+  .flourish .line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold));
+  }
+  .flourish .line:last-child { background: linear-gradient(90deg, var(--gold), transparent); }
+  .flourish .gem {
+    width: 9px; height: 9px;
+    background: var(--gold-bright);
+    transform: rotate(45deg);
+    box-shadow: 0 0 12px rgba(232,200,118,0.8);
+  }
+
+  .motto {
+    margin-top: 4vh;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(14px, 1.9vw, 20px);
+    letter-spacing: 0.42em;
+    color: var(--ember);
+    text-shadow: 0 0 16px rgba(212,118,44,0.4);
+  }
+  .motto-gloss { margin-top: 1.2vh; font-style: italic; font-size: 16px; color: var(--parchment-dim); }
+
+  .intro {
+    max-width: 640px; margin: 7vh auto 0;
+    font-size: 20px; text-align: center;
+    color: var(--parchment);
+  }
+  .intro .first-words {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-bright);
+    letter-spacing: 0.08em;
+  }
+
+  .descend {
+    margin-top: 8vh;
+    font-family: 'Cinzel', serif;
+    font-size: 11px; letter-spacing: 0.5em;
+    color: var(--parchment-dim);
+  }
+  .descend .chev {
+    display: block; margin: 12px auto 0;
+    width: 13px; height: 13px;
+    border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold);
+    transform: rotate(45deg);
+    filter: drop-shadow(0 0 4px rgba(200,162,74,0.7));
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: rotate(45deg) translate(0,0); }
+    50% { transform: rotate(45deg) translate(4px,4px); }
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section.scene { padding: 13vh 0 7vh; }
+  section .inner { position: relative; z-index: 2; }
+
+  .section-head { text-align: center; margin-bottom: 8vh; }
+  .section-head .numeral {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(13px, 1.5vw, 16px);
+    letter-spacing: 0.5em; color: var(--gold);
+  }
+  .section-head .numeral::before, .section-head .numeral::after {
+    content: '◆'; font-size: 0.55em; vertical-align: 2px;
+    color: var(--ember); margin: 0 14px;
+    text-shadow: 0 0 8px rgba(212,118,44,0.7);
+  }
+  .section-head h2 {
+    font-family: 'Cinzel', serif; font-weight: 500;
+    font-size: clamp(30px, 5.4vw, 62px);
+    margin-top: 1.6vh;
+    color: var(--gold-bright);
+    text-shadow:
+      0 0 16px rgba(232,200,118,0.4),
+      0 0 50px rgba(200,162,74,0.22),
+      0 1px 0 rgba(0,0,0,0.6);
+  }
+  .section-head .gloss { font-style: italic; color: var(--parchment-dim); font-size: 17px; margin-top: 1vh; }
+
+  /* ---------- PART I · THE WORKS ---------- */
+  .opus {
+    display: grid;
+    grid-template-columns: 86px 1fr;
+    gap: 3vw;
+    padding: 4.8vh 1.5vw;
+    border-top: 1px solid rgba(200,162,74,0.22);
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.35s ease;
+  }
+  .opus:last-of-type { border-bottom: 1px solid rgba(200,162,74,0.22); }
+  .opus:hover { background: rgba(232,200,118,0.05); }
+  .opus::after {
+    content: ''; position: absolute; top: 0; bottom: 0;
+    left: -40%; width: 30%;
+    background: linear-gradient(105deg, transparent, rgba(232,200,118,0.10), transparent);
+    transform: skewX(-18deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+  }
+  .opus:hover::after { left: 120%; }
+
+  .opus .medallion {
+    width: 64px; height: 64px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; font-size: 19px; color: var(--gold-bright);
+    box-shadow: 0 0 14px rgba(200,162,74,0.25), inset 0 0 10px rgba(200,162,74,0.15);
+    position: relative;
+  }
+  .opus .medallion::before {
+    content: ''; position: absolute; inset: -7px;
+    border: 1px dashed rgba(200,162,74,0.4);
+    border-radius: 50%;
+    transition: transform 0.9s ease;
+  }
+  .opus:hover .medallion::before { transform: rotate(120deg); }
+
+  .opus h3 {
+    font-family: 'Cinzel', serif; font-weight: 500;
+    font-size: clamp(24px, 3.4vw, 40px);
+    letter-spacing: 0.1em; color: var(--parchment);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+    display: inline-flex; align-items: baseline; gap: 0.5em;
+  }
+  .opus:hover h3 {
+    color: var(--gold-bright);
+    text-shadow: 0 0 18px rgba(232,200,118,0.5);
+  }
+  .opus h3 .go {
+    font-size: 0.55em; color: var(--gold-bright);
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .opus:hover h3 .go { opacity: 1; transform: none; }
+  .opus .desc { font-style: italic; color: var(--parchment-dim); font-size: 17px; margin-top: 6px; }
+  .opus .materials {
+    font-family: 'Cinzel', serif; font-size: 11px;
+    letter-spacing: 0.28em; color: var(--gold); margin-top: 12px;
+  }
+  .opus .materials .pip { color: var(--ember); margin: 0 6px; }
+
+  /* ---------- PART II · THE CRAFT ---------- */
+  .artes { max-width: 680px; margin: 0 auto; columns: 2; column-gap: 5vw; }
+  .ars { break-inside: avoid; padding: 1.9vh 0; text-align: center; }
+  .ars .pigment {
+    display: inline-block; width: 9px; height: 9px;
+    border-radius: 50%; margin-right: 10px;
+    vertical-align: 2px;
+    box-shadow: 0 0 8px currentColor;
+    transition: transform 0.3s ease;
+  }
+  .ars:hover .pigment { transform: scale(1.6); }
+  .ars .name {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(17px, 2.1vw, 23px);
+    letter-spacing: 0.14em; color: var(--parchment);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+  }
+  .ars:hover .name { color: var(--gold-bright); text-shadow: 0 0 14px rgba(232,200,118,0.5); }
+  .ars .role { font-style: italic; font-size: 15px; color: var(--parchment-dim); }
+
+  /* ---------- PART III · THE MUSES (gilded talismans) ---------- */
+  .posters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 3.2vw;
+    perspective: 1100px;
+  }
+  .poster {
+    aspect-ratio: 2 / 3;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(200,162,74,0.45);
+    box-shadow:
+      inset 0 0 0 3px var(--abyss),
+      inset 0 0 0 4px rgba(200,162,74,0.5),
+      0 18px 36px -18px rgba(0,0,0,0.9),
+      0 0 24px -8px rgba(200,162,74,0.25);
+    background-size: 300% 300%;
+    animation: posterlife 18s ease-in-out infinite alternate;
+    transition: box-shadow 0.35s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 22px;
+    isolation: isolate;
+  }
+  @keyframes posterlife { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+  .poster:hover {
+    box-shadow:
+      inset 0 0 0 3px var(--abyss),
+      inset 0 0 0 4px var(--gold-bright),
+      0 26px 50px -16px rgba(0,0,0,0.95),
+      0 0 36px -6px rgba(232,200,118,0.5);
+  }
+  .poster::before {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+  .poster::after {
+    content: ''; position: absolute; top: -20%; bottom: -20%;
+    left: -60%; width: 45%;
+    background: linear-gradient(100deg, transparent, rgba(232,200,118,0.18), transparent);
+    transform: skewX(-16deg); z-index: 2;
+    transition: left 0.8s ease;
+    pointer-events: none;
+  }
+  .poster:hover::after { left: 130%; }
+  .poster .watermark {
+    position: absolute; top: 2%; left: 50%; transform: translateX(-50%);
+    font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: 9em; line-height: 1;
+    color: rgba(232,200,118,0.10);
+    z-index: 0; pointer-events: none;
+  }
+  .poster .ribbon {
+    position: absolute; top: 16px; left: -34px;
+    transform: rotate(-45deg);
+    background: var(--gold);
+    color: var(--abyss);
+    font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.32em; text-align: center;
+    width: 130px; padding: 5px 0 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    z-index: 3;
+  }
+  .poster h3 {
+    font-family: 'Cinzel', serif; font-weight: 500;
+    font-size: clamp(19px, 2.3vw, 26px);
+    letter-spacing: 0.08em; color: var(--gold-bright);
+    text-shadow: 0 0 14px rgba(232,200,118,0.4), 0 2px 8px rgba(0,0,0,0.8);
+    position: relative; z-index: 2;
+  }
+  .poster p {
+    font-style: italic; font-size: 14.5px;
+    color: rgba(217,201,163,0.85);
+    margin-top: 6px;
+    position: relative; z-index: 2;
+  }
+  .poster-killbill  { background-image: linear-gradient(160deg, #0d0a04, #8a6a1c 52%, #0d0a04 110%); }
+  .poster-pulp      { background-image: linear-gradient(160deg, #120812, var(--tyrian) 55%, #2a0f14 115%); }
+  .poster-inter     { background-image: linear-gradient(160deg, #04080f, var(--lapis) 58%, #081626 115%); }
+  .poster-rahman    { background-image: linear-gradient(160deg, #1c0d03, var(--saffron) 55%, #5e2c12 115%); }
+  .poster-acdc      { background-image: linear-gradient(160deg, #100404, var(--blood) 60%, #1c0606 115%); }
+  .poster-beatles   { background-image: linear-gradient(160deg, #06110e, var(--verdigris) 55%, #11231c 118%); }
+
+  /* ---------- PART IV · THE LETTER ---------- */
+  .epistle { text-align: center; }
+  .epistle .invite {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(21px, 3.4vw, 38px);
+    letter-spacing: 0.12em; color: var(--parchment);
+    max-width: 720px; margin: 0 auto; line-height: 1.5;
+  }
+  .epistle .invite em {
+    font-style: normal; color: var(--gold-bright);
+    text-shadow: 0 0 16px rgba(232,200,118,0.45);
+  }
+  .contact-row {
+    margin-top: 7vh;
+    display: flex; justify-content: center; gap: 3.6em; flex-wrap: wrap;
+  }
+  .contact-row a {
+    font-family: 'Cinzel', serif; font-size: 14px;
+    letter-spacing: 0.32em; color: var(--parchment);
+    border-bottom: 1px solid var(--gold);
+    padding-bottom: 5px;
+    transition: color 0.25s ease, text-shadow 0.25s ease, letter-spacing 0.25s ease;
+  }
+  .contact-row a:hover {
+    color: var(--gold-bright);
+    text-shadow: 0 0 14px rgba(232,200,118,0.5);
+    letter-spacing: 0.4em;
+  }
+
+  .seal {
+    width: 86px; height: 86px;
+    margin: 9vh auto 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #a8442f, var(--blood) 55%, #3d130d 100%);
+    box-shadow:
+      inset 0 3px 6px rgba(255,200,150,0.25),
+      inset 0 -4px 8px rgba(0,0,0,0.5),
+      0 0 26px -4px rgba(122,42,31,0.8);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(232,200,118,0.9);
+    font-family: 'Cinzel', serif; font-size: 26px;
+    transform: rotate(-6deg);
+    transition: transform 0.3s ease;
+    position: relative;
+  }
+  .seal::before {
+    content: ''; position: absolute; inset: 8px;
+    border: 1px solid rgba(232,200,118,0.35); border-radius: 50%;
+  }
+  .seal:hover { transform: rotate(0deg) scale(1.06); }
+  .ps { margin-top: 5vh; font-style: italic; font-size: 16px; color: var(--parchment-dim); }
+
+  /* ---------- FOOTER ---------- */
+  footer { text-align: center; padding: 11vh 6vw 8vh; }
+  .flourish.small { width: min(50%, 300px); margin-bottom: 3.5vh; }
+  footer .finis {
+    font-family: 'Cinzel', serif; font-size: 13px;
+    letter-spacing: 0.6em; color: var(--parchment-dim);
+  }
+  footer .colophon { margin-top: 2vh; font-style: italic; font-size: 13.5px; color: var(--parchment-dim); opacity: 0.8; }
+
+  /* ---------- REVEAL (gated behind html.js) ---------- */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .js .reveal.visible { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal, .js .loc-reveal { opacity: 1; transform: none; filter: none; letter-spacing: inherit; transition: none; }
+    .fresco .underpaint, .fresco .smoke, .rune-ring, .descend .chev,
+    .js .fresco img.loaded, .poster { animation: none !important; }
+    #dust { display: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 17px; }
+    .opus { grid-template-columns: 56px 1fr; }
+    .opus .medallion { width: 48px; height: 48px; font-size: 15px; }
+    .artes { columns: 1; }
+    /* one-line swipeable nav for in-app browsers */
+    nav.frieze {
+      gap: 1.6em; font-size: 10.5px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: flex-start;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    nav.frieze::-webkit-scrollbar { display: none; }
+    nav.frieze a { white-space: nowrap; flex: 0 0 auto; }
+    nav.frieze a:first-child { margin-left: auto; }
+    nav.frieze a:last-child { margin-right: auto; }
+    .contact-row { gap: 2em; }
+    .provenance { display: none; }
+    .posters { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .poster { padding: 14px; }
+    .poster .watermark { font-size: 5.5em; }
+    .rune-ring { opacity: 0.1; }
+    .frame { inset: 7px; }
+    .frame::before { inset: 3px; }
+    /* calm the big animated layers on small screens — battery & jank */
+    .fresco .smoke { animation: none; opacity: 0.7; }
+    header.scene { padding: 11vh 6vw 10vh; }
+    section.scene { padding: 10vh 0 5vh; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#works">Skip to content</a>
+<div id="progress" aria-hidden="true"></div>
+<div class="patina" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true"></div>
+<canvas id="dust" aria-hidden="true"></canvas>
+
+<nav class="frieze" aria-label="Sections">
+  <a href="#works">I · The Works</a>
+  <a href="#craft">II · The Craft</a>
+  <a href="#muses">III · The Muses</a>
+  <a href="#letter">IV · The Letter</a>
+</nav>
+
+<!-- ============ TITLE ============ -->
+<header class="scene">
+  <div class="fresco" aria-hidden="true">
+    <!-- primary artwork: pure CSS, alive without any network or JS -->
+    <div class="underpaint" style="background:
+      radial-gradient(ellipse 55% 70% at 50% 0%, rgba(232,200,118,0.22), transparent 65%),
+      radial-gradient(ellipse 40% 35% at 28% 55%, rgba(212,118,44,0.16), transparent 70%),
+      radial-gradient(ellipse 45% 40% at 74% 40%, rgba(61,106,138,0.14), transparent 70%),
+      radial-gradient(ellipse 35% 30% at 60% 80%, rgba(122,42,31,0.18), transparent 70%);"></div>
+    <div class="smoke"></div>
+    <img alt="" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer"
+      src="https://commons.wikimedia.org/wiki/Special:FilePath/Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg?width=1000"
+      data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Thomas_Cole_-_The_Consummation_of_Empire_-_WGA05140.jpg?width=1000" />
+    <div class="glaze"></div>
+  </div>
+  <svg class="rune-ring" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true">
+    <circle cx="100" cy="100" r="96" stroke-width="0.6"/>
+    <circle cx="100" cy="100" r="78" stroke-width="0.4" stroke-dasharray="2 5"/>
+    <circle cx="100" cy="100" r="88" stroke-width="0.3"/>
+    <g stroke-width="0.8">
+      <path d="M100 2 v8"/><path d="M100 190 v8"/><path d="M2 100 h8"/><path d="M190 100 h8"/>
+      <path d="M30 30 l6 6"/><path d="M164 164 l6 6"/><path d="M170 30 l-6 6"/><path d="M36 164 l-6 6"/>
+    </g>
+  </svg>
+  <span class="provenance">after Thomas Cole — The Consummation of Empire, 1836</span>
+
+  <div class="inner">
+    <div class="epigraph reveal">Self-taught · Developer</div>
+    <h1 class="loc-reveal" id="the-name"><span class="word">ROHITH</span><span class="dot">·</span><span class="word">ILLURI</span></h1>
+
+    <div class="flourish reveal" aria-hidden="true">
+      <span class="line"></span><span class="gem"></span><span class="line"></span>
+    </div>
+
+    <div class="motto reveal">DEEDS · NOT · WORDS</div>
+    <div class="motto-gloss reveal">facta non verba</div>
+
+    <div class="intro reveal">
+      <p><span class="first-words">Builder of small, deliberate software.</span><br/>
+      No degree on the wall — only the work below, each piece learned by
+      making it. Four parts follow. Nothing for show that is not also for use.</p>
+    </div>
+
+    <div class="descend reveal">DESCEND<span class="chev"></span></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ PART I · THE WORKS ============ -->
+  <section id="works" class="scene">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 50% 45% at 22% 35%, rgba(61,106,138,0.20), transparent 70%),
+        radial-gradient(ellipse 45% 40% at 78% 60%, rgba(200,162,74,0.16), transparent 70%),
+        radial-gradient(ellipse 35% 30% at 55% 20%, rgba(232,200,118,0.10), transparent 70%);"></div>
+      <div class="smoke"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Sanzio_01.jpg?width=1000"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg?width=1000" />
+      <div class="glaze"></div>
+    </div>
+    <span class="provenance">after Raphael — The School of Athens, c. 1511</span>
+
+    <div class="inner page">
+      <div class="section-head">
+        <div class="numeral reveal">PART I</div>
+        <h2 class="loc-reveal">THE WORKS</h2>
+        <div class="gloss reveal">what was built</div>
+      </div>
+
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">I</span>
+          <div>
+            <h3>CRAVE <span class="go">⟶</span></h3>
+            <div class="desc">A marketplace for food — ordering, fulfilment, the whole road from hunger to table.</div>
+            <div class="materials">React<span class="pip">·</span>Node<span class="pip">·</span>PostgreSQL</div>
+          </div>
+        </div>
+      </a>
+
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">II</span>
+          <div>
+            <h3>CRYPTOAPP <span class="go">⟶</span></h3>
+            <div class="desc">Live markets rendered as they move — prices streaming, charts breathing.</div>
+            <div class="materials">React<span class="pip">·</span>WebSocket</div>
+          </div>
+        </div>
+      </a>
+
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">III</span>
+          <div>
+            <h3>TORONTO <span class="go">⟶</span></h3>
+            <div class="desc">A city read through its data — patterns surfaced from the civic record.</div>
+            <div class="materials">Python</div>
+          </div>
+        </div>
+      </a>
+
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">IV</span>
+          <div>
+            <h3>NNETS <span class="go">⟶</span></h3>
+            <div class="desc">Neural networks built from first principles — no framework, only the mathematics.</div>
+            <div class="materials">Python<span class="pip">·</span>Micrograd</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ PART II · THE CRAFT ============ -->
+  <section id="craft" class="scene">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 50% 45% at 72% 42%, rgba(212,118,44,0.20), transparent 70%),
+        radial-gradient(ellipse 45% 40% at 25% 60%, rgba(122,42,31,0.20), transparent 70%),
+        radial-gradient(ellipse 30% 25% at 50% 25%, rgba(232,200,118,0.12), transparent 70%);"></div>
+      <div class="smoke"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/La_fragua_de_Vulcano_(Vel%C3%A1zquez).jpg?width=1000"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Diego_Vel%C3%A1zquez_-_The_Forge_of_Vulcan_-_WGA24447.jpg?width=1000" />
+      <div class="glaze"></div>
+    </div>
+    <span class="provenance">after Velázquez — The Forge of Vulcan, 1630</span>
+
+    <div class="inner page">
+      <div class="section-head">
+        <div class="numeral reveal">PART II</div>
+        <h2 class="loc-reveal">THE CRAFT</h2>
+        <div class="gloss reveal">tools of the trade</div>
+      </div>
+
+      <div class="artes">
+        <div class="ars reveal"><span class="pigment" style="background:var(--saffron);color:var(--saffron)"></span><span class="name">JAVASCRIPT</span><div class="role">the mother tongue</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--lapis);color:var(--lapis)"></span><span class="name">REACT</span><div class="role">the face of things</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--ember);color:var(--ember)"></span><span class="name">NODE.JS</span><div class="role">the engine room</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--verdigris);color:var(--verdigris)"></span><span class="name">PYTHON</span><div class="role">for thinking aloud</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--lapis);color:var(--lapis)"></span><span class="name">POSTGRESQL</span><div class="role">keeper of records</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--tyrian);color:var(--tyrian)"></span><span class="name">DOCKER</span><div class="role">the vessel</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--blood);color:var(--blood)"></span><span class="name">AWS</span><div class="role">the territory</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--gold);color:var(--gold)"></span><span class="name">GRAPHQL</span><div class="role">the negotiator</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PART III · THE MUSES ============ -->
+  <section id="muses" class="scene">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 50% 45% at 30% 48%, rgba(74,138,120,0.18), transparent 70%),
+        radial-gradient(ellipse 45% 40% at 74% 38%, rgba(110,58,100,0.18), transparent 70%),
+        radial-gradient(ellipse 35% 30% at 55% 75%, rgba(200,162,74,0.12), transparent 70%);"></div>
+      <div class="smoke"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Sandro_Botticelli_-_La_Primavera_-_Google_Art_Project.jpg?width=1000"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Botticelli-primavera.jpg?width=1000" />
+      <div class="glaze"></div>
+    </div>
+    <span class="provenance">after Botticelli — Primavera, c. 1480</span>
+
+    <div class="inner page">
+      <div class="section-head">
+        <div class="numeral reveal">PART III</div>
+        <h2 class="loc-reveal">THE MUSES</h2>
+        <div class="gloss reveal">films &amp; sound that shaped the hand</div>
+      </div>
+
+      <div class="posters">
+        <div class="poster poster-killbill reveal" data-tilt>
+          <span class="ribbon">FILM</span>
+          <span class="watermark">K</span>
+          <h3>KILL BILL</h3>
+          <p>style as substance</p>
+        </div>
+        <div class="poster poster-pulp reveal" data-tilt>
+          <span class="ribbon">FILM</span>
+          <span class="watermark">P</span>
+          <h3>PULP FICTION</h3>
+          <p>structure is optional</p>
+        </div>
+        <div class="poster poster-inter reveal" data-tilt>
+          <span class="ribbon">FILM</span>
+          <span class="watermark">I</span>
+          <h3>INTERSTELLAR</h3>
+          <p>scope, earned</p>
+        </div>
+        <div class="poster poster-rahman reveal" data-tilt>
+          <span class="ribbon">SOUND</span>
+          <span class="watermark">R</span>
+          <h3>A.R. RAHMAN</h3>
+          <p>the score beneath everything</p>
+        </div>
+        <div class="poster poster-acdc reveal" data-tilt>
+          <span class="ribbon">SOUND</span>
+          <span class="watermark">A</span>
+          <h3>AC/DC</h3>
+          <p>ship it loud</p>
+        </div>
+        <div class="poster poster-beatles reveal" data-tilt>
+          <span class="ribbon">SOUND</span>
+          <span class="watermark">B</span>
+          <h3>THE BEATLES</h3>
+          <p>the fundamentals</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PART IV · THE LETTER ============ -->
+  <section id="letter" class="scene epistle">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 50% 45% at 58% 42%, rgba(217,145,42,0.18), transparent 70%),
+        radial-gradient(ellipse 40% 35% at 28% 60%, rgba(200,162,74,0.16), transparent 70%),
+        radial-gradient(ellipse 30% 25% at 70% 75%, rgba(122,42,31,0.14), transparent 70%);"></div>
+      <div class="smoke"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Johannes_Vermeer_-_Girl_Reading_a_Letter_at_an_Open_Window_-_Google_Art_Project.jpg?width=1000"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Jan_Vermeer_van_Delft_003.jpg?width=1000" />
+      <div class="glaze"></div>
+    </div>
+    <span class="provenance">after Vermeer — Girl Reading a Letter, c. 1659</span>
+
+    <div class="inner page">
+      <div class="section-head">
+        <div class="numeral reveal">PART IV</div>
+        <h2 class="loc-reveal">THE LETTER</h2>
+        <div class="gloss reveal">write to me</div>
+      </div>
+
+      <div class="invite reveal">EVERY GOOD COLLABORATION<br/>BEGAN AS <em>A LETTER.</em></div>
+
+      <div class="contact-row reveal">
+        <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:rohith.illuri@gmail.com">Email</a>
+        <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
+      </div>
+
+      <a class="seal reveal" href="mailto:rohith.illuri@gmail.com" aria-label="Send an email">✦</a>
+      <div class="ps reveal">P.S. — the muses are always open to recommendations.</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="flourish small reveal" aria-hidden="true">
+    <span class="line"></span><span class="gem"></span><span class="line"></span>
+  </div>
+  <div class="finis reveal">THE END · MMXXVI</div>
+  <div class="colophon reveal">wrought in HTML &amp; CSS — no frameworks were harmed</div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduceMotion = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || false;
+
+  /* ---------- reveal on scroll, with no-JS and broken-observer failsafes ---------- */
+  var targets = document.querySelectorAll('.reveal, .loc-reveal');
+  function showAll() { targets.forEach(function (el) { el.classList.add('visible'); }); }
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    showAll();
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    targets.forEach(function (el) { io.observe(el); });
+    setTimeout(showAll, 2500); /* failsafe for webviews with broken observers */
+  }
+
+  /* ---------- museum paintings: fade in on load, walk the fallback chain ---------- */
+  document.querySelectorAll('.fresco img').forEach(function (img) {
+    function ok() { img.classList.add('loaded'); }
+    img.addEventListener('load', ok);
+    img.addEventListener('error', function () {
+      var alt = img.getAttribute('data-fallback');
+      if (alt) { img.removeAttribute('data-fallback'); img.src = alt; }
+      else { img.remove(); } /* the CSS underpaint remains — never a gap */
+    });
+    if (img.complete && img.naturalWidth > 0) ok();
+  });
+
+  /* ---------- gilt thread scroll progress ---------- */
+  (function progress() {
+    var bar = document.getElementById('progress');
+    if (!bar) return;
+    var ticking = false;
+    function update() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? h.scrollTop / max : 0) + ')';
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking && window.requestAnimationFrame) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+  })();
+
+  /* ---------- nav: highlight the part being read ---------- */
+  (function activeNav() {
+    if (!('IntersectionObserver' in window)) return;
+    var links = {};
+    document.querySelectorAll('nav.frieze a[href^="#"]').forEach(function (a) {
+      links[a.getAttribute('href').slice(1)] = a;
+    });
+    var nio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var link = links[e.target.id];
+        if (link && e.isIntersecting) {
+          Object.keys(links).forEach(function (k) { links[k].classList.remove('active'); });
+          link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-30% 0px -55% 0px' });
+    Object.keys(links).forEach(function (id) {
+      var sec = document.getElementById(id);
+      if (sec) nio.observe(sec);
+    });
+  })();
+
+  /* ---------- rising embers ---------- */
+  (function embers() {
+    if (reduceMotion || !window.requestAnimationFrame) return;
+    var canvas = document.getElementById('dust');
+    if (!canvas) return;
+    var ctx = canvas.getContext && canvas.getContext('2d');
+    if (!ctx) return;
+    var w, h, motes = [];
+    var COUNT = Math.min(46, Math.floor(window.innerWidth / 28));
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    function spawn(randomY) {
+      var warm = Math.random() < 0.3;
+      return {
+        x: Math.random() * w,
+        y: randomY ? Math.random() * h : h + 6,
+        r: 0.6 + Math.random() * 1.8,
+        vy: 0.15 + Math.random() * 0.38,
+        drift: 0.4 + Math.random() * 0.9,
+        phase: Math.random() * Math.PI * 2,
+        a: 0.25 + Math.random() * 0.5,
+        color: warm ? '#d4762c' : '#e8c876'
+      };
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    for (var i = 0; i < COUNT; i++) motes.push(spawn(true));
+    var t = 0, running = true;
+    document.addEventListener('visibilitychange', function () { running = !document.hidden; });
+    (function tick() {
+      if (running) {
+        t += 0.01;
+        ctx.clearRect(0, 0, w, h);
+        motes.forEach(function (m, idx) {
+          m.y -= m.vy;
+          m.x += Math.sin(t * 1.4 + m.phase) * m.drift * 0.3;
+          if (m.y < -8) motes[idx] = spawn(false);
+          ctx.globalAlpha = m.a * (0.7 + 0.3 * Math.sin(t * 2 + m.phase));
+          ctx.fillStyle = m.color;
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+      requestAnimationFrame(tick);
+    })();
+  })();
+
+  /* ---------- talisman tilt ---------- */
+  (function tilt() {
+    if (reduceMotion || !window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+    document.querySelectorAll('[data-tilt]').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        var r = card.getBoundingClientRect();
+        var rx = ((e.clientY - r.top) / r.height - 0.5) * -7;
+        var ry = ((e.clientX - r.left) / r.width - 0.5) * 9;
+        card.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateZ(8px)';
+      });
+      card.addEventListener('mouseleave', function () { card.style.transform = ''; });
+    });
+  })();
+})();
+</script>
+</body>
+</html>
