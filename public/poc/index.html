@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ROHITH ILLURI — A Portfolio in Five Chapters</title>
-<meta name="description" content="Self-taught developer. Presented in five chapters." />
+<title>Rohith Illuri — Portfolio</title>
+<meta name="description" content="Self-taught developer. Facta non verba." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Oswald:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --noir: #0a0908;
-    --bone: #ede3d0;
-    --kill-yellow: #f2c230;
-    --blood: #c1121f;
-    --smoke: #6b655c;
-    --letterbox: 7vh;
+    --marble: #ede7dc;
+    --marble-deep: #e3dbcc;
+    --ink: #2b251c;
+    --ink-soft: #5a5142;
+    --gold: #9c7a2f;
+    --terracotta: #a0452f;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,622 +23,501 @@
   html { scroll-behavior: smooth; }
 
   body {
-    background: var(--noir);
-    color: var(--bone);
-    font-family: 'Oswald', sans-serif;
-    overflow-x: hidden;
-    /* aged print: slight warmth, lifted blacks */
-    cursor: crosshair;
+    background-color: var(--marble);
+    /* subtle marble veining */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.02' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.42 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23m)'/%3E%3C/svg%3E");
+    color: var(--ink);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.65;
   }
 
-  ::selection { background: var(--kill-yellow); color: var(--noir); }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--gold); color: var(--marble); }
 
-  /* ---------- LETTERBOX ---------- */
-  .letterbox {
-    position: fixed;
-    left: 0; right: 0;
-    height: var(--letterbox);
-    background: #000;
-    z-index: 90;
-    pointer-events: none;
-  }
-  .letterbox.top { top: 0; }
-  .letterbox.bottom { bottom: 0; }
-
-  .letterbox .reel-meta {
-    position: absolute;
-    bottom: 1.6vh;
-    font-family: 'Special Elite', monospace;
-    font-size: 11px;
-    letter-spacing: 0.25em;
-    color: var(--smoke);
-    text-transform: uppercase;
-  }
-  .letterbox.top .reel-meta.left { left: 24px; }
-  .letterbox.top .reel-meta.right { right: 24px; }
-  .letterbox.bottom .reel-meta { top: 1.6vh; bottom: auto; }
-  .letterbox.bottom .reel-meta.left { left: 24px; }
-  .letterbox.bottom .reel-meta.right { right: 24px; }
-
-  /* ---------- FILM GRAIN + VIGNETTE ---------- */
-  #grain {
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    pointer-events: none;
-    opacity: 0.55;
-    mix-blend-mode: overlay;
-  }
-  .vignette {
-    position: fixed;
-    inset: 0;
-    z-index: 70;
-    pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
-  }
-  /* warm aged-print cast over everything */
-  .age-cast {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    pointer-events: none;
-    background: rgba(242, 194, 48, 0.03);
-    mix-blend-mode: soft-light;
+  /* ---------- GREEK KEY MEANDER BORDERS ---------- */
+  .meander {
+    height: 26px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='26' viewBox='0 0 40 26'%3E%3Cpath d='M0 5 H30 V21 H14 V13 H22' fill='none' stroke='%239c7a2f' stroke-width='2.5'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: 40px 26px;
+    opacity: 0.75;
   }
 
-  /* cigarette burn cue mark — top right, flashes periodically */
-  #cue-mark {
-    position: fixed;
-    top: calc(var(--letterbox) + 18px);
-    right: 26px;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(237,227,208,0.9) 0%, rgba(193,18,31,0.55) 55%, transparent 72%);
-    z-index: 85;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* ---------- SCENE BASICS ---------- */
-  .scene {
-    min-height: 100vh;
-    padding: calc(var(--letterbox) + 8vh) 8vw;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    position: relative;
-  }
-
-  .chapter-card {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--noir);
-    position: relative;
-    text-align: center;
-    padding: var(--letterbox) 6vw;
-  }
-  .chapter-card .chapter-label {
-    font-family: 'Special Elite', monospace;
-    font-size: clamp(12px, 1.4vw, 16px);
-    letter-spacing: 0.5em;
-    color: var(--kill-yellow);
-    text-transform: uppercase;
-    margin-bottom: 3vh;
-  }
-  .chapter-card h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(56px, 11vw, 160px);
-    line-height: 0.95;
-    color: var(--bone);
-    letter-spacing: 0.02em;
-  }
-  .chapter-card .rule {
-    width: 120px;
-    height: 2px;
-    background: var(--kill-yellow);
-    margin-top: 4vh;
-  }
-
-  /* ---------- TITLE SEQUENCE ---------- */
-  #title-seq {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    position: relative;
-    padding: var(--letterbox) 6vw;
-  }
-  #presents {
-    font-family: 'Special Elite', monospace;
-    font-size: clamp(12px, 1.4vw, 16px);
-    letter-spacing: 0.6em;
-    text-transform: uppercase;
-    color: var(--smoke);
-    margin-bottom: 4vh;
-  }
-  #the-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(64px, 14vw, 220px);
-    line-height: 0.9;
-    color: var(--kill-yellow);
-    text-shadow: 0 0 60px rgba(242, 194, 48, 0.25);
-    letter-spacing: 0.01em;
-  }
-  #tagline {
-    margin-top: 4vh;
-    font-family: 'Special Elite', monospace;
-    font-size: clamp(13px, 1.6vw, 18px);
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--bone);
-  }
-  #scroll-hint {
-    position: absolute;
-    bottom: calc(var(--letterbox) + 3vh);
-    font-family: 'Special Elite', monospace;
-    font-size: 11px;
-    letter-spacing: 0.4em;
-    color: var(--smoke);
-    text-transform: uppercase;
-    animation: hint-pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes hint-pulse {
-    0%, 100% { opacity: 0.35; }
-    50% { opacity: 0.9; }
-  }
-
-  /* ---------- THE WORK ---------- */
-  .work-item {
-    border-top: 1px solid rgba(237,227,208,0.14);
-    padding: 5vh 0;
-    display: grid;
-    grid-template-columns: 90px 1fr auto;
-    gap: 4vw;
-    align-items: baseline;
-  }
-  .work-item:last-child { border-bottom: 1px solid rgba(237,227,208,0.14); }
-  .work-num {
-    font-family: 'Special Elite', monospace;
-    color: var(--blood);
-    font-size: clamp(14px, 1.6vw, 18px);
-  }
-  .work-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(40px, 6vw, 84px);
-    line-height: 1;
-    color: var(--bone);
-    transition: color 0.25s ease, transform 0.25s ease;
-  }
-  .work-item:hover .work-title {
-    color: var(--kill-yellow);
-    transform: translateX(10px);
-  }
-  .work-desc {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 300;
-    font-size: clamp(13px, 1.4vw, 16px);
-    color: var(--smoke);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-align: right;
-  }
-  .work-item a { text-decoration: none; display: contents; }
-
-  /* ---------- THE CAST (skills as end credits) ---------- */
-  .credits {
-    max-width: 760px;
+  /* ---------- LAYOUT ---------- */
+  .page {
+    max-width: 880px;
     margin: 0 auto;
-    width: 100%;
+    padding: 0 6vw;
   }
-  .credit-row {
+
+  /* ---------- NAV FRIEZE ---------- */
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 2.4em;
+    padding: 26px 6vw 22px;
+    flex-wrap: wrap;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.32em;
+    color: var(--ink-soft);
+  }
+  nav a {
+    transition: color 0.25s ease;
+    padding-bottom: 3px;
+    border-bottom: 1px solid transparent;
+  }
+  nav a:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ---------- TITLE ---------- */
+  header {
+    text-align: center;
+    padding: 12vh 6vw 10vh;
+  }
+  .epigraph {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(11px, 1.3vw, 14px);
+    letter-spacing: 0.55em;
+    color: var(--gold);
+    margin-bottom: 5vh;
+  }
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: clamp(44px, 9vw, 110px);
+    line-height: 1.05;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    /* chiseled letterpress */
+    text-shadow: 0 1px 0 rgba(255,255,255,0.75), 0 -1px 1px rgba(43,37,28,0.35);
+  }
+  .motto {
+    margin-top: 4vh;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(14px, 1.8vw, 19px);
+    letter-spacing: 0.45em;
+    color: var(--terracotta);
+  }
+  .motto-gloss {
+    margin-top: 1.2vh;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- TRIGLYPH DIVIDER (Doric) ---------- */
+  .triglyph {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin: 2vh auto 0;
+  }
+  .triglyph span {
+    display: block;
+    width: 4px;
+    height: 26px;
+    background: var(--gold);
+    opacity: 0.8;
+  }
+
+  /* ---------- INTRO ---------- */
+  .intro {
+    max-width: 620px;
+    margin: 8vh auto 0;
+    font-size: 20px;
+    text-align: left;
+  }
+  .intro p:first-child::first-letter {
+    font-family: 'Cinzel', serif;
+    font-size: 3.4em;
+    float: left;
+    line-height: 0.82;
+    padding-right: 0.12em;
+    color: var(--terracotta);
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section { padding: 11vh 0 3vh; }
+
+  .section-head {
+    text-align: center;
+    margin-bottom: 8vh;
+  }
+  .section-head .numeral {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(13px, 1.5vw, 16px);
+    letter-spacing: 0.5em;
+    color: var(--gold);
+  }
+  .section-head h2 {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: clamp(34px, 5.5vw, 64px);
+    letter-spacing: 0.14em;
+    margin-top: 1.4vh;
+    color: var(--ink);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.7), 0 -1px 1px rgba(43,37,28,0.3);
+  }
+  .section-head .gloss {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 17px;
+    margin-top: 0.8vh;
+  }
+
+  /* ---------- I · OPERA (works as museum catalog) ---------- */
+  .opus {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4vw;
-    padding: 1.6vh 0;
+    grid-template-columns: 70px 1fr;
+    gap: 3vw;
+    padding: 4.5vh 0;
+    border-top: 1px solid rgba(43,37,28,0.18);
     align-items: baseline;
   }
-  .credit-role {
-    font-family: 'Special Elite', monospace;
-    font-size: clamp(11px, 1.2vw, 14px);
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--smoke);
-    text-align: right;
+  .opus:last-of-type { border-bottom: 1px solid rgba(43,37,28,0.18); }
+  .opus .num {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
   }
-  .credit-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(22px, 2.6vw, 34px);
-    color: var(--bone);
-    letter-spacing: 0.04em;
+  .opus h3 {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: clamp(26px, 3.6vw, 42px);
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    transition: color 0.3s ease;
   }
-
-  /* ---------- THE INFLUENCES ---------- */
-  .influences-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 3vw;
-    margin-top: 6vh;
+  .opus:hover h3 { color: var(--terracotta); }
+  .opus .desc {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 17px;
+    margin-top: 6px;
   }
-  .poster {
-    border: 1px solid rgba(237,227,208,0.18);
-    padding: 28px 22px 22px;
-    position: relative;
-    background: rgba(237,227,208,0.025);
-    transition: border-color 0.3s ease, background 0.3s ease;
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-  }
-  .poster:hover {
-    border-color: var(--kill-yellow);
-    background: rgba(242,194,48,0.05);
-  }
-  .poster .kind {
-    position: absolute;
-    top: 14px;
-    left: 22px;
-    font-family: 'Special Elite', monospace;
-    font-size: 10px;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--blood);
-  }
-  .poster h3 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(26px, 3vw, 40px);
-    line-height: 1;
-    color: var(--bone);
-  }
-  .poster p {
-    margin-top: 10px;
-    font-family: 'Oswald', sans-serif;
-    font-weight: 300;
-    font-size: 13px;
-    letter-spacing: 0.06em;
-    color: var(--smoke);
-    text-transform: uppercase;
+  .opus .materials {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--gold);
+    margin-top: 12px;
   }
 
-  /* ---------- FINAL SCENE ---------- */
-  #final {
+  /* ---------- II · ARTES ---------- */
+  .artes {
+    max-width: 640px;
+    margin: 0 auto;
+    columns: 2;
+    column-gap: 5vw;
+  }
+  .ars {
+    break-inside: avoid;
+    padding: 1.6vh 0;
     text-align: center;
-    align-items: center;
   }
-  #final .ends {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(48px, 9vw, 140px);
-    color: var(--bone);
-    line-height: 0.95;
+  .ars .name {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(18px, 2.2vw, 24px);
+    letter-spacing: 0.14em;
+    color: var(--ink);
   }
-  #final .ends em {
-    font-style: normal;
-    color: var(--kill-yellow);
+  .ars .role {
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- III · MVSAE (stelae) ---------- */
+  .stelae {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 3vw;
+  }
+  .stela {
+    border: 1px solid rgba(43,37,28,0.25);
+    border-top: 3px solid var(--gold);
+    background: rgba(255,255,255,0.28);
+    padding: 30px 26px 26px;
+    text-align: center;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+  }
+  .stela:hover {
+    border-color: var(--gold);
+    transform: translateY(-4px);
+  }
+  .stela .kind {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--terracotta);
+  }
+  .stela h3 {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: clamp(20px, 2.4vw, 27px);
+    letter-spacing: 0.08em;
+    margin-top: 14px;
+    color: var(--ink);
+  }
+  .stela p {
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  /* ---------- IV · EPISTVLA ---------- */
+  .epistula { text-align: center; }
+  .epistula .invite {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(22px, 3.4vw, 38px);
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.4;
   }
   .contact-row {
     margin-top: 7vh;
     display: flex;
-    gap: 5vw;
-    flex-wrap: wrap;
     justify-content: center;
+    gap: 4em;
+    flex-wrap: wrap;
   }
   .contact-row a {
-    font-family: 'Special Elite', monospace;
-    font-size: clamp(12px, 1.4vw, 15px);
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--bone);
-    text-decoration: none;
-    border-bottom: 1px solid var(--smoke);
-    padding-bottom: 6px;
-    transition: color 0.25s ease, border-color 0.25s ease;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 0.32em;
+    color: var(--ink);
+    border-bottom: 1px solid var(--gold);
+    padding-bottom: 5px;
+    transition: color 0.25s ease;
   }
-  .contact-row a:hover {
-    color: var(--kill-yellow);
-    border-color: var(--kill-yellow);
+  .contact-row a:hover { color: var(--gold); }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    text-align: center;
+    padding: 12vh 6vw 8vh;
   }
-  #final .copyright {
-    margin-top: 10vh;
-    font-family: 'Special Elite', monospace;
-    font-size: 10px;
-    letter-spacing: 0.35em;
-    color: var(--smoke);
-    text-transform: uppercase;
+  footer .finis {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.6em;
+    color: var(--ink-soft);
   }
 
-  /* section intro text under chapter headers */
-  .scene-note {
-    font-family: 'Special Elite', monospace;
-    font-size: clamp(12px, 1.3vw, 15px);
-    letter-spacing: 0.2em;
-    color: var(--smoke);
-    text-transform: uppercase;
-    margin-bottom: 6vh;
+  /* ---------- REVEAL ON SCROLL ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
   }
-  .scene-note .y { color: var(--kill-yellow); }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
 
-  /* ---------- REDUCED MOTION ---------- */
   @media (prefers-reduced-motion: reduce) {
-    #grain { display: none; }
-    #scroll-hint { animation: none; }
-    * { transition: none !important; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
   }
 
   @media (max-width: 640px) {
-    :root { --letterbox: 5vh; }
-    .work-item { grid-template-columns: 50px 1fr; }
-    .work-desc { grid-column: 2; text-align: left; margin-top: 6px; }
-    .credit-row { grid-template-columns: 1fr; gap: 2px; }
-    .credit-role { text-align: left; }
-    .letterbox .reel-meta { font-size: 9px; }
+    body { font-size: 17px; }
+    .opus { grid-template-columns: 1fr; gap: 8px; }
+    .artes { columns: 1; }
+    nav { gap: 1.4em; font-size: 11px; }
+    .contact-row { gap: 2.2em; }
   }
 </style>
 </head>
 <body>
 
-<!-- letterbox bars -->
-<div class="letterbox top">
-  <span class="reel-meta left">Reel 01 — Portfolio</span>
-  <span class="reel-meta right">2.39 : 1</span>
-</div>
-<div class="letterbox bottom">
-  <span class="reel-meta left">Rohith Illuri Pictures</span>
-  <span class="reel-meta right" id="timecode">00:00:00:00</span>
-</div>
+<div class="meander"></div>
 
-<!-- overlays -->
-<canvas id="grain"></canvas>
-<div class="vignette"></div>
-<div class="age-cast"></div>
-<div id="cue-mark"></div>
+<nav aria-label="Sections">
+  <a href="#opera">I · Opera</a>
+  <a href="#artes">II · Artes</a>
+  <a href="#musae">III · Mvsae</a>
+  <a href="#epistula">IV · Epistvla</a>
+</nav>
 
-<!-- ============ TITLE SEQUENCE ============ -->
-<section id="title-seq">
-  <div id="presents">Rohith Illuri Pictures Presents</div>
-  <h1 id="the-name">ROHITH<br/>ILLURI</h1>
-  <div id="tagline">A self-taught developer · in five chapters</div>
-  <div id="scroll-hint">▼ Roll film</div>
-</section>
+<header>
+  <div class="epigraph reveal">Self-taught · Developer</div>
+  <h1 class="reveal">ROHITH·ILLVRI</h1>
+  <div class="motto reveal">FACTA NON VERBA</div>
+  <div class="motto-gloss reveal">deeds, not words</div>
+  <div class="triglyph reveal" aria-hidden="true"><span></span><span></span><span></span></div>
 
-<!-- ============ CHAPTER ONE ============ -->
-<section class="chapter-card" data-chapter>
-  <div class="chapter-label">Chapter One</div>
-  <h2>THE WORK</h2>
-  <div class="rule"></div>
-</section>
-
-<section class="scene" id="work">
-  <div class="scene-note">Four pictures. <span class="y">No sequels needed.</span></div>
-
-  <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener"><div class="work-item" data-reveal>
-    <span class="work-num">No. 1</span>
-    <span class="work-title">CRAVE</span>
-    <span class="work-desc">Food marketplace · React, Node, Postgres</span>
-  </div></a>
-
-  <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener"><div class="work-item" data-reveal>
-    <span class="work-num">No. 2</span>
-    <span class="work-title">CRYPTOAPP</span>
-    <span class="work-desc">Live market dashboard · React, WebSocket</span>
-  </div></a>
-
-  <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener"><div class="work-item" data-reveal>
-    <span class="work-num">No. 3</span>
-    <span class="work-title">TORONTO</span>
-    <span class="work-desc">Urban data analysis · Python</span>
-  </div></a>
-
-  <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener"><div class="work-item" data-reveal>
-    <span class="work-num">No. 4</span>
-    <span class="work-title">NNETS</span>
-    <span class="work-desc">Neural nets from scratch · Micrograd</span>
-  </div></a>
-</section>
-
-<!-- ============ CHAPTER TWO ============ -->
-<section class="chapter-card" data-chapter>
-  <div class="chapter-label">Chapter Two</div>
-  <h2>THE CAST</h2>
-  <div class="rule"></div>
-</section>
-
-<section class="scene">
-  <div class="credits">
-    <div class="scene-note" style="text-align:center;">In order of appearance</div>
-    <div class="credit-row" data-reveal><span class="credit-role">Leading role</span><span class="credit-name">JAVASCRIPT</span></div>
-    <div class="credit-row" data-reveal><span class="credit-role">The interface</span><span class="credit-name">REACT</span></div>
-    <div class="credit-row" data-reveal><span class="credit-role">Behind the scenes</span><span class="credit-name">NODE.JS</span></div>
-    <div class="credit-row" data-reveal><span class="credit-role">The thinker</span><span class="credit-name">PYTHON</span></div>
-    <div class="credit-row" data-reveal><span class="credit-role">Keeper of records</span><span class="credit-name">POSTGRESQL</span></div>
-    <div class="credit-row" data-reveal><span class="credit-role">The container</span><span class="credit-name">DOCKER</span></div>
-    <div class="credit-row" data-reveal><span class="credit-role">On location</span><span class="credit-name">AWS</span></div>
+  <div class="intro reveal">
+    <p>Builder of small, deliberate software. No degree on the wall —
+    only the work below, each piece learned by making it. What follows is
+    arranged the old way: in four parts, carved plainly, nothing for show
+    that is not also for use.</p>
   </div>
-</section>
+</header>
 
-<!-- ============ CHAPTER THREE ============ -->
-<section class="chapter-card" data-chapter>
-  <div class="chapter-label">Chapter Three</div>
-  <h2>THE INFLUENCES</h2>
-  <div class="rule"></div>
-</section>
+<main class="page">
 
-<section class="scene">
-  <div class="scene-note">What plays in the background <span class="y">never stays in the background.</span></div>
-  <div class="influences-grid">
-    <div class="poster" data-reveal>
-      <span class="kind">Film</span>
-      <h3>KILL BILL</h3>
-      <p>Style as substance</p>
+  <!-- ============ I · OPERA ============ -->
+  <section id="opera">
+    <div class="section-head reveal">
+      <div class="numeral">PARS I</div>
+      <h2>OPERA</h2>
+      <div class="gloss">the works</div>
     </div>
-    <div class="poster" data-reveal>
-      <span class="kind">Film</span>
-      <h3>PULP FICTION</h3>
-      <p>Structure is optional</p>
-    </div>
-    <div class="poster" data-reveal>
-      <span class="kind">Film</span>
-      <h3>INTERSTELLAR</h3>
-      <p>Scope, earned</p>
-    </div>
-    <div class="poster" data-reveal>
-      <span class="kind">Sound</span>
-      <h3>A.R. RAHMAN</h3>
-      <p>The score underneath everything</p>
-    </div>
-    <div class="poster" data-reveal>
-      <span class="kind">Sound</span>
-      <h3>AC/DC</h3>
-      <p>Ship it loud</p>
-    </div>
-    <div class="poster" data-reveal>
-      <span class="kind">Sound</span>
-      <h3>THE BEATLES</h3>
-      <p>The fundamentals</p>
-    </div>
-  </div>
-</section>
 
-<!-- ============ FINAL SCENE ============ -->
-<section class="chapter-card" data-chapter>
-  <div class="chapter-label">The Final Chapter</div>
-  <h2>THE CONTACT</h2>
-  <div class="rule"></div>
-</section>
+    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+      <div class="opus reveal">
+        <span class="num">I</span>
+        <div>
+          <h3>CRAVE</h3>
+          <div class="desc">A marketplace for food — ordering, fulfilment, the whole road from hunger to table.</div>
+          <div class="materials">React · Node · PostgreSQL</div>
+        </div>
+      </div>
+    </a>
 
-<section class="scene" id="final">
-  <div class="ends" data-reveal>THIS IS WHERE<br/><em>YOU COME IN.</em></div>
-  <div class="contact-row" data-reveal>
-    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">GitHub</a>
-    <a href="mailto:rohith.illuri@gmail.com">Email</a>
-    <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
-  </div>
-  <div class="copyright">© MMXXVI · Shot entirely on HTML · No CDNs were harmed</div>
-</section>
+    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+      <div class="opus reveal">
+        <span class="num">II</span>
+        <div>
+          <h3>CRYPTOAPP</h3>
+          <div class="desc">Live markets rendered as they move — prices streaming, charts breathing.</div>
+          <div class="materials">React · WebSocket</div>
+        </div>
+      </div>
+    </a>
 
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+      <div class="opus reveal">
+        <span class="num">III</span>
+        <div>
+          <h3>TORONTO</h3>
+          <div class="desc">A city read through its data — patterns surfaced from the civic record.</div>
+          <div class="materials">Python</div>
+        </div>
+      </div>
+    </a>
+
+    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+      <div class="opus reveal">
+        <span class="num">IV</span>
+        <div>
+          <h3>NNETS</h3>
+          <div class="desc">Neural networks built from first principles — no framework, only the mathematics.</div>
+          <div class="materials">Python · Micrograd</div>
+        </div>
+      </div>
+    </a>
+  </section>
+
+  <!-- ============ II · ARTES ============ -->
+  <section id="artes">
+    <div class="section-head reveal">
+      <div class="numeral">PARS II</div>
+      <h2>ARTES</h2>
+      <div class="gloss">the craft</div>
+    </div>
+
+    <div class="artes">
+      <div class="ars reveal"><div class="name">JAVASCRIPT</div><div class="role">the mother tongue</div></div>
+      <div class="ars reveal"><div class="name">REACT</div><div class="role">the face of things</div></div>
+      <div class="ars reveal"><div class="name">NODE.JS</div><div class="role">the engine room</div></div>
+      <div class="ars reveal"><div class="name">PYTHON</div><div class="role">for thinking aloud</div></div>
+      <div class="ars reveal"><div class="name">POSTGRESQL</div><div class="role">keeper of records</div></div>
+      <div class="ars reveal"><div class="name">DOCKER</div><div class="role">the vessel</div></div>
+      <div class="ars reveal"><div class="name">AWS</div><div class="role">the territory</div></div>
+      <div class="ars reveal"><div class="name">GRAPHQL</div><div class="role">the negotiator</div></div>
+    </div>
+  </section>
+
+  <!-- ============ III · MVSAE ============ -->
+  <section id="musae">
+    <div class="section-head reveal">
+      <div class="numeral">PARS III</div>
+      <h2>MVSAE</h2>
+      <div class="gloss">the influences</div>
+    </div>
+
+    <div class="stelae">
+      <div class="stela reveal">
+        <div class="kind">Film</div>
+        <h3>KILL BILL</h3>
+        <p>style as substance</p>
+      </div>
+      <div class="stela reveal">
+        <div class="kind">Film</div>
+        <h3>PULP FICTION</h3>
+        <p>structure is optional</p>
+      </div>
+      <div class="stela reveal">
+        <div class="kind">Film</div>
+        <h3>INTERSTELLAR</h3>
+        <p>scope, earned</p>
+      </div>
+      <div class="stela reveal">
+        <div class="kind">Sound</div>
+        <h3>A.R. RAHMAN</h3>
+        <p>the score beneath everything</p>
+      </div>
+      <div class="stela reveal">
+        <div class="kind">Sound</div>
+        <h3>AC/DC</h3>
+        <p>ship it loud</p>
+      </div>
+      <div class="stela reveal">
+        <div class="kind">Sound</div>
+        <h3>THE BEATLES</h3>
+        <p>the fundamentals</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ IV · EPISTVLA ============ -->
+  <section id="epistula" class="epistula">
+    <div class="section-head reveal">
+      <div class="numeral">PARS IV</div>
+      <h2>EPISTVLA</h2>
+      <div class="gloss">write to me</div>
+    </div>
+
+    <div class="invite reveal">EVERY GOOD COLLABORATION<br/>BEGAN AS A LETTER.</div>
+
+    <div class="contact-row reveal">
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">GitHub</a>
+      <a href="mailto:rohith.illuri@gmail.com">Email</a>
+      <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="finis reveal">FINIS · MMXXVI</div>
+</footer>
+
+<div class="meander"></div>
+
 <script>
+  /* reveal on scroll — vanilla IntersectionObserver, no dependencies */
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------- FILM GRAIN (canvas noise, regenerated ~12fps like real grain) ---------- */
-  (function grain() {
-    if (reduceMotion) return;
-    const canvas = document.getElementById('grain');
-    const ctx = canvas.getContext('2d');
-    let w, h;
-    function resize() {
-      w = canvas.width = Math.floor(window.innerWidth / 2);
-      h = canvas.height = Math.floor(window.innerHeight / 2);
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    let last = 0;
-    function frame(t) {
-      if (t - last > 80) { // ~12fps — real film grain cadence, cheap on CPU
-        const img = ctx.createImageData(w, h);
-        const d = img.data;
-        for (let i = 0; i < d.length; i += 4) {
-          const v = Math.random() * 255;
-          d[i] = d[i + 1] = d[i + 2] = v;
-          d[i + 3] = 22;
-        }
-        ctx.putImageData(img, 0, 0);
-        last = t;
-      }
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  })();
-
-  /* ---------- CIGARETTE BURN cue mark — every ~14s, two quick flashes ---------- */
-  (function cueMark() {
-    if (reduceMotion) return;
-    const mark = document.getElementById('cue-mark');
-    function flash() {
-      gsap.timeline()
-        .to(mark, { opacity: 0.9, duration: 0.06 })
-        .to(mark, { opacity: 0, duration: 0.1 })
-        .to(mark, { opacity: 0.7, duration: 0.05 }, '+=0.18')
-        .to(mark, { opacity: 0, duration: 0.12 });
-      setTimeout(flash, 12000 + Math.random() * 6000);
-    }
-    setTimeout(flash, 6000);
-  })();
-
-  /* ---------- RUNNING TIMECODE in bottom letterbox ---------- */
-  (function timecode() {
-    const el = document.getElementById('timecode');
-    const start = performance.now();
-    function pad(n) { return String(n).padStart(2, '0'); }
-    setInterval(() => {
-      const ms = performance.now() - start;
-      const f = Math.floor((ms % 1000) / (1000 / 24));
-      const s = Math.floor(ms / 1000) % 60;
-      const m = Math.floor(ms / 60000) % 60;
-      const h2 = Math.floor(ms / 3600000);
-      el.textContent = pad(h2) + ':' + pad(m) + ':' + pad(s) + ':' + pad(f);
-    }, 1000 / 24);
-  })();
-
-  /* ---------- GSAP SCENES ---------- */
-  gsap.registerPlugin(ScrollTrigger);
-
-  if (!reduceMotion) {
-    /* Title sequence: hard cuts, not fades — Tarantino doesn't ease in */
-    const intro = gsap.timeline();
-    intro
-      .set('#presents, #the-name, #tagline, #scroll-hint', { opacity: 0 })
-      .to('#presents', { opacity: 1, duration: 0.05 }, 0.5)
-      .to('#the-name', { opacity: 1, duration: 0.05 }, 1.3)
-      .fromTo('#the-name', { scale: 1.12 }, { scale: 1, duration: 0.9, ease: 'power4.out' }, 1.3)
-      .to('#tagline', { opacity: 1, duration: 0.05 }, 2.1)
-      .to('#scroll-hint', { opacity: 1, duration: 0.4 }, 2.8);
-
-    /* Chapter cards: title slams in while pinned */
-    document.querySelectorAll('[data-chapter]').forEach((card) => {
-      const h = card.querySelector('h2');
-      const label = card.querySelector('.chapter-label');
-      const rule = card.querySelector('.rule');
-      gsap.timeline({
-        scrollTrigger: { trigger: card, start: 'top 60%' }
-      })
-        .from(label, { opacity: 0, duration: 0.05 })
-        .fromTo(h, { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'power4.out' }, 0.15)
-        .from(rule, { scaleX: 0, duration: 0.4, ease: 'power2.out' }, 0.4);
-    });
-
-    /* Content reveals: quick, no float — cut-style */
-    document.querySelectorAll('[data-reveal]').forEach((el) => {
-      gsap.from(el, {
-        opacity: 0,
-        y: 18,
-        duration: 0.45,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 88%' }
-      });
-    });
-
-    /* occasional 1-frame jitter on the whole film — projector gate weave */
-    (function gateWeave() {
-      function weave() {
-        gsap.timeline()
-          .set('body', { x: (Math.random() - 0.5) * 4, y: (Math.random() - 0.5) * 3 })
-          .set('body', { x: 0, y: 0 }, '+=0.04');
-        setTimeout(weave, 4000 + Math.random() * 5000);
-      }
-      setTimeout(weave, 3000);
-    })();
+  const targets = document.querySelectorAll('.reveal');
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    targets.forEach(el => el.classList.add('visible'));
   } else {
-    // reduced motion: everything visible, no animation
-    document.querySelectorAll('#presents, #the-name, #tagline').forEach(el => el.style.opacity = 1);
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    targets.forEach(el => io.observe(el));
   }
 </script>
 </body>
