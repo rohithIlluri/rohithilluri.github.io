@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<script>document.documentElement.className += ' js';</script>
 <style>
   :root {
     --marble: #ede7dc;
@@ -23,6 +24,7 @@
   html { scroll-behavior: smooth; }
 
   body {
+    overflow-x: hidden;
     background-color: var(--marble);
     /* subtle marble veining */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.02' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.42 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23m)'/%3E%3C/svg%3E");
@@ -85,13 +87,15 @@
   h1 {
     font-family: 'Cinzel', serif;
     font-weight: 500;
-    font-size: clamp(44px, 9vw, 110px);
-    line-height: 1.05;
+    font-size: clamp(34px, 9vw, 110px);
+    line-height: 1.15;
     letter-spacing: 0.08em;
     color: var(--ink);
     /* chiseled letterpress */
     text-shadow: 0 1px 0 rgba(255,255,255,0.75), 0 -1px 1px rgba(43,37,28,0.35);
   }
+  /* name set as two wrappable units so it breaks cleanly on narrow screens */
+  h1 span { display: inline-block; }
   .motto {
     margin-top: 4vh;
     font-family: 'Cinzel', serif;
@@ -309,13 +313,15 @@
     color: var(--ink-soft);
   }
 
-  /* ---------- REVEAL ON SCROLL ---------- */
-  .reveal {
+  /* ---------- REVEAL ON SCROLL ----------
+     hidden state only applies when JS is confirmed running (html.js),
+     so the page is never blank in JS-disabled previews */
+  .js .reveal {
     opacity: 0;
     transform: translateY(16px);
     transition: opacity 0.7s ease, transform 0.7s ease;
   }
-  .reveal.visible {
+  .js .reveal.visible {
     opacity: 1;
     transform: none;
   }
@@ -347,7 +353,7 @@
 
 <header>
   <div class="epigraph reveal">Self-taught · Developer</div>
-  <h1 class="reveal">ROHITH·ILLVRI</h1>
+  <h1 class="reveal"><span>ROHITH·</span><span>ILLVRI</span></h1>
   <div class="motto reveal">FACTA NON VERBA</div>
   <div class="motto-gloss reveal">deeds, not words</div>
   <div class="triglyph reveal" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -518,6 +524,8 @@
       });
     }, { threshold: 0.12 });
     targets.forEach(el => io.observe(el));
+    /* failsafe: some embedded webviews ship a broken observer */
+    setTimeout(() => targets.forEach(el => el.classList.add('visible')), 2500);
   }
 </script>
 </body>
