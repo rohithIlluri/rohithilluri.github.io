@@ -1,7 +1,7 @@
 /**
- * Test suite for the classical POC page (public/poc/index.html).
+ * Test suite for the portfolio site (site/index.html).
  *
- * Run:  node --test tests/poc/
+ * Run:  npm run test:poc
  *
  * Static checks parse the raw HTML/CSS; behavioral checks execute the
  * page's inline script inside jsdom. Network checks verify the painting
@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path';
 import { JSDOM } from 'jsdom';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const HTML_PATH = join(__dirname, '..', '..', 'public', 'poc', 'index.html');
+const HTML_PATH = join(__dirname, '..', '..', 'site', 'index.html');
 const html = readFileSync(HTML_PATH, 'utf8');
 
 const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/);
@@ -132,6 +132,28 @@ describe('script behavior (jsdom, scripts executed)', () => {
     const h1 = doc.getElementById('the-name');
     assert.equal(h1.textContent.replace(/\s/g, ''), 'ROHITH·ILLURI');
   });
+
+  test('sound toggle hides itself when WebAudio is unavailable (jsdom)', () => {
+    const btn = doc.getElementById('sound-toggle');
+    assert.ok(btn, 'sound toggle missing from DOM');
+    assert.equal(btn.style.display, 'none', 'button should hide without AudioContext');
+  });
+});
+
+describe('soundtrack', () => {
+  test('toggle is a real button, off by default, with an accessible label', () => {
+    const btn = sdoc.getElementById('sound-toggle');
+    assert.equal(btn.tagName, 'BUTTON');
+    assert.equal(btn.getAttribute('aria-pressed'), 'false');
+    assert.ok(btn.getAttribute('aria-label'));
+    assert.match(btn.textContent, /OFF/);
+  });
+
+  test('no audio element, no autoplay — sound is generative and gesture-gated', () => {
+    assert.equal(sdoc.querySelectorAll('audio, video').length, 0);
+    assert.ok(!html.includes('autoplay'), 'autoplay attribute found');
+    assert.ok(html.includes('AudioContext'), 'WebAudio engine missing');
+  });
 });
 
 describe('navigation', () => {
@@ -221,7 +243,7 @@ describe('motion posters', () => {
   });
 
   test('local card images exist on disk', () => {
-    const pocDir = join(__dirname, '..', '..', 'public', 'poc');
+    const pocDir = join(__dirname, '..', '..', 'site');
     let localCount = 0;
     for (const art of sdoc.querySelectorAll('.poster img.art')) {
       const src = art.getAttribute('src');
