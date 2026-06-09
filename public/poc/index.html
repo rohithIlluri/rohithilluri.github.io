@@ -4,19 +4,29 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Rohith Illuri — Portfolio</title>
-<meta name="description" content="Self-taught developer. Facta non verba." />
+<meta name="description" content="Self-taught developer. Deeds, not words." />
+<meta name="theme-color" content="#ece5d8" />
+<meta property="og:title" content="Rohith Illuri — Portfolio" />
+<meta property="og:description" content="Self-taught developer. Deeds, not words." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet" />
 <script>document.documentElement.className += ' js';</script>
 <style>
   :root {
-    --marble: #ede7dc;
-    --marble-deep: #e3dbcc;
+    --marble: #ece5d8;
+    --marble-deep: #ddd2bd;
     --ink: #2b251c;
     --ink-soft: #5a5142;
     --gold: #9c7a2f;
+    --gold-bright: #c9a227;
     --terracotta: #a0452f;
+    --pompeii: #c63a32;
+    --lapis: #26619c;
+    --verdigris: #3e8e7e;
+    --tyrian: #66305c;
+    --saffron: #d9912a;
+    --olive: #6b6f3f;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,7 +36,7 @@
   body {
     overflow-x: hidden;
     background-color: var(--marble);
-    /* subtle marble veining */
+    /* marble veining */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.02' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.42 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23m)'/%3E%3C/svg%3E");
     color: var(--ink);
     font-family: 'EB Garamond', Georgia, serif;
@@ -36,47 +46,130 @@
 
   a { color: inherit; text-decoration: none; }
   ::selection { background: var(--gold); color: var(--marble); }
+  :focus-visible { outline: 2px dotted var(--gold); outline-offset: 4px; }
 
-  /* ---------- GREEK KEY MEANDER BORDERS ---------- */
+  /* thin gold scrollbar */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--marble-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 5px; }
+
+  .skip-link {
+    position: absolute; left: -9999px; top: 0;
+    background: var(--ink); color: var(--marble);
+    padding: 10px 18px; z-index: 200; font-family: 'Cinzel', serif; font-size: 13px;
+  }
+  .skip-link:focus { left: 12px; top: 12px; }
+
+  /* ---------- SCROLL PROGRESS (gilt thread) ---------- */
+  #progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px; z-index: 120;
+    background: linear-gradient(90deg, var(--gold), var(--gold-bright), var(--saffron));
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+
+  /* ---------- GOLD DUST ---------- */
+  #dust {
+    position: fixed; inset: 0; z-index: 90;
+    pointer-events: none;
+  }
+
+  /* ---------- MEANDER (slowly marching) ---------- */
   .meander {
     height: 26px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='26' viewBox='0 0 40 26'%3E%3Cpath d='M0 5 H30 V21 H14 V13 H22' fill='none' stroke='%239c7a2f' stroke-width='2.5'/%3E%3C/svg%3E");
     background-repeat: repeat-x;
     background-size: 40px 26px;
-    opacity: 0.75;
+    opacity: 0.8;
+  }
+  .js .meander { animation: march 80s linear infinite; }
+  @keyframes march { to { background-position-x: 400px; } }
+
+  /* ---------- NAV FRIEZE ---------- */
+  nav.frieze {
+    position: sticky; top: 0; z-index: 110;
+    display: flex; justify-content: center; gap: 2.2em;
+    padding: 18px 6vw 14px;
+    flex-wrap: wrap;
+    font-family: 'Cinzel', serif;
+    font-size: 12px; letter-spacing: 0.3em;
+    color: var(--ink-soft);
+    background: color-mix(in srgb, var(--marble) 82%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(43,37,28,0.12);
+  }
+  nav.frieze a {
+    position: relative; padding: 4px 2px;
+    transition: color 0.25s ease;
+  }
+  nav.frieze a::after {
+    content: ''; position: absolute; left: 0; right: 100%; bottom: -2px;
+    height: 2px; background: var(--gold-bright);
+    transition: right 0.3s ease;
+  }
+  nav.frieze a:hover, nav.frieze a.active { color: var(--gold); }
+  nav.frieze a:hover::after, nav.frieze a.active::after { right: 0; }
+
+  /* ---------- FRESCO LAYERS (living paintings) ---------- */
+  .scene { position: relative; }
+  .fresco {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+  /* painted fallback — always present beneath the painting */
+  .fresco .underpaint {
+    position: absolute; inset: -5%;
+    opacity: 0.5;
+  }
+  .fresco img {
+    position: absolute; left: 50%; top: 50%;
+    min-width: 112%; min-height: 112%;
+    width: auto; height: auto;
+    transform: translate(-50%, -50%) scale(1);
+    object-fit: cover;
+    /* visible by default so paintings render even without JS */
+    opacity: var(--fresco-strength, 0.42);
+    filter: saturate(1.15) sepia(0.12);
+  }
+  .js .fresco img { opacity: 0; transition: opacity 2s ease; }
+  .js .fresco img.loaded { opacity: var(--fresco-strength, 0.42); }
+  .js .fresco img.loaded { animation: kenburns 48s ease-in-out infinite alternate; }
+  @keyframes kenburns {
+    from { transform: translate(-50%, -50%) scale(1); }
+    to   { transform: translate(-51.5%, -49%) scale(1.09); }
+  }
+  /* marble glaze so text always reads */
+  .fresco .glaze {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 70% at 50% 45%, transparent 0%, var(--marble) 95%),
+      linear-gradient(var(--marble) 0%, transparent 18%, transparent 82%, var(--marble) 100%);
+  }
+  /* provenance — tiny rotated caption on the right edge */
+  .provenance {
+    position: absolute; right: 10px; top: 50%;
+    transform: rotate(90deg) translateX(-50%);
+    transform-origin: right top;
+    font-style: italic; font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft); opacity: 0.65;
+    z-index: 2; white-space: nowrap;
+    pointer-events: none;
   }
 
   /* ---------- LAYOUT ---------- */
-  .page {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 0 6vw;
-  }
-
-  /* ---------- NAV FRIEZE ---------- */
-  nav {
-    display: flex;
-    justify-content: center;
-    gap: 2.4em;
-    padding: 26px 6vw 22px;
-    flex-wrap: wrap;
-    font-family: 'Cinzel', serif;
-    font-size: 12px;
-    letter-spacing: 0.32em;
-    color: var(--ink-soft);
-  }
-  nav a {
-    transition: color 0.25s ease;
-    padding-bottom: 3px;
-    border-bottom: 1px solid transparent;
-  }
-  nav a:hover { color: var(--gold); border-bottom-color: var(--gold); }
+  .page { max-width: 920px; margin: 0 auto; padding: 0 6vw; }
 
   /* ---------- TITLE ---------- */
-  header {
+  header.scene {
     text-align: center;
-    padding: 12vh 6vw 10vh;
+    padding: 13vh 6vw 11vh;
   }
+  header .inner { position: relative; z-index: 2; }
   .epigraph {
     font-family: 'Cinzel', serif;
     font-size: clamp(11px, 1.3vw, 14px);
@@ -86,447 +179,813 @@
   }
   h1 {
     font-family: 'Cinzel', serif;
-    font-weight: 500;
-    font-size: clamp(34px, 9vw, 110px);
+    font-weight: 600;
+    font-size: clamp(34px, 9vw, 112px);
     line-height: 1.15;
     letter-spacing: 0.08em;
     color: var(--ink);
-    /* chiseled letterpress */
     text-shadow: 0 1px 0 rgba(255,255,255,0.75), 0 -1px 1px rgba(43,37,28,0.35);
   }
-  /* name set as two wrappable units so it breaks cleanly on narrow screens */
-  h1 span { display: inline-block; }
+  h1 .word { display: inline-block; }
+  h1 .dot { color: var(--terracotta); }
+  /* chisel reveal — letters rise as if struck */
+  .js h1 .ch {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.35em) rotate(2deg);
+    animation: chisel 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+    animation-delay: calc(var(--i) * 70ms + 200ms);
+  }
+  @keyframes chisel {
+    to { opacity: 1; transform: none; }
+  }
+
+  .motto-row {
+    margin-top: 4.5vh;
+    display: flex; align-items: center; justify-content: center;
+    gap: 18px;
+  }
+  .laurel { width: clamp(46px, 7vw, 80px); height: auto; color: var(--gold); opacity: 0.9; }
+  .laurel.flip { transform: scaleX(-1); }
+  .js .laurel { animation: sway 7s ease-in-out infinite alternate; transform-origin: bottom center; }
+  .js .laurel.flip { animation-name: swayflip; }
+  @keyframes sway     { from { transform: rotate(-2deg); }            to { transform: rotate(2.5deg); } }
+  @keyframes swayflip { from { transform: scaleX(-1) rotate(-2deg); } to { transform: scaleX(-1) rotate(2.5deg); } }
   .motto {
-    margin-top: 4vh;
     font-family: 'Cinzel', serif;
-    font-size: clamp(14px, 1.8vw, 19px);
-    letter-spacing: 0.45em;
+    font-size: clamp(14px, 1.9vw, 20px);
+    letter-spacing: 0.42em;
     color: var(--terracotta);
   }
   .motto-gloss {
     margin-top: 1.2vh;
-    font-style: italic;
-    font-size: 16px;
+    font-style: italic; font-size: 16px;
     color: var(--ink-soft);
   }
 
-  /* ---------- TRIGLYPH DIVIDER (Doric) ---------- */
-  .triglyph {
-    display: flex;
-    justify-content: center;
-    gap: 7px;
-    margin: 2vh auto 0;
+  .triglyph { display: flex; justify-content: center; gap: 7px; margin: 3vh auto 0; }
+  .triglyph span { width: 4px; height: 26px; background: var(--gold); opacity: 0.85; }
+  .triglyph span:nth-child(2) { height: 34px; margin-top: -4px; }
+
+  .intro {
+    max-width: 640px; margin: 7vh auto 0;
+    font-size: 20px; text-align: left;
+    position: relative; z-index: 2;
   }
-  .triglyph span {
-    display: block;
-    width: 4px;
-    height: 26px;
-    background: var(--gold);
-    opacity: 0.8;
+  .intro p::first-letter {
+    font-family: 'Cinzel', serif;
+    font-size: 3.4em; float: left;
+    line-height: 0.82; padding-right: 0.14em;
+    color: var(--terracotta);
+    text-shadow: 2px 2px 0 rgba(156,122,47,0.3);
   }
 
-  /* ---------- INTRO ---------- */
-  .intro {
-    max-width: 620px;
-    margin: 8vh auto 0;
-    font-size: 20px;
-    text-align: left;
-  }
-  .intro p:first-child::first-letter {
+  .descend {
+    margin-top: 7vh;
     font-family: 'Cinzel', serif;
-    font-size: 3.4em;
-    float: left;
-    line-height: 0.82;
-    padding-right: 0.12em;
-    color: var(--terracotta);
+    font-size: 11px; letter-spacing: 0.5em;
+    color: var(--ink-soft);
+    position: relative; z-index: 2;
   }
+  .descend .chev {
+    display: block; margin: 10px auto 0;
+    width: 14px; height: 14px;
+    border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+    transform: rotate(45deg);
+  }
+  .js .descend .chev { animation: bob 2.2s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: rotate(45deg) translate(0,0); } 50% { transform: rotate(45deg) translate(4px,4px); } }
 
   /* ---------- SECTIONS ---------- */
-  section { padding: 11vh 0 3vh; }
+  section.scene { padding: 12vh 0 6vh; }
+  section .inner { position: relative; z-index: 2; }
 
-  .section-head {
-    text-align: center;
-    margin-bottom: 8vh;
-  }
+  .section-head { text-align: center; margin-bottom: 8vh; }
   .section-head .numeral {
     font-family: 'Cinzel', serif;
     font-size: clamp(13px, 1.5vw, 16px);
-    letter-spacing: 0.5em;
-    color: var(--gold);
+    letter-spacing: 0.5em; color: var(--gold);
+  }
+  .section-head .numeral::before, .section-head .numeral::after {
+    content: '◆'; font-size: 0.6em; vertical-align: 2px;
+    color: var(--terracotta); margin: 0 14px;
   }
   .section-head h2 {
-    font-family: 'Cinzel', serif;
-    font-weight: 500;
-    font-size: clamp(34px, 5.5vw, 64px);
-    letter-spacing: 0.14em;
-    margin-top: 1.4vh;
+    font-family: 'Cinzel', serif; font-weight: 600;
+    font-size: clamp(32px, 5.5vw, 64px);
+    letter-spacing: 0.14em; margin-top: 1.4vh;
     color: var(--ink);
     text-shadow: 0 1px 0 rgba(255,255,255,0.7), 0 -1px 1px rgba(43,37,28,0.3);
   }
-  .section-head .gloss {
-    font-style: italic;
-    color: var(--ink-soft);
-    font-size: 17px;
-    margin-top: 0.8vh;
-  }
+  .section-head .gloss { font-style: italic; color: var(--ink-soft); font-size: 17px; margin-top: 0.8vh; }
 
-  /* ---------- I · OPERA (works as museum catalog) ---------- */
+  /* ---------- PART I · THE WORKS ---------- */
   .opus {
     display: grid;
-    grid-template-columns: 70px 1fr;
-    gap: 3vw;
-    padding: 4.5vh 0;
+    grid-template-columns: 86px 96px 1fr;
+    gap: 2.4vw;
+    padding: 4.5vh 1vw;
     border-top: 1px solid rgba(43,37,28,0.18);
-    align-items: baseline;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.35s ease;
   }
   .opus:last-of-type { border-bottom: 1px solid rgba(43,37,28,0.18); }
-  .opus .num {
-    font-family: 'Cinzel', serif;
-    font-size: 17px;
-    letter-spacing: 0.1em;
-    color: var(--gold);
+  .opus:hover { background: rgba(255,255,255,0.32); }
+  /* gold-leaf sheen sweep */
+  .opus::after {
+    content: ''; position: absolute; top: 0; bottom: 0;
+    left: -40%; width: 30%;
+    background: linear-gradient(105deg, transparent, rgba(201,162,39,0.18), transparent);
+    transform: skewX(-18deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
   }
+  .opus:hover::after { left: 120%; }
+
+  .opus .medallion {
+    width: 64px; height: 64px;
+    border: 1.5px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; font-size: 19px; color: var(--gold);
+    position: relative;
+  }
+  .opus .medallion::before {
+    content: ''; position: absolute; inset: -6px;
+    border: 1px dashed rgba(156,122,47,0.5);
+    border-radius: 50%;
+    transition: transform 0.9s ease;
+  }
+  .opus:hover .medallion::before { transform: rotate(120deg); }
+
+  .fresco-chip {
+    width: 96px; height: 96px;
+    border: 1px solid rgba(43,37,28,0.3);
+    box-shadow: inset 0 0 0 3px var(--marble), inset 0 0 0 4px rgba(156,122,47,0.5);
+    background-size: 220% 220%;
+    filter: saturate(0.85);
+    transition: filter 0.4s ease, transform 0.4s ease;
+  }
+  .js .fresco-chip { animation: chipdrift 14s ease-in-out infinite alternate; }
+  @keyframes chipdrift { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+  .opus:hover .fresco-chip { filter: saturate(1.3); transform: scale(1.05) rotate(-1deg); }
+  .chip-crave  { background-image: linear-gradient(130deg, var(--saffron), var(--pompeii) 55%, var(--terracotta)); }
+  .chip-crypto { background-image: linear-gradient(130deg, var(--lapis), var(--verdigris) 60%, var(--gold-bright)); }
+  .chip-toronto{ background-image: linear-gradient(130deg, var(--olive), var(--lapis) 65%, var(--marble-deep)); }
+  .chip-nnets  { background-image: linear-gradient(130deg, var(--tyrian), var(--pompeii) 50%, var(--gold)); }
+
   .opus h3 {
-    font-family: 'Cinzel', serif;
-    font-weight: 500;
-    font-size: clamp(26px, 3.6vw, 42px);
-    letter-spacing: 0.1em;
-    color: var(--ink);
+    font-family: 'Cinzel', serif; font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 40px);
+    letter-spacing: 0.1em; color: var(--ink);
     transition: color 0.3s ease;
+    display: inline-flex; align-items: baseline; gap: 0.5em;
   }
   .opus:hover h3 { color: var(--terracotta); }
-  .opus .desc {
-    font-style: italic;
-    color: var(--ink-soft);
-    font-size: 17px;
-    margin-top: 6px;
+  .opus h3 .go {
+    font-size: 0.55em; color: var(--gold-bright);
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
+  .opus:hover h3 .go { opacity: 1; transform: none; }
+  .opus .desc { font-style: italic; color: var(--ink-soft); font-size: 17px; margin-top: 6px; }
   .opus .materials {
-    font-family: 'Cinzel', serif;
-    font-size: 11px;
-    letter-spacing: 0.28em;
-    color: var(--gold);
-    margin-top: 12px;
+    font-family: 'Cinzel', serif; font-size: 11px;
+    letter-spacing: 0.28em; color: var(--gold); margin-top: 12px;
   }
+  .opus .materials .pip { color: var(--terracotta); margin: 0 6px; }
 
-  /* ---------- II · ARTES ---------- */
-  .artes {
-    max-width: 640px;
-    margin: 0 auto;
-    columns: 2;
-    column-gap: 5vw;
-  }
+  /* ---------- PART II · THE CRAFT ---------- */
+  .artes { max-width: 680px; margin: 0 auto; columns: 2; column-gap: 5vw; }
   .ars {
-    break-inside: avoid;
-    padding: 1.6vh 0;
-    text-align: center;
+    break-inside: avoid; padding: 1.8vh 0;
+    text-align: center; position: relative;
   }
+  .ars .pigment {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 10px;
+    vertical-align: 2px;
+    box-shadow: inset -1px -1px 1px rgba(0,0,0,0.25), 0 0 0 2px rgba(255,255,255,0.4);
+    transition: transform 0.3s ease;
+  }
+  .ars:hover .pigment { transform: scale(1.5); }
   .ars .name {
+    display: inline-block;
     font-family: 'Cinzel', serif;
-    font-size: clamp(18px, 2.2vw, 24px);
-    letter-spacing: 0.14em;
-    color: var(--ink);
+    font-size: clamp(17px, 2.1vw, 23px);
+    letter-spacing: 0.14em; color: var(--ink);
+    transition: color 0.3s ease;
   }
-  .ars .role {
-    font-style: italic;
-    font-size: 15px;
-    color: var(--ink-soft);
-  }
+  .ars:hover .name { color: var(--gold); }
+  .ars .role { font-style: italic; font-size: 15px; color: var(--ink-soft); }
 
-  /* ---------- III · MVSAE (stelae) ---------- */
-  .stelae {
+  /* ---------- PART III · THE MUSES (motion posters) ---------- */
+  .posters {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 3vw;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 3.2vw;
+    perspective: 1100px;
   }
-  .stela {
-    border: 1px solid rgba(43,37,28,0.25);
-    border-top: 3px solid var(--gold);
-    background: rgba(255,255,255,0.28);
-    padding: 30px 26px 26px;
-    text-align: center;
-    transition: border-color 0.3s ease, transform 0.3s ease;
+  .poster {
+    aspect-ratio: 2 / 3;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(43,37,28,0.35);
+    box-shadow:
+      inset 0 0 0 4px var(--marble),
+      inset 0 0 0 5px rgba(156,122,47,0.55),
+      0 14px 30px -18px rgba(43,37,28,0.55);
+    background-size: 300% 300%;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 22px;
+    isolation: isolate;
   }
-  .stela:hover {
-    border-color: var(--gold);
-    transform: translateY(-4px);
+  .js .poster { animation: posterlife 16s ease-in-out infinite alternate; }
+  @keyframes posterlife { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+  .poster:hover {
+    box-shadow:
+      inset 0 0 0 4px var(--marble),
+      inset 0 0 0 5px var(--gold-bright),
+      0 22px 44px -16px rgba(43,37,28,0.6);
   }
-  .stela .kind {
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 0.4em;
-    color: var(--terracotta);
+  /* canvas grain on every poster */
+  .poster::before {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+    pointer-events: none;
   }
-  .stela h3 {
-    font-family: 'Cinzel', serif;
-    font-weight: 500;
-    font-size: clamp(20px, 2.4vw, 27px);
-    letter-spacing: 0.08em;
-    margin-top: 14px;
+  /* sheen */
+  .poster::after {
+    content: ''; position: absolute; top: -20%; bottom: -20%;
+    left: -60%; width: 45%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.22), transparent);
+    transform: skewX(-16deg); z-index: 2;
+    transition: left 0.8s ease;
+    pointer-events: none;
+  }
+  .poster:hover::after { left: 130%; }
+  .poster .watermark {
+    position: absolute; top: 2%; left: 50%; transform: translateX(-50%);
+    font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: 9em; line-height: 1;
+    color: rgba(255,255,255,0.12);
+    z-index: 0; pointer-events: none;
+  }
+  .poster .ribbon {
+    position: absolute; top: 16px; left: -34px;
+    transform: rotate(-45deg);
+    background: var(--marble);
     color: var(--ink);
+    font-family: 'Cinzel', serif; font-size: 9px;
+    letter-spacing: 0.32em; text-align: center;
+    width: 130px; padding: 5px 0 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    z-index: 3;
   }
-  .stela p {
-    font-style: italic;
-    font-size: 15px;
-    color: var(--ink-soft);
-    margin-top: 8px;
+  .poster h3 {
+    font-family: 'Cinzel', serif; font-weight: 600;
+    font-size: clamp(19px, 2.3vw, 26px);
+    letter-spacing: 0.08em; color: #f5efe2;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    position: relative; z-index: 2;
   }
+  .poster p {
+    font-style: italic; font-size: 14.5px;
+    color: rgba(245,239,226,0.85);
+    margin-top: 6px;
+    position: relative; z-index: 2;
+  }
+  .poster-killbill  { background-image: linear-gradient(160deg, #1c1408, var(--gold-bright) 52%, #1c1408 110%); }
+  .poster-pulp      { background-image: linear-gradient(160deg, #1d0f1c, var(--tyrian) 55%, var(--pompeii) 115%); }
+  .poster-inter     { background-image: linear-gradient(160deg, #060d18, var(--lapis) 58%, #0c1f33 115%); }
+  .poster-rahman    { background-image: linear-gradient(160deg, #2a1404, var(--saffron) 55%, var(--terracotta) 115%); }
+  .poster-acdc      { background-image: linear-gradient(160deg, #170707, var(--pompeii) 60%, #2b0a0a 115%); }
+  .poster-beatles   { background-image: linear-gradient(160deg, #0a1a17, var(--verdigris) 55%, var(--olive) 118%); }
 
-  /* ---------- IV · EPISTVLA ---------- */
-  .epistula { text-align: center; }
-  .epistula .invite {
+  /* ---------- PART IV · THE LETTER ---------- */
+  .epistle { text-align: center; }
+  .epistle .invite {
     font-family: 'Cinzel', serif;
-    font-size: clamp(22px, 3.4vw, 38px);
-    letter-spacing: 0.12em;
-    color: var(--ink);
-    max-width: 700px;
-    margin: 0 auto;
-    line-height: 1.4;
+    font-size: clamp(21px, 3.4vw, 38px);
+    letter-spacing: 0.12em; color: var(--ink);
+    max-width: 720px; margin: 0 auto; line-height: 1.45;
   }
+  .epistle .invite em { font-style: normal; color: var(--terracotta); }
   .contact-row {
     margin-top: 7vh;
-    display: flex;
-    justify-content: center;
-    gap: 4em;
-    flex-wrap: wrap;
+    display: flex; justify-content: center; gap: 3.6em; flex-wrap: wrap;
   }
   .contact-row a {
-    font-family: 'Cinzel', serif;
-    font-size: 14px;
-    letter-spacing: 0.32em;
-    color: var(--ink);
+    font-family: 'Cinzel', serif; font-size: 14px;
+    letter-spacing: 0.32em; color: var(--ink);
     border-bottom: 1px solid var(--gold);
     padding-bottom: 5px;
-    transition: color 0.25s ease;
+    transition: color 0.25s ease, letter-spacing 0.25s ease;
   }
-  .contact-row a:hover { color: var(--gold); }
+  .contact-row a:hover { color: var(--gold); letter-spacing: 0.4em; }
+
+  .seal {
+    width: 86px; height: 86px;
+    margin: 9vh auto 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #d8554a, var(--pompeii) 55%, #7e1f18 100%);
+    box-shadow:
+      inset 0 3px 6px rgba(255,255,255,0.3),
+      inset 0 -4px 8px rgba(0,0,0,0.35),
+      0 6px 18px -6px rgba(126,31,24,0.6);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(236,229,216,0.9);
+    font-family: 'Cinzel', serif; font-size: 26px;
+    transform: rotate(-6deg);
+    transition: transform 0.3s ease;
+    position: relative;
+  }
+  .seal::before {
+    content: ''; position: absolute; inset: 8px;
+    border: 1px solid rgba(236,229,216,0.4); border-radius: 50%;
+  }
+  .seal:hover { transform: rotate(0deg) scale(1.06); }
+  .ps { margin-top: 5vh; font-style: italic; font-size: 16px; color: var(--ink-soft); }
 
   /* ---------- FOOTER ---------- */
-  footer {
-    text-align: center;
-    padding: 12vh 6vw 8vh;
-  }
+  footer { text-align: center; padding: 10vh 6vw 7vh; }
   footer .finis {
-    font-family: 'Cinzel', serif;
-    font-size: 13px;
-    letter-spacing: 0.6em;
-    color: var(--ink-soft);
+    font-family: 'Cinzel', serif; font-size: 13px;
+    letter-spacing: 0.6em; color: var(--ink-soft);
   }
+  footer .colophon { margin-top: 2vh; font-style: italic; font-size: 13.5px; color: var(--ink-soft); opacity: 0.8; }
 
-  /* ---------- REVEAL ON SCROLL ----------
-     hidden state only applies when JS is confirmed running (html.js),
-     so the page is never blank in JS-disabled previews */
+  /* ---------- REVEAL ON SCROLL (gated behind html.js) ---------- */
   .js .reveal {
     opacity: 0;
     transform: translateY(16px);
     transition: opacity 0.7s ease, transform 0.7s ease;
   }
-  .js .reveal.visible {
-    opacity: 1;
-    transform: none;
-  }
+  .js .reveal.visible { opacity: 1; transform: none; }
 
   @media (prefers-reduced-motion: reduce) {
-    .reveal { opacity: 1; transform: none; transition: none; }
+    .js .reveal { opacity: 1; transform: none; transition: none; }
+    .js h1 .ch { opacity: 1; transform: none; animation: none; }
+    .js .meander, .js .laurel, .js .descend .chev,
+    .js .fresco img.loaded, .js .fresco-chip, .js .poster { animation: none !important; }
+    #dust { display: none; }
     html { scroll-behavior: auto; }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 720px) {
     body { font-size: 17px; }
-    .opus { grid-template-columns: 1fr; gap: 8px; }
+    .opus { grid-template-columns: 56px 1fr; }
+    .opus .fresco-chip { display: none; }
+    .opus .medallion { width: 48px; height: 48px; font-size: 15px; }
     .artes { columns: 1; }
-    nav { gap: 1.4em; font-size: 11px; }
-    .contact-row { gap: 2.2em; }
+    nav.frieze { gap: 1.3em; font-size: 10.5px; }
+    .contact-row { gap: 2em; }
+    .provenance { display: none; }
+    .posters { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .poster { padding: 14px; }
+    .poster .watermark { font-size: 5.5em; }
   }
 </style>
 </head>
 <body>
 
-<div class="meander"></div>
+<a class="skip-link" href="#works">Skip to content</a>
+<div id="progress" aria-hidden="true"></div>
+<canvas id="dust" aria-hidden="true"></canvas>
 
-<nav aria-label="Sections">
-  <a href="#opera">I · Opera</a>
-  <a href="#artes">II · Artes</a>
-  <a href="#musae">III · Mvsae</a>
-  <a href="#epistula">IV · Epistvla</a>
+<div class="meander" aria-hidden="true"></div>
+
+<nav class="frieze" aria-label="Sections">
+  <a href="#works">I · The Works</a>
+  <a href="#craft">II · The Craft</a>
+  <a href="#muses">III · The Muses</a>
+  <a href="#letter">IV · The Letter</a>
 </nav>
 
-<header>
-  <div class="epigraph reveal">Self-taught · Developer</div>
-  <h1 class="reveal"><span>ROHITH·</span><span>ILLVRI</span></h1>
-  <div class="motto reveal">FACTA NON VERBA</div>
-  <div class="motto-gloss reveal">deeds, not words</div>
-  <div class="triglyph reveal" aria-hidden="true"><span></span><span></span><span></span></div>
+<!-- ============ TITLE ============ -->
+<header class="scene">
+  <div class="fresco" aria-hidden="true">
+    <div class="underpaint" style="background:
+      radial-gradient(ellipse 60% 50% at 30% 60%, rgba(217,145,42,0.35), transparent 70%),
+      radial-gradient(ellipse 50% 45% at 75% 35%, rgba(38,97,156,0.28), transparent 70%),
+      radial-gradient(ellipse 45% 40% at 60% 80%, rgba(160,69,47,0.3), transparent 70%);"></div>
+    <img alt="" loading="eager" decoding="async" referrerpolicy="no-referrer"
+      src="https://commons.wikimedia.org/wiki/Special:FilePath/Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg?width=1600"
+      data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Thomas_Cole_-_The_Consummation_of_Empire_-_WGA05140.jpg?width=1600" />
+    <div class="glaze"></div>
+  </div>
+  <span class="provenance">after Thomas Cole — The Consummation of Empire, 1836</span>
 
-  <div class="intro reveal">
-    <p>Builder of small, deliberate software. No degree on the wall —
-    only the work below, each piece learned by making it. What follows is
-    arranged the old way: in four parts, carved plainly, nothing for show
-    that is not also for use.</p>
+  <div class="inner">
+    <div class="epigraph reveal">Self-taught · Developer</div>
+    <h1 class="reveal" id="the-name"><span class="word">ROHITH</span><span class="dot">·</span><span class="word">ILLURI</span></h1>
+
+    <div class="motto-row reveal">
+      <svg class="laurel" viewBox="0 0 100 44" fill="currentColor" aria-hidden="true">
+        <path d="M4 40 Q40 34 92 8" stroke="currentColor" stroke-width="2" fill="none"/>
+        <ellipse cx="18" cy="34" rx="9" ry="3.4" transform="rotate(-18 18 34)"/>
+        <ellipse cx="33" cy="29" rx="9" ry="3.4" transform="rotate(-24 33 29)"/>
+        <ellipse cx="48" cy="23" rx="9" ry="3.4" transform="rotate(-28 48 23)"/>
+        <ellipse cx="63" cy="17" rx="8" ry="3.1" transform="rotate(-32 63 17)"/>
+        <ellipse cx="77" cy="12" rx="7" ry="2.8" transform="rotate(-35 77 12)"/>
+        <ellipse cx="88" cy="8" rx="5.5" ry="2.3" transform="rotate(-38 88 8)"/>
+      </svg>
+      <div>
+        <div class="motto">DEEDS · NOT · WORDS</div>
+        <div class="motto-gloss">facta non verba</div>
+      </div>
+      <svg class="laurel flip" viewBox="0 0 100 44" fill="currentColor" aria-hidden="true">
+        <path d="M4 40 Q40 34 92 8" stroke="currentColor" stroke-width="2" fill="none"/>
+        <ellipse cx="18" cy="34" rx="9" ry="3.4" transform="rotate(-18 18 34)"/>
+        <ellipse cx="33" cy="29" rx="9" ry="3.4" transform="rotate(-24 33 29)"/>
+        <ellipse cx="48" cy="23" rx="9" ry="3.4" transform="rotate(-28 48 23)"/>
+        <ellipse cx="63" cy="17" rx="8" ry="3.1" transform="rotate(-32 63 17)"/>
+        <ellipse cx="77" cy="12" rx="7" ry="2.8" transform="rotate(-35 77 12)"/>
+        <ellipse cx="88" cy="8" rx="5.5" ry="2.3" transform="rotate(-38 88 8)"/>
+      </svg>
+    </div>
+
+    <div class="triglyph reveal" aria-hidden="true"><span></span><span></span><span></span></div>
+
+    <div class="intro reveal">
+      <p>Builder of small, deliberate software. No degree on the wall —
+      only the work below, each piece learned by making it. What follows is
+      arranged the old way: in four parts, painted plainly, nothing for show
+      that is not also for use.</p>
+    </div>
+
+    <div class="descend reveal">DESCEND<span class="chev"></span></div>
   </div>
 </header>
 
-<main class="page">
+<main>
 
-  <!-- ============ I · OPERA ============ -->
-  <section id="opera">
-    <div class="section-head reveal">
-      <div class="numeral">PARS I</div>
-      <h2>OPERA</h2>
-      <div class="gloss">the works</div>
+  <!-- ============ PART I · THE WORKS ============ -->
+  <section id="works" class="scene">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 55% 50% at 25% 40%, rgba(38,97,156,0.32), transparent 70%),
+        radial-gradient(ellipse 50% 45% at 75% 60%, rgba(156,122,47,0.3), transparent 70%);"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Sanzio_01.jpg?width=1600"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg?width=1600" />
+      <div class="glaze"></div>
     </div>
+    <span class="provenance">after Raphael — The School of Athens, c. 1511</span>
 
-    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
-      <div class="opus reveal">
-        <span class="num">I</span>
-        <div>
-          <h3>CRAVE</h3>
-          <div class="desc">A marketplace for food — ordering, fulfilment, the whole road from hunger to table.</div>
-          <div class="materials">React · Node · PostgreSQL</div>
-        </div>
+    <div class="inner page">
+      <div class="section-head reveal">
+        <div class="numeral">PART I</div>
+        <h2>THE WORKS</h2>
+        <div class="gloss">what was built</div>
       </div>
-    </a>
 
-    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
-      <div class="opus reveal">
-        <span class="num">II</span>
-        <div>
-          <h3>CRYPTOAPP</h3>
-          <div class="desc">Live markets rendered as they move — prices streaming, charts breathing.</div>
-          <div class="materials">React · WebSocket</div>
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">I</span>
+          <div class="fresco-chip chip-crave" aria-hidden="true"></div>
+          <div>
+            <h3>CRAVE <span class="go">⟶</span></h3>
+            <div class="desc">A marketplace for food — ordering, fulfilment, the whole road from hunger to table.</div>
+            <div class="materials">React<span class="pip">·</span>Node<span class="pip">·</span>PostgreSQL</div>
+          </div>
         </div>
-      </div>
-    </a>
+      </a>
 
-    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
-      <div class="opus reveal">
-        <span class="num">III</span>
-        <div>
-          <h3>TORONTO</h3>
-          <div class="desc">A city read through its data — patterns surfaced from the civic record.</div>
-          <div class="materials">Python</div>
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">II</span>
+          <div class="fresco-chip chip-crypto" aria-hidden="true"></div>
+          <div>
+            <h3>CRYPTOAPP <span class="go">⟶</span></h3>
+            <div class="desc">Live markets rendered as they move — prices streaming, charts breathing.</div>
+            <div class="materials">React<span class="pip">·</span>WebSocket</div>
+          </div>
         </div>
-      </div>
-    </a>
+      </a>
 
-    <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
-      <div class="opus reveal">
-        <span class="num">IV</span>
-        <div>
-          <h3>NNETS</h3>
-          <div class="desc">Neural networks built from first principles — no framework, only the mathematics.</div>
-          <div class="materials">Python · Micrograd</div>
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">III</span>
+          <div class="fresco-chip chip-toronto" aria-hidden="true"></div>
+          <div>
+            <h3>TORONTO <span class="go">⟶</span></h3>
+            <div class="desc">A city read through its data — patterns surfaced from the civic record.</div>
+            <div class="materials">Python</div>
+          </div>
         </div>
-      </div>
-    </a>
-  </section>
+      </a>
 
-  <!-- ============ II · ARTES ============ -->
-  <section id="artes">
-    <div class="section-head reveal">
-      <div class="numeral">PARS II</div>
-      <h2>ARTES</h2>
-      <div class="gloss">the craft</div>
-    </div>
-
-    <div class="artes">
-      <div class="ars reveal"><div class="name">JAVASCRIPT</div><div class="role">the mother tongue</div></div>
-      <div class="ars reveal"><div class="name">REACT</div><div class="role">the face of things</div></div>
-      <div class="ars reveal"><div class="name">NODE.JS</div><div class="role">the engine room</div></div>
-      <div class="ars reveal"><div class="name">PYTHON</div><div class="role">for thinking aloud</div></div>
-      <div class="ars reveal"><div class="name">POSTGRESQL</div><div class="role">keeper of records</div></div>
-      <div class="ars reveal"><div class="name">DOCKER</div><div class="role">the vessel</div></div>
-      <div class="ars reveal"><div class="name">AWS</div><div class="role">the territory</div></div>
-      <div class="ars reveal"><div class="name">GRAPHQL</div><div class="role">the negotiator</div></div>
+      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">
+        <div class="opus reveal">
+          <span class="medallion">IV</span>
+          <div class="fresco-chip chip-nnets" aria-hidden="true"></div>
+          <div>
+            <h3>NNETS <span class="go">⟶</span></h3>
+            <div class="desc">Neural networks built from first principles — no framework, only the mathematics.</div>
+            <div class="materials">Python<span class="pip">·</span>Micrograd</div>
+          </div>
+        </div>
+      </a>
     </div>
   </section>
 
-  <!-- ============ III · MVSAE ============ -->
-  <section id="musae">
-    <div class="section-head reveal">
-      <div class="numeral">PARS III</div>
-      <h2>MVSAE</h2>
-      <div class="gloss">the influences</div>
+  <!-- ============ PART II · THE CRAFT ============ -->
+  <section id="craft" class="scene">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 55% 50% at 70% 45%, rgba(198,58,50,0.3), transparent 70%),
+        radial-gradient(ellipse 50% 45% at 25% 60%, rgba(217,145,42,0.32), transparent 70%);"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/La_fragua_de_Vulcano_(Vel%C3%A1zquez).jpg?width=1600"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Diego_Vel%C3%A1zquez_-_The_Forge_of_Vulcan_-_WGA24447.jpg?width=1600" />
+      <div class="glaze"></div>
     </div>
+    <span class="provenance">after Velázquez — The Forge of Vulcan, 1630</span>
 
-    <div class="stelae">
-      <div class="stela reveal">
-        <div class="kind">Film</div>
-        <h3>KILL BILL</h3>
-        <p>style as substance</p>
+    <div class="inner page">
+      <div class="section-head reveal">
+        <div class="numeral">PART II</div>
+        <h2>THE CRAFT</h2>
+        <div class="gloss">tools of the trade</div>
       </div>
-      <div class="stela reveal">
-        <div class="kind">Film</div>
-        <h3>PULP FICTION</h3>
-        <p>structure is optional</p>
-      </div>
-      <div class="stela reveal">
-        <div class="kind">Film</div>
-        <h3>INTERSTELLAR</h3>
-        <p>scope, earned</p>
-      </div>
-      <div class="stela reveal">
-        <div class="kind">Sound</div>
-        <h3>A.R. RAHMAN</h3>
-        <p>the score beneath everything</p>
-      </div>
-      <div class="stela reveal">
-        <div class="kind">Sound</div>
-        <h3>AC/DC</h3>
-        <p>ship it loud</p>
-      </div>
-      <div class="stela reveal">
-        <div class="kind">Sound</div>
-        <h3>THE BEATLES</h3>
-        <p>the fundamentals</p>
+
+      <div class="artes">
+        <div class="ars reveal"><span class="pigment" style="background:var(--saffron)"></span><span class="name">JAVASCRIPT</span><div class="role">the mother tongue</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--lapis)"></span><span class="name">REACT</span><div class="role">the face of things</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--olive)"></span><span class="name">NODE.JS</span><div class="role">the engine room</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--verdigris)"></span><span class="name">PYTHON</span><div class="role">for thinking aloud</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--lapis)"></span><span class="name">POSTGRESQL</span><div class="role">keeper of records</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--tyrian)"></span><span class="name">DOCKER</span><div class="role">the vessel</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--pompeii)"></span><span class="name">AWS</span><div class="role">the territory</div></div>
+        <div class="ars reveal"><span class="pigment" style="background:var(--terracotta)"></span><span class="name">GRAPHQL</span><div class="role">the negotiator</div></div>
       </div>
     </div>
   </section>
 
-  <!-- ============ IV · EPISTVLA ============ -->
-  <section id="epistula" class="epistula">
-    <div class="section-head reveal">
-      <div class="numeral">PARS IV</div>
-      <h2>EPISTVLA</h2>
-      <div class="gloss">write to me</div>
+  <!-- ============ PART III · THE MUSES ============ -->
+  <section id="muses" class="scene">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 55% 50% at 30% 50%, rgba(62,142,126,0.32), transparent 70%),
+        radial-gradient(ellipse 50% 45% at 75% 40%, rgba(102,48,92,0.28), transparent 70%);"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Sandro_Botticelli_-_La_Primavera_-_Google_Art_Project.jpg?width=1600"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Botticelli-primavera.jpg?width=1600" />
+      <div class="glaze"></div>
     </div>
+    <span class="provenance">after Botticelli — Primavera, c. 1480</span>
 
-    <div class="invite reveal">EVERY GOOD COLLABORATION<br/>BEGAN AS A LETTER.</div>
+    <div class="inner page">
+      <div class="section-head reveal">
+        <div class="numeral">PART III</div>
+        <h2>THE MUSES</h2>
+        <div class="gloss">films &amp; sound that shaped the hand</div>
+      </div>
 
-    <div class="contact-row reveal">
-      <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">GitHub</a>
-      <a href="mailto:rohith.illuri@gmail.com">Email</a>
-      <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
+      <div class="posters">
+        <div class="poster poster-killbill reveal" data-tilt>
+          <span class="ribbon">FILM</span>
+          <span class="watermark">K</span>
+          <h3>KILL BILL</h3>
+          <p>style as substance</p>
+        </div>
+        <div class="poster poster-pulp reveal" data-tilt>
+          <span class="ribbon">FILM</span>
+          <span class="watermark">P</span>
+          <h3>PULP FICTION</h3>
+          <p>structure is optional</p>
+        </div>
+        <div class="poster poster-inter reveal" data-tilt>
+          <span class="ribbon">FILM</span>
+          <span class="watermark">I</span>
+          <h3>INTERSTELLAR</h3>
+          <p>scope, earned</p>
+        </div>
+        <div class="poster poster-rahman reveal" data-tilt>
+          <span class="ribbon">SOUND</span>
+          <span class="watermark">R</span>
+          <h3>A.R. RAHMAN</h3>
+          <p>the score beneath everything</p>
+        </div>
+        <div class="poster poster-acdc reveal" data-tilt>
+          <span class="ribbon">SOUND</span>
+          <span class="watermark">A</span>
+          <h3>AC/DC</h3>
+          <p>ship it loud</p>
+        </div>
+        <div class="poster poster-beatles reveal" data-tilt>
+          <span class="ribbon">SOUND</span>
+          <span class="watermark">B</span>
+          <h3>THE BEATLES</h3>
+          <p>the fundamentals</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PART IV · THE LETTER ============ -->
+  <section id="letter" class="scene epistle">
+    <div class="fresco" aria-hidden="true">
+      <div class="underpaint" style="background:
+        radial-gradient(ellipse 55% 50% at 60% 45%, rgba(217,145,42,0.3), transparent 70%),
+        radial-gradient(ellipse 45% 40% at 30% 60%, rgba(156,122,47,0.28), transparent 70%);"></div>
+      <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Johannes_Vermeer_-_Girl_Reading_a_Letter_at_an_Open_Window_-_Google_Art_Project.jpg?width=1400"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Jan_Vermeer_van_Delft_003.jpg?width=1400" />
+      <div class="glaze"></div>
+    </div>
+    <span class="provenance">after Vermeer — Girl Reading a Letter, c. 1659</span>
+
+    <div class="inner page">
+      <div class="section-head reveal">
+        <div class="numeral">PART IV</div>
+        <h2>THE LETTER</h2>
+        <div class="gloss">write to me</div>
+      </div>
+
+      <div class="invite reveal">EVERY GOOD COLLABORATION<br/>BEGAN AS <em>A LETTER.</em></div>
+
+      <div class="contact-row reveal">
+        <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:rohith.illuri@gmail.com">Email</a>
+        <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
+      </div>
+
+      <a class="seal reveal" href="mailto:rohith.illuri@gmail.com" aria-label="Send an email" style="text-decoration:none;">✦</a>
+      <div class="ps reveal">P.S. — the muses are always open to recommendations.</div>
     </div>
   </section>
 
 </main>
 
 <footer>
-  <div class="finis reveal">FINIS · MMXXVI</div>
+  <div class="triglyph reveal" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="finis reveal" style="margin-top:3vh;">THE END · MMXXVI</div>
+  <div class="colophon reveal">painted in HTML &amp; CSS — no frameworks were harmed</div>
 </footer>
 
-<div class="meander"></div>
+<div class="meander" aria-hidden="true"></div>
 
 <script>
-  /* reveal on scroll — vanilla IntersectionObserver, no dependencies */
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const targets = document.querySelectorAll('.reveal');
+(function () {
+  'use strict';
+
+  var reduceMotion = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || false;
+
+  /* ---------- reveal on scroll, with no-JS and broken-observer failsafes ---------- */
+  var targets = document.querySelectorAll('.reveal');
+  function showAll() { targets.forEach(function (el) { el.classList.add('visible'); }); }
   if (reduceMotion || !('IntersectionObserver' in window)) {
-    targets.forEach(el => el.classList.add('visible'));
+    showAll();
   } else {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          io.unobserve(e.target);
-        }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
       });
     }, { threshold: 0.12 });
-    targets.forEach(el => io.observe(el));
-    /* failsafe: some embedded webviews ship a broken observer */
-    setTimeout(() => targets.forEach(el => el.classList.add('visible')), 2500);
+    targets.forEach(function (el) { io.observe(el); });
+    setTimeout(showAll, 2500); /* failsafe for webviews with broken observers */
   }
+
+  /* ---------- chisel-reveal the name, letter by letter ---------- */
+  (function chisel() {
+    if (reduceMotion) return;
+    var words = document.querySelectorAll('#the-name .word');
+    var i = 0;
+    words.forEach(function (w) {
+      var text = w.textContent;
+      w.textContent = '';
+      text.split('').forEach(function (c) {
+        var s = document.createElement('span');
+        s.className = 'ch';
+        s.style.setProperty('--i', i++);
+        s.textContent = c;
+        w.appendChild(s);
+      });
+    });
+  })();
+
+  /* ---------- living paintings: fade in on load, fall back on error ---------- */
+  document.querySelectorAll('.fresco img').forEach(function (img) {
+    function ok() { img.classList.add('loaded'); }
+    img.addEventListener('load', ok);
+    img.addEventListener('error', function () {
+      var alt = img.getAttribute('data-fallback');
+      if (alt && img.src !== alt) { img.removeAttribute('data-fallback'); img.src = alt; }
+      else { img.remove(); } /* underpaint remains — page stays colorful */
+    });
+    if (img.complete && img.naturalWidth > 0) ok();
+  });
+
+  /* ---------- gilt thread scroll progress ---------- */
+  (function progress() {
+    var bar = document.getElementById('progress');
+    if (!bar) return;
+    var ticking = false;
+    function update() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? h.scrollTop / max : 0) + ')';
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking && window.requestAnimationFrame) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+  })();
+
+  /* ---------- nav frieze: highlight the part you are reading ---------- */
+  (function activeNav() {
+    if (!('IntersectionObserver' in window)) return;
+    var links = {};
+    document.querySelectorAll('nav.frieze a[href^="#"]').forEach(function (a) {
+      links[a.getAttribute('href').slice(1)] = a;
+    });
+    var nio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var link = links[e.target.id];
+        if (link && e.isIntersecting) {
+          Object.keys(links).forEach(function (k) { links[k].classList.remove('active'); });
+          link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-30% 0px -55% 0px' });
+    Object.keys(links).forEach(function (id) {
+      var sec = document.getElementById(id);
+      if (sec) nio.observe(sec);
+    });
+  })();
+
+  /* ---------- gold dust ---------- */
+  (function dust() {
+    if (reduceMotion || !window.requestAnimationFrame) return;
+    var canvas = document.getElementById('dust');
+    if (!canvas) return;
+    var ctx = canvas.getContext && canvas.getContext('2d');
+    if (!ctx) return;
+    var w, h, motes = [];
+    var COUNT = Math.min(42, Math.floor(window.innerWidth / 30));
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    function spawn(randomY) {
+      return {
+        x: Math.random() * w,
+        y: randomY ? Math.random() * h : h + 6,
+        r: 0.6 + Math.random() * 1.7,
+        vy: 0.12 + Math.random() * 0.3,
+        drift: 0.4 + Math.random() * 0.8,
+        phase: Math.random() * Math.PI * 2,
+        a: 0.15 + Math.random() * 0.4
+      };
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    for (var i = 0; i < COUNT; i++) motes.push(spawn(true));
+    var t = 0, running = true;
+    document.addEventListener('visibilitychange', function () { running = !document.hidden; });
+    (function tick() {
+      if (running) {
+        t += 0.01;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#c9a227';
+        motes.forEach(function (m, idx) {
+          m.y -= m.vy;
+          m.x += Math.sin(t * 1.4 + m.phase) * m.drift * 0.3;
+          if (m.y < -8) motes[idx] = spawn(false);
+          ctx.globalAlpha = m.a * (0.7 + 0.3 * Math.sin(t * 2 + m.phase));
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+      requestAnimationFrame(tick);
+    })();
+  })();
+
+  /* ---------- motion posters: tilt toward the cursor ---------- */
+  (function tilt() {
+    if (reduceMotion || !window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+    document.querySelectorAll('[data-tilt]').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        var r = card.getBoundingClientRect();
+        var rx = ((e.clientY - r.top) / r.height - 0.5) * -7;
+        var ry = ((e.clientX - r.left) / r.width - 0.5) * 9;
+        card.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateZ(8px)';
+      });
+      card.addEventListener('mouseleave', function () { card.style.transform = ''; });
+    });
+  })();
+})();
 </script>
 </body>
 </html>
