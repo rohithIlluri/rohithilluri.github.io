@@ -17,8 +17,8 @@
 <script>document.documentElement.className += ' js';</script>
 <style>
   :root {
-    --abyss: #0c0a07;
-    --umber: #17120a;
+    --abyss: #131008;
+    --umber: #1d160c;
     --parchment: #d9c9a3;
     --parchment-dim: #9a8b6a;
     --gold: #c8a24a;
@@ -74,6 +74,33 @@
   /* ---------- EMBERS (canvas, JS enhancement) ---------- */
   #dust { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
 
+  /* ---------- AGED PATINA ----------
+     vignette + foxing stains + parchment grain, like a page handled
+     for four hundred years. Pure CSS, sits beneath the embers.       */
+  .patina {
+    position: fixed; inset: 0; z-index: 85; pointer-events: none;
+    background:
+      radial-gradient(ellipse 115% 90% at 50% 48%, transparent 52%, rgba(16,9,2,0.55) 100%),
+      radial-gradient(ellipse 30% 20% at 12% 16%, rgba(146,96,44,0.10), transparent 70%),
+      radial-gradient(ellipse 24% 17% at 88% 68%, rgba(146,96,44,0.09), transparent 70%),
+      radial-gradient(ellipse 19% 14% at 76% 10%, rgba(126,84,40,0.08), transparent 70%),
+      radial-gradient(ellipse 22% 16% at 22% 86%, rgba(146,96,44,0.09), transparent 70%);
+  }
+  .patina::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.72 0 0 0 0 0.45 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23p)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- MANUSCRIPT FRAME ---------- */
+  .frame {
+    position: fixed; inset: 12px; z-index: 118; pointer-events: none;
+    border: 1px solid rgba(200,162,74,0.3);
+  }
+  .frame::before {
+    content: ''; position: absolute; inset: 4px;
+    border: 1px solid rgba(200,162,74,0.14);
+  }
+
   /* ---------- NAV ---------- */
   nav.frieze {
     position: sticky; top: 0; z-index: 110;
@@ -109,7 +136,9 @@
   .fresco { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
   .fresco .underpaint {
     position: absolute; inset: -12%;
-    opacity: 0.85;
+    opacity: 1;
+    /* static filter, rasterized once — brightens the glow colors */
+    filter: brightness(1.7) saturate(1.15);
     animation: drift 36s ease-in-out infinite alternate;
   }
   @keyframes drift {
@@ -122,6 +151,7 @@
     background:
       radial-gradient(ellipse 45% 35% at 30% 30%, rgba(232,200,118,0.10), transparent 70%),
       radial-gradient(ellipse 40% 30% at 70% 65%, rgba(212,118,44,0.07), transparent 70%);
+    filter: brightness(1.6);
     animation: breathe 14s ease-in-out infinite alternate;
   }
   @keyframes breathe {
@@ -135,12 +165,12 @@
     width: auto; height: auto;
     transform: translate(-50%, -50%);
     object-fit: cover;
-    opacity: 0.22;
-    /* no blend modes or heavy filters — they jank low-end WebViews */
-    filter: brightness(0.62) saturate(0.85);
+    opacity: 0.4;
+    /* no blend modes — they jank low-end WebViews; warm aged tone instead */
+    filter: brightness(0.82) saturate(0.95) sepia(0.22);
   }
   .js .fresco img { opacity: 0; transition: opacity 2.5s ease; }
-  .js .fresco img.loaded { opacity: 0.22; animation: kenburns 52s ease-in-out infinite alternate; }
+  .js .fresco img.loaded { opacity: 0.4; animation: kenburns 52s ease-in-out infinite alternate; }
   @keyframes kenburns {
     from { transform: translate(-50%, -50%) scale(1); }
     to   { transform: translate(-51.5%, -49%) scale(1.08); }
@@ -149,8 +179,8 @@
   .fresco .glaze {
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 85% 65% at 50% 42%, transparent 0%, var(--abyss) 96%),
-      linear-gradient(var(--abyss) 0%, transparent 16%, transparent 84%, var(--abyss) 100%);
+      radial-gradient(ellipse 100% 80% at 50% 42%, transparent 30%, var(--abyss) 100%),
+      linear-gradient(var(--abyss) 0%, transparent 12%, transparent 88%, var(--abyss) 100%);
   }
   .provenance {
     position: absolute; right: 10px; top: 50%;
@@ -573,6 +603,8 @@
     .poster { padding: 14px; }
     .poster .watermark { font-size: 5.5em; }
     .rune-ring { opacity: 0.1; }
+    .frame { inset: 7px; }
+    .frame::before { inset: 3px; }
     /* calm the big animated layers on small screens — battery & jank */
     .fresco .smoke { animation: none; opacity: 0.7; }
     header.scene { padding: 11vh 6vw 10vh; }
@@ -584,6 +616,8 @@
 
 <a class="skip-link" href="#works">Skip to content</a>
 <div id="progress" aria-hidden="true"></div>
+<div class="patina" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true"></div>
 <canvas id="dust" aria-hidden="true"></canvas>
 
 <nav class="frieze" aria-label="Sections">

@@ -227,6 +227,13 @@ describe('style discipline', () => {
     assert.match(css, /body\s*\{[^}]*overflow-x:\s*hidden/);
   });
 
+  test('aged patina and manuscript frame are present', () => {
+    assert.ok(sdoc.querySelector('.patina'), 'missing patina overlay');
+    assert.ok(sdoc.querySelector('.frame'), 'missing manuscript frame');
+    assert.match(css, /\.patina\s*\{[^}]*pointer-events:\s*none/, 'patina must not block taps');
+    assert.match(css, /\.frame\s*\{[^}]*pointer-events:\s*none/, 'frame must not block taps');
+  });
+
   test('inline SVG data URIs are well-formed', () => {
     const uris = css.match(/url\("data:image\/svg\+xml,([^"]+)"\)/g) ?? [];
     assert.ok(uris.length >= 2, 'expected marble + meander + grain SVGs');
