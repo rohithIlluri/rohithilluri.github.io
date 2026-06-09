@@ -117,10 +117,10 @@ describe('script behavior (jsdom, scripts executed)', () => {
   });
 
   test('jsdom has no IntersectionObserver, so the fallback reveals everything', () => {
-    const hidden = [...doc.querySelectorAll('.reveal')].filter(
+    const hidden = [...doc.querySelectorAll('.reveal, .loc-reveal')].filter(
       (el) => !el.classList.contains('visible')
     );
-    assert.equal(hidden.length, 0, `${hidden.length} .reveal elements never became visible`);
+    assert.equal(hidden.length, 0, `${hidden.length} reveal elements never became visible`);
   });
 
   test('script tolerates missing matchMedia/IntersectionObserver without throwing', () => {
@@ -235,6 +235,32 @@ describe('style discipline', () => {
       const decoded = decodeURIComponent(encoded);
       assert.ok(decoded.includes('<svg'), 'data URI does not decode to SVG');
     }
+  });
+});
+
+describe('performance budget', () => {
+  test('painting thumbnails are capped at 1000px wide', () => {
+    for (const img of sdoc.querySelectorAll('.fresco img')) {
+      for (const url of [img.getAttribute('src'), img.getAttribute('data-fallback')]) {
+        const width = Number(new URL(url).searchParams.get('width'));
+        assert.ok(width > 0 && width <= 1000, `painting requested at ${width}px: ${url}`);
+      }
+    }
+  });
+
+  test('exactly one image is high-priority; fonts swap; hosts are preconnected', () => {
+    assert.equal(sdoc.querySelectorAll('img[fetchpriority="high"]').length, 1);
+    const fontLink = sdoc.querySelector('link[href*="fonts.googleapis.com/css2"]');
+    assert.match(fontLink.getAttribute('href'), /display=swap/);
+    const preconnects = [...sdoc.querySelectorAll('link[rel="preconnect"]')].map((l) =>
+      l.getAttribute('href')
+    );
+    assert.ok(preconnects.includes('https://upload.wikimedia.org'), 'missing painting-host preconnect');
+  });
+
+  test('no blend modes or backdrop filters (jank on low-end WebViews)', () => {
+    assert.ok(!css.includes('mix-blend-mode: luminosity'), 'luminosity blend on large layers');
+    assert.ok(!css.includes('backdrop-filter'), 'backdrop-filter present');
   });
 });
 
