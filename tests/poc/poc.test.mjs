@@ -10,7 +10,7 @@
  */
 import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { JSDOM } from 'jsdom';
@@ -209,6 +209,28 @@ describe('motion posters', () => {
     );
     assert.equal(new Set(classes).size, 6, 'poster palettes are not unique');
   });
+
+  test('every poster carries artwork with a readability scrim, lazy and decorative', () => {
+    for (const p of sdoc.querySelectorAll('.poster')) {
+      const art = p.querySelector('img.art');
+      assert.ok(art, 'poster missing img.art');
+      assert.equal(art.getAttribute('alt'), '');
+      assert.equal(art.getAttribute('loading'), 'lazy');
+      assert.ok(p.querySelector('.scrim'), 'poster missing scrim');
+    }
+  });
+
+  test('local card images exist on disk', () => {
+    const pocDir = join(__dirname, '..', '..', 'public', 'poc');
+    let localCount = 0;
+    for (const art of sdoc.querySelectorAll('.poster img.art')) {
+      const src = art.getAttribute('src');
+      if (/^https?:/.test(src)) continue;
+      localCount++;
+      assert.ok(existsSync(join(pocDir, src)), `missing local image: ${src}`);
+    }
+    assert.ok(localCount >= 5, 'expected at least five local card images');
+  });
 });
 
 describe('style discipline', () => {
@@ -248,10 +270,22 @@ describe('style discipline', () => {
 describe('performance budget', () => {
   test('painting thumbnails are capped at 1000px wide', () => {
     for (const img of sdoc.querySelectorAll('.fresco img')) {
-      for (const url of [img.getAttribute('src'), img.getAttribute('data-fallback')]) {
+      const urls = [img.getAttribute('src'), ...(img.getAttribute('data-fallback') ?? '').split('|')]
+        .filter(Boolean);
+      for (const url of urls) {
         const width = Number(new URL(url).searchParams.get('width'));
         assert.ok(width > 0 && width <= 1000, `painting requested at ${width}px: ${url}`);
       }
+    }
+  });
+
+  test('fallback chains and captions stay in lockstep', () => {
+    const withCaptions = [...sdoc.querySelectorAll('.fresco img[data-captions]')];
+    assert.ok(withCaptions.length >= 2, 'craft and letter paintings should carry captions');
+    for (const img of withCaptions) {
+      const candidates = 1 + img.getAttribute('data-fallback').split('|').filter(Boolean).length;
+      const caps = img.getAttribute('data-captions').split('|').filter(Boolean).length;
+      assert.equal(caps, candidates, 'caption count must match candidate count');
     }
   });
 
@@ -285,13 +319,22 @@ describe('contact', () => {
       assert.ok(a.getAttribute('rel')?.includes('noopener'), `${a.href} missing rel=noopener`);
     }
   });
+
+  test('the seal is an envelope, not an abstract glyph', () => {
+    const seal = sdoc.querySelector('.seal');
+    assert.ok(seal.querySelector('svg'), 'seal should contain an envelope SVG');
+    assert.ok(!seal.textContent.includes('✦'), 'misleading star glyph still present');
+    assert.equal(seal.getAttribute('href'), 'mailto:rohith.illuri@gmail.com');
+  });
 });
 
 describe('painting URLs resolve (network)', () => {
-  const urls = [...sdoc.querySelectorAll('.fresco img')].flatMap((img) => [
-    img.getAttribute('src'),
-    img.getAttribute('data-fallback'),
-  ]);
+  const urls = [...sdoc.querySelectorAll('.fresco img, .poster img.art')]
+    .flatMap((img) => [
+      img.getAttribute('src'),
+      ...(img.getAttribute('data-fallback') ?? '').split('|'),
+    ])
+    .filter((u) => u && /^https?:/.test(u));
 
   for (const url of urls) {
     test(`reachable: ${decodeURIComponent(url.slice(0, 90))}…`, async (t) => {
