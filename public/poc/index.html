@@ -471,6 +471,21 @@
     color: rgba(232,200,118,0.10);
     z-index: 0; pointer-events: none;
   }
+  /* the artwork — paints over the watermark; if it fails to load,
+     JS removes it and the gradient + watermark remain underneath */
+  .poster .art {
+    position: absolute; inset: 0; z-index: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: sepia(0.28) saturate(0.92) brightness(0.8);
+  }
+  .js .poster .art { opacity: 0; transition: opacity 1.2s ease; }
+  .js .poster .art.loaded { opacity: 1; }
+  /* scrim so titles stay readable over photographs */
+  .poster .scrim {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(rgba(10,7,3,0.2) 0%, transparent 32%, transparent 46%, rgba(10,7,3,0.9) 100%);
+  }
   .poster .ribbon {
     position: absolute; top: 16px; left: -34px;
     transform: rotate(-45deg);
@@ -541,12 +556,12 @@
       inset 0 -4px 8px rgba(0,0,0,0.5),
       0 0 26px -4px rgba(122,42,31,0.8);
     display: flex; align-items: center; justify-content: center;
-    color: rgba(232,200,118,0.9);
-    font-family: 'Cinzel', serif; font-size: 26px;
+    color: rgba(232,200,118,0.92);
     transform: rotate(-6deg);
     transition: transform 0.3s ease;
     position: relative;
   }
+  .seal svg { width: 32px; height: 32px; }
   .seal::before {
     content: ''; position: absolute; inset: 8px;
     border: 1px solid rgba(232,200,118,0.35); border-radius: 50%;
@@ -753,11 +768,12 @@
         radial-gradient(ellipse 30% 25% at 50% 25%, rgba(232,200,118,0.12), transparent 70%);"></div>
       <div class="smoke"></div>
       <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-        src="https://commons.wikimedia.org/wiki/Special:FilePath/La_fragua_de_Vulcano_(Vel%C3%A1zquez).jpg?width=1000"
-        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Diego_Vel%C3%A1zquez_-_The_Forge_of_Vulcan_-_WGA24447.jpg?width=1000" />
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Vel%C3%A1zquez_-_La_Fragua_de_Vulcano_(Museo_del_Prado,_1630).jpg?width=1000"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt_-_The_Anatomy_Lesson_of_Dr_Nicolaes_Tulp.jpg?width=1000|https://commons.wikimedia.org/wiki/Special:FilePath/The_Night_Watch_-_HD.jpg?width=1000"
+        data-captions="after Velázquez — The Forge of Vulcan, 1630|after Rembrandt — The Anatomy Lesson, 1632|after Rembrandt — The Night Watch, 1642" />
       <div class="glaze"></div>
     </div>
-    <span class="provenance">after Velázquez — The Forge of Vulcan, 1630</span>
+    <span class="provenance">after the old masters</span>
 
     <div class="inner page">
       <div class="section-head">
@@ -805,36 +821,48 @@
         <div class="poster poster-killbill reveal" data-tilt>
           <span class="ribbon">FILM</span>
           <span class="watermark">K</span>
+          <img class="art" src="img/kill-bill.jpg" alt="" loading="lazy" decoding="async" />
+          <span class="scrim" aria-hidden="true"></span>
           <h3>KILL BILL</h3>
           <p>style as substance</p>
         </div>
         <div class="poster poster-pulp reveal" data-tilt>
           <span class="ribbon">FILM</span>
           <span class="watermark">P</span>
+          <img class="art" src="https://upload.wikimedia.org/wikipedia/en/3/3b/Pulp_Fiction_%281994%29_poster.jpg" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+          <span class="scrim" aria-hidden="true"></span>
           <h3>PULP FICTION</h3>
           <p>structure is optional</p>
         </div>
         <div class="poster poster-inter reveal" data-tilt>
           <span class="ribbon">FILM</span>
           <span class="watermark">I</span>
+          <img class="art" src="img/interstellar.jpg" alt="" loading="lazy" decoding="async" />
+          <span class="scrim" aria-hidden="true"></span>
           <h3>INTERSTELLAR</h3>
           <p>scope, earned</p>
         </div>
         <div class="poster poster-rahman reveal" data-tilt>
           <span class="ribbon">SOUND</span>
           <span class="watermark">R</span>
+          <img class="art" src="img/rahman.jpg" alt="" loading="lazy" decoding="async" />
+          <span class="scrim" aria-hidden="true"></span>
           <h3>A.R. RAHMAN</h3>
           <p>the score beneath everything</p>
         </div>
         <div class="poster poster-acdc reveal" data-tilt>
           <span class="ribbon">SOUND</span>
           <span class="watermark">A</span>
+          <img class="art" src="img/acdc.jpg" alt="" loading="lazy" decoding="async" />
+          <span class="scrim" aria-hidden="true"></span>
           <h3>AC/DC</h3>
           <p>ship it loud</p>
         </div>
         <div class="poster poster-beatles reveal" data-tilt>
           <span class="ribbon">SOUND</span>
           <span class="watermark">B</span>
+          <img class="art" src="img/beatles.jpg" alt="" loading="lazy" decoding="async" />
+          <span class="scrim" aria-hidden="true"></span>
           <h3>THE BEATLES</h3>
           <p>the fundamentals</p>
         </div>
@@ -851,11 +879,12 @@
         radial-gradient(ellipse 30% 25% at 70% 75%, rgba(122,42,31,0.14), transparent 70%);"></div>
       <div class="smoke"></div>
       <img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-        src="https://commons.wikimedia.org/wiki/Special:FilePath/Johannes_Vermeer_-_Girl_Reading_a_Letter_at_an_Open_Window_-_Google_Art_Project.jpg?width=1000"
-        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Jan_Vermeer_van_Delft_003.jpg?width=1000" />
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/Vermeer,_Johannes_-_Woman_reading_a_letter_-_ca._1662-1663.jpg?width=1000"
+        data-fallback="https://commons.wikimedia.org/wiki/Special:FilePath/Johannes_Vermeer_-_Het_melkmeisje_-_Google_Art_Project.jpg?width=1000|https://commons.wikimedia.org/wiki/Special:FilePath/Meisje_met_de_parel.jpg?width=1000"
+        data-captions="after Vermeer — Woman Reading a Letter, c. 1663|after Vermeer — The Milkmaid, c. 1658|after Vermeer — Girl with a Pearl Earring, c. 1665" />
       <div class="glaze"></div>
     </div>
-    <span class="provenance">after Vermeer — Girl Reading a Letter, c. 1659</span>
+    <span class="provenance">after the old masters</span>
 
     <div class="inner page">
       <div class="section-head">
@@ -872,7 +901,12 @@
         <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
       </div>
 
-      <a class="seal reveal" href="mailto:rohith.illuri@gmail.com" aria-label="Send an email">✦</a>
+      <a class="seal reveal" href="mailto:rohith.illuri@gmail.com" aria-label="Send an email">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2.5" y="5" width="19" height="14" rx="1.5"/>
+          <path d="M3 6.5 L12 13.5 L21 6.5"/>
+        </svg>
+      </a>
       <div class="ps reveal">P.S. — the muses are always open to recommendations.</div>
     </div>
   </section>
@@ -908,14 +942,30 @@
     setTimeout(showAll, 2500); /* failsafe for webviews with broken observers */
   }
 
-  /* ---------- museum paintings: fade in on load, walk the fallback chain ---------- */
-  document.querySelectorAll('.fresco img').forEach(function (img) {
-    function ok() { img.classList.add('loaded'); }
+  /* ---------- paintings & card art: fade in on load, walk fallback chains ---------- */
+  document.querySelectorAll('.fresco img, .poster .art').forEach(function (img) {
+    function ok() {
+      img.classList.add('loaded');
+      /* keep the provenance caption honest about which painting loaded */
+      var caps = (img.getAttribute('data-captions') || '').split('|').filter(Boolean);
+      if (caps.length) {
+        var scene = img.closest('.scene');
+        var prov = scene && scene.querySelector('.provenance');
+        if (prov) prov.textContent = caps[0];
+      }
+    }
     img.addEventListener('load', ok);
     img.addEventListener('error', function () {
-      var alt = img.getAttribute('data-fallback');
-      if (alt) { img.removeAttribute('data-fallback'); img.src = alt; }
-      else { img.remove(); } /* the CSS underpaint remains — never a gap */
+      var chain = (img.getAttribute('data-fallback') || '').split('|').filter(Boolean);
+      var next = chain.shift();
+      if (next) {
+        img.setAttribute('data-fallback', chain.join('|'));
+        var caps = (img.getAttribute('data-captions') || '').split('|').filter(Boolean);
+        if (caps.length > 1) { caps.shift(); img.setAttribute('data-captions', caps.join('|')); }
+        img.src = next;
+      } else {
+        img.remove(); /* CSS underpaint / gradient remains — never a gap */
+      }
     });
     if (img.complete && img.naturalWidth > 0) ok();
   });
