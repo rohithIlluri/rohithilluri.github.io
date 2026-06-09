@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,7 +15,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # the static site's test suite needs only jsdom — no full install
+      - run: npm install --no-save jsdom
+
+      - run: npm run test:poc
+
+  deploy:
+    needs: test
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -22,20 +38,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run build
-
       - uses: actions/configure-pages@v4
 
+      # the site is static — no build step, publish site/ as-is
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: build
+          path: site
 
       - id: deployment
         uses: actions/deploy-pages@v4
