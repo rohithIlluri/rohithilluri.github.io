@@ -362,18 +362,29 @@ describe('painting URLs resolve (network)', () => {
     test(`reachable: ${decodeURIComponent(url.slice(0, 90))}…`, async (t) => {
       let res;
       try {
-        res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+        res = await fetch(url, {
+          method: 'HEAD',
+          redirect: 'follow',
+          headers: { 'User-Agent': 'rohithilluri.github.io link-check (rohith.illuri@gmail.com)' },
+        });
       } catch {
         t.skip('network unavailable in this environment');
         return;
       }
-      if (res.status === 403) {
-        const reason = res.headers.get('x-deny-reason') ?? '';
-        if (reason.includes('host_not_allowed')) {
-          t.skip('environment proxy blocks this host — verify in CI/browser');
-          return;
-        }
+      if (res.status === 403 && (res.headers.get('x-deny-reason') ?? '').includes('host_not_allowed')) {
+        t.skip('environment proxy blocks this host — verify in CI/browser');
+        return;
       }
+      // Rate limiting and server hiccups are inconclusive, not broken links.
+      // The page walks its fallback chain at runtime either way; only a
+      // definitive "this file does not exist" should fail the build.
+      if (res.status === 429 || res.status === 403 || res.status >= 500) {
+        t.skip(`inconclusive HTTP ${res.status} — not a missing file`);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 400)); // be polite to the host
+      assert.notEqual(res.status, 404, `painting URL 404s: ${url}`);
+      assert.notEqual(res.status, 410, `painting URL is gone: ${url}`);
       assert.ok(res.ok, `HTTP ${res.status} for painting URL`);
     });
   }
