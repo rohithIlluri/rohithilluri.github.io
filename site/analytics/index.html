@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Analytics — Rohith Illuri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root {
+  --abyss:      #0e0c08;
+  --parchment:  #161410;
+  --card:       #1c1914;
+  --gold:       #c8a24a;
+  --gold-dim:   #7a6030;
+  --gold-bright:#e8c876;
+  --ember:      #d4762c;
+  --ash:        #7a7060;
+  --text:       #d0c4a8;
+  --border:     rgba(200,162,74,0.12);
+  --border-hi:  rgba(200,162,74,0.28);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  min-height: 100vh;
+  background: var(--abyss);
+  color: var(--text);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 900; opacity: 0.35;
+}
+
+/* ── gate ──────────────────────────────────────────────────────────────── */
+.gate {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 100vh; gap: 1.8rem; padding: 2rem;
+}
+.gate-sigil {
+  font-family: 'Cinzel', serif; font-size: 0.55rem;
+  letter-spacing: 0.35em; color: var(--gold-dim);
+  text-transform: uppercase; margin-bottom: -0.5rem;
+}
+.gate h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.3rem, 4vw, 2rem);
+  letter-spacing: 0.22em; font-weight: 700; color: var(--gold);
+}
+.gate form { display: flex; gap: 0; }
+.gate input {
+  background: var(--parchment); border: 1px solid var(--border-hi);
+  border-right: none; color: var(--text); padding: 0.6rem 1.1rem;
+  font-family: 'EB Garamond', serif; font-size: 1rem; outline: none;
+  border-radius: 2px 0 0 2px; width: 200px; transition: border-color 0.2s;
+}
+.gate input:focus { border-color: var(--gold-dim); }
+.gate button {
+  background: transparent; border: 1px solid var(--border-hi);
+  color: var(--gold); padding: 0.6rem 1.4rem;
+  font-family: 'Cinzel', serif; font-size: 0.62rem;
+  letter-spacing: 0.2em; cursor: pointer; text-transform: uppercase;
+  border-radius: 0 2px 2px 0; transition: background 0.2s, color 0.2s;
+}
+.gate button:hover { background: rgba(200,162,74,0.08); color: var(--gold-bright); }
+.gate .err { color: var(--ember); font-size: 0.82rem; min-height: 1em; letter-spacing: 0.04em; }
+
+/* ── layout ─────────────────────────────────────────────────────────────── */
+.dashboard { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+/* ── header ─────────────────────────────────────────────────────────────── */
+.dash-header {
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  padding-bottom: 1.25rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.dash-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(0.9rem, 2.5vw, 1.25rem);
+  font-weight: 700; letter-spacing: 0.22em;
+  color: var(--gold); text-transform: uppercase;
+}
+.dash-title em {
+  font-style: normal; font-weight: 400; color: var(--ash);
+  font-size: 0.7em; letter-spacing: 0.05em; margin-left: 0.6em;
+}
+.dash-meta {
+  font-size: 0.72rem; color: var(--ash); letter-spacing: 0.05em;
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+}
+.dash-meta a {
+  color: var(--gold-dim); text-decoration: none;
+  font-family: 'Cinzel', serif; font-size: 0.6rem;
+  letter-spacing: 0.15em; margin-left: 0.4rem;
+}
+.dash-meta a:hover { color: var(--gold); }
+.reload-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--ash); padding: 0.22rem 0.6rem;
+  font-family: 'Cinzel', serif; font-size: 0.5rem;
+  letter-spacing: 0.12em; cursor: pointer; border-radius: 2px;
+  text-transform: uppercase; transition: all 0.18s;
+}
+.reload-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* ── range tabs ─────────────────────────────────────────────────────────── */
+.range-tabs {
+  display: flex; margin-bottom: 1.75rem;
+  border: 1px solid var(--border); border-radius: 3px;
+  overflow: hidden; width: fit-content;
+}
+.range-tab {
+  background: transparent; border: none;
+  border-right: 1px solid var(--border); color: var(--ash);
+  padding: 0.38rem 0.9rem; font-family: 'Cinzel', serif;
+  font-size: 0.52rem; letter-spacing: 0.15em;
+  cursor: pointer; text-transform: uppercase; transition: all 0.18s;
+}
+.range-tab:last-child { border-right: none; }
+.range-tab:hover { color: var(--gold); background: rgba(200,162,74,0.05); }
+.range-tab.active { background: rgba(200,162,74,0.1); color: var(--gold-bright); }
+
+/* ── setup banner ────────────────────────────────────────────────────────── */
+.setup-banner {
+  background: rgba(212,118,44,0.06); border: 1px solid rgba(212,118,44,0.3);
+  border-radius: 3px; padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem; display: none;
+}
+.setup-banner.show { display: block; }
+.setup-banner h3 {
+  font-family: 'Cinzel', serif; font-size: 0.7rem;
+  letter-spacing: 0.18em; color: var(--ember);
+  margin-bottom: 0.6rem; text-transform: uppercase;
+}
+.setup-banner p { font-size: 0.85rem; color: var(--text); }
+.setup-banner code {
+  background: rgba(0,0,0,0.4); padding: 0.1em 0.4em;
+  border-radius: 2px; font-size: 0.82em; color: var(--gold-bright);
+}
+
+/* ── stat cards ──────────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1rem; margin-bottom: 2rem;
+}
+@media (max-width: 800px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 3px; padding: 1.1rem 1.25rem;
+  position: relative; overflow: hidden; transition: border-color 0.25s;
+}
+.stat-card:hover { border-color: var(--border-hi); }
+.stat-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+}
+.stat-label {
+  font-family: 'Cinzel', serif; font-size: 0.52rem;
+  letter-spacing: 0.22em; color: var(--ash);
+  text-transform: uppercase; margin-bottom: 0.45rem;
+}
+.stat-value {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+  font-weight: 700; color: var(--gold-bright);
+  line-height: 1; margin-bottom: 0.2rem;
+}
+.stat-sub { font-size: 0.7rem; color: var(--ash); }
+
+/* ── section wrapper ─────────────────────────────────────────────────────── */
+.section { margin-bottom: 2rem; }
+.section-title {
+  font-family: 'Cinzel', serif; font-size: 0.58rem;
+  letter-spacing: 0.28em; color: var(--gold-dim);
+  text-transform: uppercase; padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border); margin-bottom: 1.1rem;
+}
+
+/* ── world map ───────────────────────────────────────────────────────────── */
+.map-container {
+  border: 1px solid var(--border); border-radius: 3px;
+  overflow: hidden; margin-bottom: 2rem; height: 420px;
+}
+#leaflet-map { width: 100%; height: 100%; }
+.leaflet-container { background: #060504; font-family: 'EB Garamond', serif; }
+.leaflet-popup-content-wrapper {
+  background: rgba(14,12,8,0.97); border: 1px solid var(--gold-dim);
+  border-radius: 2px; color: var(--text); box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+}
+.leaflet-popup-tip { background: rgba(14,12,8,0.97); }
+.leaflet-popup-content { margin: 0.5rem 0.75rem; font-size: 0.82rem; }
+.leaflet-popup-content strong { color: var(--gold); }
+.leaflet-control-zoom a { background: #1c1914 !important; color: var(--gold) !important; border-color: var(--border) !important; }
+.leaflet-control-zoom a:hover { background: #2a2418 !important; }
+.leaflet-control-attribution { background: rgba(6,5,4,0.7) !important; color: var(--ash) !important; font-size: 0.6rem !important; }
+.leaflet-control-attribution a { color: var(--gold-dim) !important; }
+#map-reset {
+  position: absolute; bottom: 1rem; right: 1rem; z-index: 1000;
+  background: rgba(14,12,8,0.9); border: 1px solid var(--border-hi);
+  color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.58rem;
+  letter-spacing: 0.15em; padding: 0.35rem 0.75rem; cursor: pointer;
+  border-radius: 2px; text-transform: uppercase; transition: background 0.2s, color 0.2s;
+}
+#map-reset:hover { background: rgba(40,32,12,0.95); color: var(--gold-bright); }
+
+/* ── two-col ─────────────────────────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── three-col ───────────────────────────────────────────────────────────── */
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+@media (max-width: 800px) { .three-col { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .three-col { grid-template-columns: 1fr; } }
+
+/* ── donut chart ─────────────────────────────────────────────────────────── */
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.85rem; }
+.donut-svg { width: 96px; height: 96px; }
+.donut-legend { list-style: none; width: 100%; }
+.donut-legend li { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.32rem; font-size: 0.76rem; }
+.d-swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.d-label { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-pct { color: var(--ash); font-size: 0.68rem; min-width: 2.4rem; text-align: right; }
+
+/* ── bar list ────────────────────────────────────────────────────────────── */
+.bar-list { list-style: none; }
+.bar-list li { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.55rem; font-size: 0.82rem; }
+.bl-label { width: 130px; min-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.bl-track { flex: 1; height: 5px; background: rgba(200,162,74,0.07); border-radius: 3px; overflow: hidden; }
+.bl-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 3px; transition: width 0.9s cubic-bezier(.22,1,.36,1); }
+.bl-count { min-width: 2.2rem; text-align: right; color: var(--ash); font-size: 0.78rem; }
+
+/* ── timeline ────────────────────────────────────────────────────────────── */
+.timeline-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+.timeline { display: flex; align-items: flex-end; gap: 3px; height: 88px; }
+.tl-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.tl-bar {
+  width: 100%; min-height: 2px;
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-dim) 100%);
+  border-radius: 2px 2px 0 0; transition: height 0.7s cubic-bezier(.22,1,.36,1);
+  position: relative; cursor: default;
+}
+.tl-bar:hover { background: linear-gradient(180deg, #fff5c0 0%, var(--gold) 100%); }
+.tl-bar::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%);
+  background: rgba(14,12,8,0.96); border: 1px solid var(--gold-dim);
+  padding: 0.2rem 0.45rem; font-size: 0.62rem; white-space: nowrap;
+  pointer-events: none; display: none; border-radius: 2px; z-index: 20;
+}
+.tl-bar:hover::after { display: block; }
+.tl-label { font-size: 0.5rem; color: var(--ash); margin-top: 3px; letter-spacing: 0.02em; }
+.tl-axis { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--ash); padding: 0 2px; }
+
+/* ── peak hours heatmap ─────────────────────────────────────────────────── */
+.heatmap-outer { overflow-x: auto; padding-bottom: 0.5rem; }
+.heatmap-grid {
+  display: grid; grid-template-columns: 28px repeat(24, 1fr);
+  gap: 2px; min-width: 500px;
+}
+.hm-row-label {
+  font-size: 0.5rem; color: var(--ash); letter-spacing: 0.02em;
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;
+}
+.hm-cell {
+  height: 20px; border-radius: 2px;
+  background: rgba(200,162,74, var(--hm-o, 0.04));
+  cursor: default; position: relative; transition: outline 0.1s;
+}
+.hm-cell:hover { outline: 1px solid rgba(200,162,74,0.45); }
+.hm-cell:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  background: rgba(14,12,8,0.97); border: 1px solid var(--gold-dim);
+  padding: 0.18rem 0.42rem; font-size: 0.6rem; white-space: nowrap;
+  pointer-events: none; border-radius: 2px; z-index: 20; color: var(--text);
+}
+.hm-hour-labels {
+  display: grid; grid-template-columns: 28px repeat(24, 1fr);
+  gap: 2px; min-width: 500px; margin-top: 3px;
+}
+.hm-hour-lbl { font-size: 0.44rem; color: var(--ash); text-align: center; }
+
+/* ── recent table ────────────────────────────────────────────────────────── */
+.recent-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.recent-table th {
+  font-family: 'Cinzel', serif; font-size: 0.5rem; letter-spacing: 0.2em;
+  color: var(--ash); text-align: left; padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border); text-transform: uppercase;
+}
+.recent-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(200,162,74,0.04); vertical-align: top; }
+.recent-table tr:last-child td { border-bottom: none; }
+.recent-table tr:hover td { background: rgba(200,162,74,0.025); }
+.cell-ts { color: var(--ash); white-space: nowrap; font-size: 0.74rem; }
+.cell-where { color: var(--text); }
+.cell-ref { color: var(--ember); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── footer ──────────────────────────────────────────────────────────────── */
+.dash-footer {
+  margin-top: 3rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 0.5rem; font-size: 0.72rem; color: var(--ash);
+}
+.dash-footer a { color: var(--gold-dim); text-decoration: none; }
+.dash-footer a:hover { color: var(--gold); }
+
+/* ── empty / loading ─────────────────────────────────────────────────────── */
+.empty-state { color: var(--ash); font-style: italic; text-align: center; padding: 1.5rem; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════════════════════════════╗
+     ║  CONFIG                                                              ║
+     ╚══════════════════════════════════════════════════════════════════════╝ -->
+<script>
+var SHEET_CSV  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7m1JYX9RrTFWG8K_Sg_8ZZ16gaUsMeVTBB5Fkcoq3AbEi0l6rRepRkdBzEUVrGTq80joc5yH06Tj/pub?gid=0&single=true&output=csv';
+var ACCESS_KEY = 'rohith2026';
+</script>
+
+<!-- Gate view -->
+<div id="gate-view" class="gate" style="display:none">
+  <p class="gate-sigil">rohithilluri.github.io</p>
+  <h1>◈ Analytics</h1>
+  <form id="gate-form">
+    <input id="gate-input" type="password" placeholder="access key" autocomplete="off" spellcheck="false"/>
+    <button type="submit">Enter</button>
+  </form>
+  <p id="gate-err" class="err"></p>
+</div>
+
+<!-- Dashboard -->
+<div id="main-view" style="display:none">
+<div class="dashboard">
+
+  <header class="dash-header">
+    <div class="dash-title">◈ Analytics <em>rohithilluri.github.io</em></div>
+    <div class="dash-meta">
+      <span id="refresh-ts">—</span>
+      <button class="reload-btn" onclick="reloadData()" title="Reload">↻ Refresh</button>
+      <a href="/" title="Back to portfolio">← Portfolio</a>
+    </div>
+  </header>
+
+  <!-- Date range filter -->
+  <div class="range-tabs" id="range-tabs">
+    <button class="range-tab" data-days="7">7 Days</button>
+    <button class="range-tab active" data-days="30">30 Days</button>
+    <button class="range-tab" data-days="0">All Time</button>
+  </div>
+
+  <div id="setup-banner" class="setup-banner">
+    <h3>Setup Required · Demo Data</h3>
+    <p>Replace the <code>SHEET_CSV</code> constant with your published Google Sheet CSV URL, then redeploy.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Visits</div>
+      <div class="stat-value" id="s-total">—</div>
+      <div class="stat-sub" id="s-total-sub">&nbsp;</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Unique Visitors</div>
+      <div class="stat-value" id="s-unique">—</div>
+      <div class="stat-sub" id="s-unique-sub">&nbsp;</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Countries</div>
+      <div class="stat-value" id="s-countries">—</div>
+      <div class="stat-sub" id="s-top-country">&nbsp;</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today</div>
+      <div class="stat-value" id="s-today">—</div>
+      <div class="stat-sub" id="s-today-sub">&nbsp;</div>
+    </div>
+  </div>
+
+  <!-- World map -->
+  <div class="section">
+    <div class="section-title" id="map-title">Global Reach</div>
+    <div class="map-container">
+      <div id="leaflet-map"></div>
+      <button id="map-reset" title="Reset view" onclick="if(_leafletMap){_leafletMap.flyTo([25,15],2,{animate:true,duration:1})}">⊖ World</button>
+    </div>
+  </div>
+
+  <!-- Countries + Cities -->
+  <div class="two-col">
+    <div class="section">
+      <div class="section-title">Top Countries</div>
+      <ul class="bar-list" id="countries-list"><li class="empty-state">Loading…</li></ul>
+    </div>
+    <div class="section">
+      <div class="section-title">Top Cities</div>
+      <ul class="bar-list" id="cities-list"><li class="empty-state">Loading…</li></ul>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="section">
+    <div class="section-title" id="timeline-title">Daily Visits</div>
+    <div class="timeline-wrap">
+      <div class="timeline" id="timeline"></div>
+      <div class="tl-axis" id="tl-axis"></div>
+    </div>
+  </div>
+
+  <!-- Referrers + Recent -->
+  <div class="two-col">
+    <div class="section">
+      <div class="section-title">Traffic Sources</div>
+      <ul class="bar-list" id="ref-list"><li class="empty-state">Loading…</li></ul>
+    </div>
+    <div class="section">
+      <div class="section-title">Recent Visits</div>
+      <div id="recent-wrap"><p class="empty-state">Loading…</p></div>
+    </div>
+  </div>
+
+  <!-- Device / OS / Browser donuts -->
+  <div class="three-col">
+    <div class="section">
+      <div class="section-title">Device Type</div>
+      <div class="donut-wrap" id="device-chart"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Operating System</div>
+      <div class="donut-wrap" id="os-chart"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Browser</div>
+      <div class="donut-wrap" id="browser-chart"></div>
+    </div>
+  </div>
+
+  <!-- Peak Hours Heatmap -->
+  <div class="section">
+    <div class="section-title">Peak Hours <span style="font-size:0.82em;color:var(--ash);font-family:'EB Garamond',serif;letter-spacing:0.04em;text-transform:none">· day × hour (UTC)</span></div>
+    <div class="heatmap-outer">
+      <div id="heatmap-grid" class="heatmap-grid"></div>
+      <div id="heatmap-hlabels" class="hm-hour-labels"></div>
+    </div>
+  </div>
+
+  <footer class="dash-footer">
+    <span>Location via <a href="https://ipapi.co" target="_blank" rel="noopener">ipapi.co</a> · stored in Google Sheets</span>
+    <span id="row-count"></span>
+  </footer>
+
+</div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════════
+   GATE
+   ════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  var hashKey = (window.location.hash || '').slice(1);
+  var stored  = sessionStorage.getItem('_ak');
+  if (hashKey && hashKey === ACCESS_KEY) {
+    sessionStorage.setItem('_ak', hashKey);
+    history.replaceState(null, '', window.location.pathname);
+    boot();
+  } else if (stored === ACCESS_KEY) {
+    boot();
+  } else {
+    var gateEl = document.getElementById('gate-view');
+    gateEl.style.display = 'flex';
+    document.getElementById('gate-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = document.getElementById('gate-input').value;
+      if (v === ACCESS_KEY) {
+        sessionStorage.setItem('_ak', v);
+        gateEl.style.display = 'none';
+        boot();
+      } else {
+        document.getElementById('gate-err').textContent = 'Invalid key.';
+      }
+    });
+  }
+})();
+
+/* ════════════════════════════════════════════════════════════════════════════
+   STATE & BOOT
+   ════════════════════════════════════════════════════════════════════════════ */
+var _allRows    = [];
+var _activeDays = 30;
+
+function boot() {
+  document.getElementById('main-view').style.display = 'block';
+  document.querySelectorAll('.range-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.range-tab').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      _activeDays = parseInt(btn.getAttribute('data-days'), 10);
+      renderAll(getFilteredRows());
+    });
+  });
+  loadData();
+}
+
+function getFilteredRows() {
+  if (!_activeDays) return _allRows;
+  var cutoff = new Date(Date.now() - _activeDays * 86400000).toISOString();
+  return _allRows.filter(function (r) { return (r.Timestamp || '') >= cutoff; });
+}
+
+function reloadData() { loadData(); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DATA LOAD
+   ════════════════════════════════════════════════════════════════════════════ */
+function loadData() {
+  var isDemo = !SHEET_CSV ||
+    (SHEET_CSV.indexOf('script.google') === -1 && SHEET_CSV.indexOf('docs.google') === -1);
+
+  if (isDemo) {
+    document.getElementById('setup-banner').classList.add('show');
+    _allRows = normalize(filterBots(demoRows()));
+    renderAll(getFilteredRows());
+    return;
+  }
+
+  var url = SHEET_CSV + (SHEET_CSV.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now();
+  fetch(url)
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (csv) {
+      _allRows = normalize(filterBots(parseCSV(csv)));
+      renderAll(getFilteredRows());
+    })
+    .catch(function (err) {
+      document.getElementById('setup-banner').classList.add('show');
+      document.getElementById('setup-banner').querySelector('p').textContent =
+        'Could not load data: ' + err.message;
+      _allRows = normalize(filterBots(demoRows()));
+      renderAll(getFilteredRows());
+    });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PARSE / NORMALIZE / FILTER
+   ════════════════════════════════════════════════════════════════════════════ */
+function parseCSV(text) {
+  var lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  var headers = lines[0].split(',').map(function (h) { return h.replace(/"/g, '').trim(); });
+  return lines.slice(1).map(function (line) {
+    var vals = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    vals.push(cur.trim());
+    var obj = {};
+    headers.forEach(function (h, i) { obj[h] = (vals[i] || '').replace(/"/g, ''); });
+    return obj;
+  });
+}
+
+var BOT_RE = /bot|crawl|spider|slurp|prerender|headless|phantomjs|python-requests|python\/|curl\/|wget\/|scrapy|archive\.org|semrush|ahrefs|mj12bot|pingdom|uptimerobot|yandexbot|baiduspider|facebookexternalhit/i;
+function filterBots(rows) {
+  return rows.filter(function (r) { return !BOT_RE.test(r['User Agent'] || ''); });
+}
+
+function uaParse(ua) {
+  ua = ua || '';
+  var b = 'Unknown', os = 'Unknown', dev = 'desktop';
+  if      (/Edg\//.test(ua))                          b = 'Edge';
+  else if (/OPR\/|Opera/.test(ua))                    b = 'Opera';
+  else if (/Firefox\//.test(ua))                      b = 'Firefox';
+  else if (/Chrome\//.test(ua))                       b = 'Chrome';
+  else if (/Safari/.test(ua))                         b = 'Safari';
+  if      (/Windows NT/.test(ua))                     os = 'Windows';
+  else if (/Android/.test(ua))                        os = 'Android';
+  else if (/iPhone|iPad|iPod/.test(ua))               os = 'iOS';
+  else if (/Mac OS X/.test(ua))                       os = 'macOS';
+  else if (/Linux/.test(ua))                          os = 'Linux';
+  if      (/iPad|Tablet/.test(ua))                    dev = 'tablet';
+  else if (/Mobile|Android|iPhone/.test(ua))          dev = 'mobile';
+  return { browser: b, os: os, device: dev };
+}
+
+function hostFrom(ref) {
+  if (!ref || ref === 'direct') return 'direct';
+  try { return new URL(ref).hostname.replace(/^www\./, ''); } catch (e) { return ref.slice(0, 30); }
+}
+
+function normalize(rows) {
+  return rows.map(function (r) {
+    var p = uaParse(r['User Agent'] || '');
+    r['Visitor ID'] = r['Visitor ID'] || r.IP || (r.Lat + ',' + r.Lng);
+    r.Device  = r.Device  || p.device;
+    r.OS      = r.OS      || p.os;
+    r.Browser = r.Browser || p.browser;
+    r.Source  = r.Source  || hostFrom(r.Referrer);
+    return r;
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DEMO DATA  (spans 30 days so all three range tabs show data)
+   ════════════════════════════════════════════════════════════════════════════ */
+function demoRows() {
+  var seed = [
+    { City:'San Francisco', Region:'California',   Country:'United States',  lat:37.77,  lng:-122.42 },
+    { City:'New York',      Region:'New York',      Country:'United States',  lat:40.71,  lng:-74.01  },
+    { City:'London',        Region:'England',       Country:'United Kingdom', lat:51.51,  lng:-0.13   },
+    { City:'Bangalore',     Region:'Karnataka',     Country:'India',          lat:12.97,  lng:77.59   },
+    { City:'Berlin',        Region:'Berlin',        Country:'Germany',        lat:52.52,  lng:13.40   },
+    { City:'Toronto',       Region:'Ontario',       Country:'Canada',         lat:43.65,  lng:-79.38  },
+    { City:'Sydney',        Region:'NSW',           Country:'Australia',      lat:-33.87, lng:151.21  },
+    { City:'Tokyo',         Region:'Tokyo',         Country:'Japan',          lat:35.68,  lng:139.69  },
+    { City:'Singapore',     Region:'Singapore',     Country:'Singapore',      lat:1.35,   lng:103.82  },
+    { City:'São Paulo',     Region:'São Paulo',     Country:'Brazil',         lat:-23.55, lng:-46.63  },
+    { City:'Dubai',         Region:'Dubai',         Country:'UAE',            lat:25.20,  lng:55.27   },
+    { City:'Amsterdam',     Region:'North Holland', Country:'Netherlands',    lat:52.37,  lng:4.90    },
+    { City:'Paris',         Region:'Île-de-France', Country:'France',         lat:48.86,  lng:2.35    },
+    { City:'Seoul',         Region:'Seoul',         Country:'South Korea',    lat:37.57,  lng:126.98  },
+    { City:'Nairobi',       Region:'Nairobi',       Country:'Kenya',          lat:-1.29,  lng:36.82   },
+    { City:'Mexico City',   Region:'CDMX',          Country:'Mexico',         lat:19.43,  lng:-99.13  },
+  ];
+  var refs = ['direct','https://www.linkedin.com/','https://t.co/','https://github.com/',
+              'direct','https://l.instagram.com/','https://news.ycombinator.com/','direct'];
+  var uas  = [
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36 Edg/125.0',
+    'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Mobile Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0',
+    'Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari'
+  ];
+  var rows = [], now = Date.now();
+  for (var i = 0; i < 70; i++) {
+    var c  = seed[i % seed.length];
+    var ts = new Date(now - Math.random() * 30 * 86400000).toISOString();
+    rows.push({
+      Timestamp: ts,
+      IP: (i % 3 === 0 ? '2600:6c40:' + i : '49.' + (i % 200) + '.12.' + (i % 99)),
+      City: c.City, Region: c.Region, Country: c.Country,
+      Lat: String(c.lat + (Math.random() - 0.5) * 0.5),
+      Lng: String(c.lng + (Math.random() - 0.5) * 0.5),
+      Timezone: 'UTC',
+      Referrer: refs[i % refs.length],
+      'User Agent': uas[i % uas.length]
+    });
+  }
+  return rows.sort(function (a, b) { return b.Timestamp.localeCompare(a.Timestamp); });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RENDER ALL
+   ════════════════════════════════════════════════════════════════════════════ */
+function renderAll(rows) {
+  var label = _activeDays ? 'Last ' + _activeDays + ' Days' : 'All Time';
+  document.getElementById('map-title').textContent      = 'Global Reach — ' + label;
+  document.getElementById('timeline-title').textContent = 'Daily Visits — ' + label;
+
+  renderStats(rows);
+  renderMap(rows);
+  renderBars('countries-list', freq(rows, 'Country'), 10);
+  renderBars('cities-list',    freq(rows, 'City'),    10);
+  renderTimeline(rows);
+  renderBars('ref-list', refFreq(rows), 10);
+  renderRecent(rows);
+  renderDonuts(rows);
+  renderHeatmap(rows);
+
+  document.getElementById('refresh-ts').textContent =
+    'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('row-count').textContent =
+    rows.length + ' visits' + (_allRows.length !== rows.length ? ' of ' + _allRows.length + ' total' : '');
+}
+
+/* ─── stats ──────────────────────────────────────────────────────────────── */
+function renderStats(rows) {
+  var today  = new Date().toISOString().slice(0, 10);
+  var todayN = rows.filter(function (r) { return (r.Timestamp || '').slice(0, 10) === today; }).length;
+
+  /* new vs returning computed over the full dataset */
+  var ipCount = {};
+  _allRows.forEach(function (r) {
+    var id = r['Visitor ID'] || r.Lat + ',' + r.Lng;
+    ipCount[id] = (ipCount[id] || 0) + 1;
+  });
+  var allIPs       = Object.keys(ipCount);
+  var returningN   = allIPs.filter(function (id) { return ipCount[id] > 1; }).length;
+  var newN         = allIPs.length - returningN;
+
+  var filteredIPs  = new Set(rows.map(function (r) { return r['Visitor ID'] || r.Lat + ',' + r.Lng; })).size;
+  var countries    = new Set(rows.map(function (r) { return r.Country; }).filter(Boolean));
+  var topCountry   = freq(rows, 'Country')[0];
+
+  document.getElementById('s-total').textContent      = rows.length.toLocaleString();
+  document.getElementById('s-unique').textContent     = filteredIPs.toLocaleString();
+  document.getElementById('s-unique-sub').textContent = newN + ' new · ' + returningN + ' returning';
+  document.getElementById('s-countries').textContent  = countries.size;
+  document.getElementById('s-today').textContent      = todayN;
+  document.getElementById('s-today-sub').textContent  =
+    new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  if (topCountry) document.getElementById('s-top-country').textContent = '↑ ' + topCountry[0];
+}
+
+/* ─── donut charts ───────────────────────────────────────────────────────── */
+var DONUT_PALETTE = ['#e8c876','#d4762c','#6090b0','#7a9858','#a06890','#8a7040'];
+
+function renderDonuts(rows) {
+  renderOneDonut('device-chart',  rows, 'Device');
+  renderOneDonut('os-chart',      rows, 'OS');
+  renderOneDonut('browser-chart', rows, 'Browser');
+}
+
+function renderOneDonut(elId, rows, key) {
+  var el    = document.getElementById(elId);
+  var pairs = freq(rows, key).slice(0, 6);
+  var total = pairs.reduce(function (s, p) { return s + p[1]; }, 0) || 1;
+  var R = 38, CX = 50, CY = 50, SW = 14, GAP = 0.012;
+  var circ = 2 * Math.PI * R, offset = 0;
+
+  var segs = pairs.map(function (p, i) {
+    var frac   = p[1] / total;
+    var dash   = Math.max(0, (frac - GAP) * circ);
+    var rotate = (offset - 0.25) * circ;
+    offset += frac;
+    return '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '" fill="none"' +
+      ' stroke="' + DONUT_PALETTE[i % DONUT_PALETTE.length] + '"' +
+      ' stroke-width="' + SW + '"' +
+      ' stroke-dasharray="' + dash.toFixed(2) + ' ' + circ.toFixed(2) + '"' +
+      ' stroke-dashoffset="' + (-rotate).toFixed(2) + '"/>';
+  });
+
+  var svg = '<svg class="donut-svg" viewBox="0 0 100 100">' +
+    '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '" fill="none" stroke="#1c1914" stroke-width="' + SW + '"/>' +
+    segs.join('') + '</svg>';
+
+  var legend = '<ul class="donut-legend">' +
+    pairs.map(function (p, i) {
+      return '<li>' +
+        '<span class="d-swatch" style="background:' + DONUT_PALETTE[i % DONUT_PALETTE.length] + '"></span>' +
+        '<span class="d-label" title="' + esc(p[0]) + '">' + esc(p[0]) + '</span>' +
+        '<span class="d-pct">' + Math.round(p[1] / total * 100) + '%</span>' +
+      '</li>';
+    }).join('') + '</ul>';
+
+  el.innerHTML = svg + legend;
+}
+
+/* ─── peak hours heatmap ─────────────────────────────────────────────────── */
+var HM_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function renderHeatmap(rows) {
+  var matrix = [];
+  for (var d = 0; d < 7; d++) { matrix[d] = new Array(24).fill(0); }
+  rows.forEach(function (r) {
+    if (!r.Timestamp) return;
+    var dt  = new Date(r.Timestamp);
+    var day = (dt.getUTCDay() + 6) % 7;
+    var hr  = dt.getUTCHours();
+    matrix[day][hr]++;
+  });
+  var maxVal = 1;
+  matrix.forEach(function (row) { row.forEach(function (v) { if (v > maxVal) maxVal = v; }); });
+
+  var html = '';
+  for (var d = 0; d < 7; d++) {
+    html += '<div class="hm-row-label">' + HM_DAYS[d] + '</div>';
+    for (var h = 0; h < 24; h++) {
+      var n = matrix[d][h];
+      var o = n ? (0.08 + 0.92 * n / maxVal).toFixed(2) : '0.04';
+      html += '<div class="hm-cell" style="--hm-o:' + o + '" data-tip="' + HM_DAYS[d] + ' ' + h + ':00 — ' + n + ' visits"></div>';
+    }
+  }
+  document.getElementById('heatmap-grid').innerHTML = html;
+
+  var hl = '<div></div>';
+  for (var h = 0; h < 24; h++) {
+    hl += '<div class="hm-hour-lbl">' + (h % 6 === 0 ? h + 'h' : '') + '</div>';
+  }
+  document.getElementById('heatmap-hlabels').innerHTML = hl;
+}
+
+/* ─── bar list ───────────────────────────────────────────────────────────── */
+function freq(rows, key) {
+  var m = {};
+  rows.forEach(function (r) { var v = r[key] || 'Unknown'; m[v] = (m[v] || 0) + 1; });
+  return Object.entries(m).sort(function (a, b) { return b[1] - a[1]; });
+}
+
+function refFreq(rows) {
+  var m = {};
+  rows.forEach(function (r) {
+    var s = (r.Source || 'direct').trim() || 'direct';
+    m[s === 'direct' ? 'Direct' : s] = (m[s === 'direct' ? 'Direct' : s] || 0) + 1;
+  });
+  return Object.entries(m).sort(function (a, b) { return b[1] - a[1]; });
+}
+
+function renderBars(elId, pairs, n) {
+  var el = document.getElementById(elId);
+  pairs  = pairs.slice(0, n);
+  if (!pairs.length) { el.innerHTML = '<li class="empty-state">No data yet</li>'; return; }
+  var max = pairs[0][1];
+  el.innerHTML = pairs.map(function (p) {
+    var pct = Math.max(4, Math.round(p[1] / max * 100));
+    return '<li>' +
+      '<span class="bl-label" title="' + esc(p[0]) + '">' + esc(p[0]) + '</span>' +
+      '<span class="bl-track"><span class="bl-fill" style="width:' + pct + '%"></span></span>' +
+      '<span class="bl-count">' + p[1] + '</span>' +
+    '</li>';
+  }).join('');
+}
+
+/* ─── timeline ───────────────────────────────────────────────────────────── */
+function renderTimeline(rows) {
+  var nDays = _activeDays || 60;
+  var days = {}, labels = [];
+  for (var i = nDays - 1; i >= 0; i--) {
+    var d = new Date(); d.setDate(d.getDate() - i);
+    var key = d.toISOString().slice(0, 10);
+    days[key] = 0;
+    labels.push(key.slice(5));
+  }
+  rows.forEach(function (r) { var d = (r.Timestamp || '').slice(0, 10); if (d in days) days[d]++; });
+  var vals = Object.values(days);
+  var max  = Math.max.apply(null, vals.concat([1]));
+
+  document.getElementById('timeline').innerHTML = Object.entries(days).map(function (e) {
+    var pct = Math.max(1, Math.round(e[1] / max * 100));
+    return '<div class="tl-col">' +
+      '<div class="tl-bar" style="height:' + pct + '%" data-tip="' + e[0] + ': ' + e[1] + ' visits"></div>' +
+      '<div class="tl-label">' + e[0].slice(5) + '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('tl-axis').innerHTML =
+    '<span>' + labels[0] + '</span><span>today</span>';
+}
+
+/* ─── recent ─────────────────────────────────────────────────────────────── */
+function renderRecent(rows) {
+  var el     = document.getElementById('recent-wrap');
+  var recent = rows.slice(0, 25);
+  if (!recent.length) { el.innerHTML = '<p class="empty-state">No visits yet</p>'; return; }
+  var html = '<table class="recent-table"><thead><tr>' +
+    '<th>When</th><th>Where</th><th>Device</th><th>Via</th>' +
+    '</tr></thead><tbody>';
+  recent.forEach(function (r) {
+    var when   = r.Timestamp
+      ? new Date(r.Timestamp).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    var where  = [r.City, r.Country].filter(Boolean).join(', ') || '—';
+    var device = [r.Device, r.OS, r.Browser].filter(Boolean).join(' · ') || '—';
+    var via    = (r.Source || 'direct').trim() || 'direct';
+    html += '<tr>' +
+      '<td class="cell-ts">'    + esc(when)   + '</td>' +
+      '<td class="cell-where">' + esc(where)  + '</td>' +
+      '<td class="cell-where">' + esc(device) + '</td>' +
+      '<td class="cell-ref" title="' + esc(r.Source || '') + '">' + esc(via) + '</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+/* ─── world map (Leaflet) ────────────────────────────────────────────────── */
+var _leafletMap  = null;
+var _markerLayer = null;
+
+function pinSVG(color) {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 22 32">' +
+    '<path d="M11 0C4.925 0 0 4.925 0 11c0 8.25 11 21 11 21S22 19.25 22 11C22 4.925 17.075 0 11 0z" fill="' + color + '"/>' +
+    '<circle cx="11" cy="11" r="4.5" fill="#0e0c08"/>' +
+    '</svg>';
+}
+function makePinIcon(color) {
+  return L.divIcon({ className: '', html: pinSVG(color), iconSize: [22,32], iconAnchor: [11,32], popupAnchor: [0,-34] });
+}
+
+function renderMap(rows) {
+  var byIP = {};
+  rows.forEach(function (r) {
+    var lat = parseFloat(r.Lat), lng = parseFloat(r.Lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+    var key = r['Visitor ID'] || (lat.toFixed(3) + ',' + lng.toFixed(3));
+    if (!byIP[key]) {
+      byIP[key] = { lat: lat, lng: lng, city: r.City, country: r.Country, lastSeen: r.Timestamp || '', visits: 0 };
+    }
+    byIP[key].visits++;
+    if ((r.Timestamp || '') > byIP[key].lastSeen) byIP[key].lastSeen = r.Timestamp;
+  });
+  var pins = Object.values(byIP);
+
+  var coordCount = {};
+  pins.forEach(function (p) {
+    var key  = p.lat.toFixed(4) + ',' + p.lng.toFixed(4);
+    var slot = coordCount[key] = (coordCount[key] || 0);
+    coordCount[key]++;
+    if (slot > 0) {
+      var angle = slot * (Math.PI * 2 / 8);
+      p.lat += 0.008 * Math.sin(angle);
+      p.lng += 0.008 * Math.cos(angle);
+    }
+  });
+
+  if (!_leafletMap) {
+    _leafletMap = L.map('leaflet-map', {
+      zoomControl: true, scrollWheelZoom: true, keyboard: true, keyboardPanDelta: 80
+    }).setView([25, 15], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(_leafletMap);
+    _markerLayer = L.layerGroup().addTo(_leafletMap);
+  } else {
+    _markerLayer.clearLayers();
+  }
+
+  pins.forEach(function (p) {
+    var color  = p.visits > 5 ? '#f0d87a' : p.visits > 2 ? '#e8c876' : '#c8a24a';
+    var when   = p.lastSeen
+      ? new Date(p.lastSeen).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    var popup  =
+      '<strong style="color:#e8c876;font-size:0.92rem">' + esc(p.city || p.country || 'Unknown') + '</strong>' +
+      (p.city && p.country ? '<br/><span style="color:#9a9080">' + esc(p.country) + '</span>' : '') +
+      '<br/>' + p.visits + ' visit' + (p.visits > 1 ? 's' : '') + ' &nbsp;·&nbsp; last ' + when +
+      '<br/><span style="color:#7a7060;font-size:0.76em">' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5) + '</span>';
+
+    (function (pin, icon, pop) {
+      L.marker([pin.lat, pin.lng], { icon: icon, title: pin.city || pin.country || '' })
+        .addTo(_markerLayer)
+        .bindPopup(pop, { maxWidth: 230 })
+        .on('click', function () { _leafletMap.flyTo([pin.lat, pin.lng], 14, { animate: true, duration: 1.4 }); });
+    }(p, makePinIcon(color), popup));
+  });
+
+  if (pins.length) {
+    try {
+      _leafletMap.fitBounds(
+        L.latLngBounds(pins.map(function (p) { return [p.lat, p.lng]; })).pad(0.15),
+        { maxZoom: 5, animate: true }
+      );
+    } catch (_) {}
+  }
+}
+
+/* ─── util ───────────────────────────────────────────────────────────────── */
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
