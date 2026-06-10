@@ -1096,7 +1096,9 @@
     })();
   })();
 
-  /* ---------- generative soundtrack: A-minor drone + distant bells ----------
+  /* ---------- generative soundtrack: epic war score in D minor ------------
+     War drums (taiko), a galloping cello ostinato in 3/4, horn swells —
+     in the vein of Game of Thrones / Elden Ring battle themes.
      Built with WebAudio so there is nothing to download and nothing to 404.
      Off by default; starts only from a user gesture, as browsers require.  */
   (function soundtrack() {
@@ -1105,7 +1107,12 @@
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { btn.style.display = 'none'; return; }
 
-    var ctx = null, master = null, delay = null, on = false, bellTimer = null;
+    var ctx = null, master = null, delay = null, bus = null;
+    var on = false, barTimer = null, barIdx = 0, nextBar = 0;
+
+    var BPM = 96, BEAT = 60 / BPM, BAR = 3 * BEAT; /* 3/4 time, GoT gallop */
+    /* roots per bar: D3 D3 F3 E3  (i — i — III — ii) */
+    var ROOTS = [146.83, 146.83, 174.61, 164.81];
 
     function build() {
       ctx = new AC();
@@ -1113,45 +1120,98 @@
       master.gain.value = 0.0001;
       master.connect(ctx.destination);
 
-      /* cathedral echo: feedback delay */
-      delay = ctx.createDelay(1.5);
-      delay.delayTime.value = 0.46;
-      var fb = ctx.createGain(); fb.gain.value = 0.34;
+      /* battlefield echo — melodic bus only, drums stay dry and punchy */
+      delay = ctx.createDelay(1.0);
+      delay.delayTime.value = 0.37;
+      var fb = ctx.createGain(); fb.gain.value = 0.22;
       delay.connect(fb); fb.connect(delay); delay.connect(master);
 
-      var bus = ctx.createGain();
+      bus = ctx.createGain();
       bus.connect(master); bus.connect(delay);
 
-      /* drone: A2, E3, C4 — each breathing on its own slow cycle */
-      [[110, 0.5, 'sawtooth', 320], [164.81, 0.34, 'sine', 1200], [261.63, 0.16, 'sine', 1400]]
-        .forEach(function (v, i) {
-          var osc = ctx.createOscillator();
-          osc.type = v[2]; osc.frequency.value = v[0];
-          var flt = ctx.createBiquadFilter();
-          flt.type = 'lowpass'; flt.frequency.value = v[3];
-          var g = ctx.createGain(); g.gain.value = v[1] * 0.5;
-          var lfo = ctx.createOscillator();
-          lfo.frequency.value = 0.05 + 0.02 * i;
-          var lg = ctx.createGain(); lg.gain.value = v[1] * 0.22;
-          lfo.connect(lg); lg.connect(g.gain);
-          osc.connect(flt); flt.connect(g); g.connect(bus);
-          osc.start(); lfo.start();
-        });
+      /* low D2 drone under everything for weight */
+      var dr = ctx.createOscillator(); dr.type = 'sawtooth'; dr.frequency.value = 73.42;
+      var df = ctx.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 240;
+      var dg = ctx.createGain(); dg.gain.value = 0.10;
+      dr.connect(df); df.connect(dg); dg.connect(master);
+      dr.start();
     }
 
-    var SCALE = [220, 261.63, 329.63, 392, 440]; /* A-minor pentatonic */
-    function bell() {
-      if (!on || !ctx) return;
-      var o = ctx.createOscillator();
-      o.type = 'sine';
-      o.frequency.value = SCALE[Math.floor(Math.random() * SCALE.length)];
+    /* taiko: pitched thump + a burst of filtered noise for the skin crack */
+    function drum(t, vol) {
+      var o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(110, t);
+      o.frequency.exponentialRampToValueAtTime(42, t + 0.3);
       var g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.07, ctx.currentTime + 0.03);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.5);
-      o.connect(g); g.connect(delay);
-      o.start(); o.stop(ctx.currentTime + 4);
-      bellTimer = setTimeout(bell, 4500 + Math.random() * 6000);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + 0.5);
+
+      var nb = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+      var ch = nb.getChannelData(0);
+      for (var i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length);
+      var ns = ctx.createBufferSource(); ns.buffer = nb;
+      var nf = ctx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.8;
+      var ng = ctx.createGain(); ng.gain.value = vol * 0.35;
+      ns.connect(nf); nf.connect(ng); ng.connect(master);
+      ns.start(t);
+    }
+
+    /* cello: two detuned saws, lowpass, slight vibrato */
+    function cello(freq, t, dur, vol) {
+      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+      o1.type = o2.type = 'sawtooth';
+      o1.frequency.value = freq; o2.frequency.value = freq * 1.006;
+      var vib = ctx.createOscillator(); vib.frequency.value = 5.2;
+      var vg = ctx.createGain(); vg.gain.value = freq * 0.006;
+      vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
+      var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 950; f.Q.value = 1.5;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.05);
+      g.gain.setValueAtTime(vol, t + dur * 0.65);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o1.connect(f); o2.connect(f); f.connect(g); g.connect(bus);
+      o1.start(t); o2.start(t); vib.start(t);
+      o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05); vib.stop(t + dur + 0.05);
+    }
+
+    /* horn swell: root + fifth, rising over two bars */
+    function horn(freq, t, dur) {
+      [freq, freq * 1.4983].forEach(function (fq) {
+        var o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = fq;
+        var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1400;
+        var g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.06, t + dur * 0.6);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(f); f.connect(g); g.connect(bus);
+        o.start(t); o.stop(t + dur + 0.05);
+      });
+    }
+
+    function scheduleBar() {
+      if (!on || !ctx) return;
+      var t = nextBar, root = ROOTS[barIdx % 4];
+
+      /* war drums: BOOM on 1, double-hit into the next bar every other bar */
+      drum(t, 0.55);
+      if (barIdx % 2 === 1) { drum(t + 2 * BEAT, 0.3); drum(t + 2.5 * BEAT, 0.4); }
+      else { drum(t + 2 * BEAT, 0.25); }
+
+      /* galloping cello: quarter — eighth(low fifth) — eighth — quarter */
+      cello(root,          t,               BEAT * 0.95, 0.085);
+      cello(root * 2 / 3,  t + BEAT,        BEAT * 0.45, 0.065);
+      cello(root,          t + 1.5 * BEAT,  BEAT * 0.45, 0.065);
+      cello(barIdx % 2 ? root * 1.1892 : root / 2, t + 2 * BEAT, BEAT * 0.9, 0.075);
+
+      /* horns crest every 8th bar */
+      if (barIdx % 8 === 4) horn(root / 2, t, BAR * 2);
+
+      barIdx++;
+      nextBar += BAR;
+      barTimer = setTimeout(scheduleBar, Math.max(20, (nextBar - ctx.currentTime - 0.15) * 1000));
     }
 
     btn.addEventListener('click', function () {
@@ -1164,11 +1224,13 @@
         if (ctx.resume) ctx.resume();
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
-        master.gain.linearRampToValueAtTime(0.13, ctx.currentTime + 2.5);
-        clearTimeout(bellTimer);
-        bellTimer = setTimeout(bell, 1200);
+        master.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 1.2);
+        clearTimeout(barTimer);
+        barIdx = 0;
+        nextBar = ctx.currentTime + 0.1;
+        scheduleBar();
       } else if (ctx) {
-        clearTimeout(bellTimer);
+        clearTimeout(barTimer);
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
         master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
