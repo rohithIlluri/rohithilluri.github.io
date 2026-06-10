@@ -1096,141 +1096,259 @@
     })();
   })();
 
-  /* ---------- generative soundtrack: epic war score in D minor ------------
-     War drums (taiko), a galloping cello ostinato in 3/4, horn swells —
-     in the vein of Game of Thrones / Elden Ring battle themes.
-     Built with WebAudio so there is nothing to download and nothing to 404.
-     Off by default; starts only from a user gesture, as browsers require.  */
+  /* ---------- "Imperium" — original orchestral composition -----------------
+     Hans Zimmer-style cinematic score in D minor, 72 BPM, 4/4.
+     32-bar structure that builds from cello+bass → violas → violin melody
+     → French horns → choir + celesta arpeggios, then loops.
+     Chord progression: Dm | Bb | F | Gm  (i – VI – III – iv)
+     100% generative WebAudio; no files to download, nothing to 404.   */
   (function soundtrack() {
     var btn = document.getElementById('sound-toggle');
     if (!btn) return;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { btn.style.display = 'none'; return; }
 
-    var ctx = null, master = null, delay = null, bus = null;
-    var on = false, barTimer = null, barIdx = 0, nextBar = 0;
+    var ctx = null, master = null, rv = null;
+    var on = false, sched = null, barN = 0, nextT = 0;
 
-    var BPM = 96, BEAT = 60 / BPM, BAR = 3 * BEAT; /* 3/4 time, GoT gallop */
-    /* roots per bar: D3 D3 F3 E3  (i — i — III — ii) */
-    var ROOTS = [146.83, 146.83, 174.61, 164.81];
+    var BPM = 72, B = 60 / BPM, BAR = 4 * B;  /* 4/4, ~3.33 s per bar */
 
-    function build() {
+    /* ── Note frequencies ───────────────────────────────────────────────── */
+    var D2=73.42, F2=87.31, G2=98, Bb2=116.54,
+        D3=146.83, F3=174.61, G3=196, A3=220, Bb3=233.08,
+        C4=261.63, D4=293.66, F4=349.23, G4=392, A4=440, Bb4=466.16,
+        C5=523.25, D5=587.33;
+
+    /* ── Chord table ────────────────────────────────────────────────────── */
+    /*  root  = bass register    rootH = cello/inner-voice register
+        fifth = perfect 5th above rootH   third = chord 3rd above rootH  */
+    var CHORDS = [
+      { root:D2,  rootH:D3,  fifth:A3,  third:F3  },  /* i   Dm  */
+      { root:Bb2, rootH:Bb3, fifth:F4,  third:D4  },  /* VI  Bb  */
+      { root:F2,  rootH:F3,  fifth:C4,  third:A3  },  /* III F   */
+      { root:G2,  rootH:G3,  fifth:D4,  third:Bb3 }   /* iv  Gm  */
+    ];
+
+    /* ── Audio graph ────────────────────────────────────────────────────── */
+    function init() {
       ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = 0.0001;
-      master.connect(ctx.destination);
 
-      /* battlefield echo — melodic bus only, drums stay dry and punchy */
-      delay = ctx.createDelay(1.0);
-      delay.delayTime.value = 0.37;
-      var fb = ctx.createGain(); fb.gain.value = 0.22;
-      delay.connect(fb); fb.connect(delay); delay.connect(master);
+      /* compressor keeps the mix from clipping as layers build */
+      var comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -20; comp.knee.value = 25;
+      comp.ratio.value = 10; comp.attack.value = 0.005; comp.release.value = 0.2;
+      comp.connect(ctx.destination);
 
-      bus = ctx.createGain();
-      bus.connect(master); bus.connect(delay);
+      master = ctx.createGain(); master.gain.value = 0.0001;
+      master.connect(comp);
 
-      /* low D2 drone under everything for weight */
-      var dr = ctx.createOscillator(); dr.type = 'sawtooth'; dr.frequency.value = 73.42;
-      var df = ctx.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 240;
-      var dg = ctx.createGain(); dg.gain.value = 0.10;
-      dr.connect(df); df.connect(dg); dg.connect(master);
-      dr.start();
+      /* concert-hall reverb from a synthesised impulse response */
+      var len = ctx.sampleRate * 3;
+      var ib  = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (var c = 0; c < 2; c++) {
+        var ch = ib.getChannelData(c);
+        for (var i = 0; i < len; i++)
+          ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.6);
+      }
+      rv = ctx.createConvolver(); rv.buffer = ib;
+      var rvg = ctx.createGain(); rvg.gain.value = 0.26;
+      rv.connect(rvg); rvg.connect(master);
     }
 
-    /* taiko: pitched thump + a burst of filtered noise for the skin crack */
-    function drum(t, vol) {
-      var o = ctx.createOscillator(); o.type = 'sine';
-      o.frequency.setValueAtTime(110, t);
-      o.frequency.exponentialRampToValueAtTime(42, t + 0.3);
-      var g = ctx.createGain();
-      g.gain.setValueAtTime(vol, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-      o.connect(g); g.connect(master);
-      o.start(t); o.stop(t + 0.5);
-
-      var nb = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
-      var ch = nb.getChannelData(0);
-      for (var i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length);
-      var ns = ctx.createBufferSource(); ns.buffer = nb;
-      var nf = ctx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.8;
-      var ng = ctx.createGain(); ng.gain.value = vol * 0.35;
-      ns.connect(nf); nf.connect(ng); ng.connect(master);
-      ns.start(t);
+    function wet(g, amt) {            /* send gain node to reverb */
+      var sg = ctx.createGain(); sg.gain.value = amt;
+      g.connect(sg); sg.connect(rv);
     }
 
-    /* cello: two detuned saws, lowpass, slight vibrato */
-    function cello(freq, t, dur, vol) {
-      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
-      o1.type = o2.type = 'sawtooth';
-      o1.frequency.value = freq; o2.frequency.value = freq * 1.006;
-      var vib = ctx.createOscillator(); vib.frequency.value = 5.2;
-      var vg = ctx.createGain(); vg.gain.value = freq * 0.006;
-      vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
-      var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 950; f.Q.value = 1.5;
-      var g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol, t + 0.05);
-      g.gain.setValueAtTime(vol, t + dur * 0.65);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o1.connect(f); o2.connect(f); f.connect(g); g.connect(bus);
-      o1.start(t); o2.start(t); vib.start(t);
-      o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05); vib.stop(t + dur + 0.05);
+    /* ── String section: 5 detuned saws + vibrato + lowpass ─────────────── */
+    function str(f, t, d, v) {
+      for (var i = 0; i < 5; i++) {
+        var o = ctx.createOscillator(); o.type = 'sawtooth';
+        o.frequency.value = f * (1 + (i - 2) * 0.0013);
+        var vib = ctx.createOscillator(); vib.frequency.value = 5.3 + i * 0.2;
+        var vg  = ctx.createGain(); vg.gain.value = f * 0.0026;
+        vib.connect(vg); vg.connect(o.frequency);
+        var flt = ctx.createBiquadFilter(); flt.type = 'lowpass';
+        flt.frequency.value = 1000; flt.Q.value = 0.5;
+        var g = ctx.createGain(); var at = Math.min(0.1, d * 0.12);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(v / 5, t + at);
+        g.gain.setValueAtTime(v / 5, t + d * 0.72);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(flt); flt.connect(g); g.connect(master); wet(g, 0.30);
+        o.start(t); o.stop(t + d + 0.1);
+        vib.start(t); vib.stop(t + d + 0.1);
+      }
     }
 
-    /* horn swell: root + fifth, rising over two bars */
-    function horn(freq, t, dur) {
-      [freq, freq * 1.4983].forEach(function (fq) {
-        var o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = fq;
-        var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1400;
-        var g = ctx.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.06, t + dur * 0.6);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        o.connect(f); f.connect(g); g.connect(bus);
-        o.start(t); o.stop(t + dur + 0.05);
+    /* ── French horn: triangle + harmonic series ────────────────────────── */
+    function hrn(f, t, d, v) {
+      [[1, 0.65, 'triangle'], [2, 0.22, 'sine'], [3, 0.08, 'sine']].forEach(function (h) {
+        var o = ctx.createOscillator(); o.type = h[2]; o.frequency.value = f * h[0];
+        var flt = ctx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 1600;
+        var g = ctx.createGain(); var at = Math.min(0.3, d * 0.28);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(v * h[1], t + at);
+        g.gain.setValueAtTime(v * h[1] * 0.82, t + d * 0.55);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(flt); flt.connect(g); g.connect(master); wet(g, 0.38);
+        o.start(t); o.stop(t + d + 0.1);
       });
     }
 
-    function scheduleBar() {
-      if (!on || !ctx) return;
-      var t = nextBar, root = ROOTS[barIdx % 4];
-
-      /* war drums: BOOM on 1, double-hit into the next bar every other bar */
-      drum(t, 0.55);
-      if (barIdx % 2 === 1) { drum(t + 2 * BEAT, 0.3); drum(t + 2.5 * BEAT, 0.4); }
-      else { drum(t + 2 * BEAT, 0.25); }
-
-      /* galloping cello: quarter — eighth(low fifth) — eighth — quarter */
-      cello(root,          t,               BEAT * 0.95, 0.085);
-      cello(root * 2 / 3,  t + BEAT,        BEAT * 0.45, 0.065);
-      cello(root,          t + 1.5 * BEAT,  BEAT * 0.45, 0.065);
-      cello(barIdx % 2 ? root * 1.1892 : root / 2, t + 2 * BEAT, BEAT * 0.9, 0.075);
-
-      /* horns crest every 8th bar */
-      if (barIdx % 8 === 4) horn(root / 2, t, BAR * 2);
-
-      barIdx++;
-      nextBar += BAR;
-      barTimer = setTimeout(scheduleBar, Math.max(20, (nextBar - ctx.currentTime - 0.15) * 1000));
+    /* ── Choir "ahh": formant bandpass synthesis ────────────────────────── */
+    function choir(f, t, d, v) {
+      [[820, 0.38], [1100, 0.20], [2650, 0.09]].forEach(function (fm) {
+        for (var i = 0; i < 4; i++) {
+          var o = ctx.createOscillator(); o.type = 'sawtooth';
+          o.frequency.value = f * (1 + (i - 1.5) * 0.0028);
+          var bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+          bp.frequency.value = fm[0]; bp.Q.value = 9;
+          var g = ctx.createGain();
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(v * fm[1] / 4, t + 0.45);
+          g.gain.setValueAtTime(v * fm[1] / 4, t + d * 0.72);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+          o.connect(bp); bp.connect(g); g.connect(master); wet(g, 0.50);
+          o.start(t); o.stop(t + d + 0.1);
+        }
+      });
     }
 
+    /* ── Timpani: pitched thump + mallet noise ──────────────────────────── */
+    function timp(f, t, v) {
+      var o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(f * 2.4, t);
+      o.frequency.exponentialRampToValueAtTime(f, t + 0.14);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + 1.9);
+      var nb = ctx.createBuffer(1, ~~(ctx.sampleRate * 0.1), ctx.sampleRate);
+      var nc = nb.getChannelData(0);
+      for (var i = 0; i < nc.length; i++)
+        nc[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.012));
+      var ns = ctx.createBufferSource(); ns.buffer = nb;
+      var nf = ctx.createBiquadFilter(); nf.type = 'bandpass';
+      nf.frequency.value = 180; nf.Q.value = 2;
+      var ng = ctx.createGain(); ng.gain.value = v * 0.45;
+      ns.connect(nf); nf.connect(ng); ng.connect(master); ns.start(t);
+    }
+
+    /* ── Celesta / piano sparkle ────────────────────────────────────────── */
+    function pno(f, t, v) {
+      var o  = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      var o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 3.07;
+      var g  = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(v, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
+      var g2 = ctx.createGain(); g2.gain.value = 0.1;
+      o.connect(g); o2.connect(g2); g2.connect(g);
+      g.connect(master); wet(g, 0.44);
+      o.start(t); o.stop(t + 3); o2.start(t); o2.stop(t + 3);
+    }
+
+    /* ── Double-bass pedal ──────────────────────────────────────────────── */
+    function bs(f, t, d, v) {
+      var o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      var flt = ctx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 100;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(v, t);
+      g.gain.setValueAtTime(v, t + d * 0.8);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(flt); flt.connect(g); g.connect(master);
+      o.start(t); o.stop(t + d + 0.05);
+    }
+
+    /* ── Violin melody — 4-bar motif over the chord cycle ─────────────── */
+    /*   Dm:  D4  (whole bar)
+         Bb:  Bb4 (2) → C5 (1) → D5 (1)           — ascending line
+         F:   C5  (2) → A4  (2)                    — fall through the 5th
+         Gm:  G4  (2) → F4  (1) → D4 (1)           — resolve to tonic D  */
+    function melody(t, ci, v) {
+      if (ci === 0) {
+        str(D4, t, BAR * 0.92, v);
+      } else if (ci === 1) {
+        str(Bb4, t,          B * 2 * 0.90, v);
+        str(C5,  t + B * 2,  B     * 0.88, v * 0.90);
+        str(D5,  t + B * 3,  B     * 0.88, v);
+      } else if (ci === 2) {
+        str(C5, t,           B * 2 * 0.90, v);
+        str(A4, t + B * 2,   B * 2 * 0.90, v * 0.90);
+      } else {
+        str(G4, t,           B * 2 * 0.90, v);
+        str(F4, t + B * 2,   B     * 0.88, v * 0.90);
+        str(D4, t + B * 3,   B     * 0.88, v);
+      }
+    }
+
+    /* ── Bar renderer — 32-bar build in 5 phases ────────────────────────── */
+    function renderBar(t, n) {
+      var phase = n % 32;
+      var ci    = phase % 4;
+      var c     = CHORDS[ci];
+
+      /* Phase 1 (bar 0+): double-bass pedal + cello eighth-note ostinato
+         Pattern: root–fifth–root–fifth–root–fifth–root–fifth (8 × ♪)    */
+      bs(c.root, t, BAR * 0.92, 0.14);
+      for (var i = 0; i < 8; i++) {
+        var nf = (i % 2 === 0) ? c.rootH : c.fifth;
+        str(nf, t + i * B / 2, B / 2 * 0.82, 0.055);
+      }
+      /* timpani lands on every new chord (every 4 bars) */
+      if (ci === 0) timp(c.root, t, phase < 4 ? 0.32 : 0.50);
+
+      /* Phase 2 (bar 4+): violas sustain the 3rd and 5th */
+      if (phase >= 4) {
+        str(c.third, t, BAR * 0.90, 0.040);
+        str(c.fifth, t, BAR * 0.90, 0.030);
+      }
+
+      /* Phase 3 (bar 8+): violin melody enters */
+      if (phase >= 8) melody(t, ci, 0.10);
+
+      /* Phase 4 (bar 16+): French horns swell on root + fifth */
+      if (phase >= 16) {
+        hrn(c.rootH,        t,           BAR * 0.88, 0.080);
+        hrn(c.fifth,        t + B * 0.5, BAR * 0.82, 0.058);
+      }
+
+      /* Phase 5 (bar 24+): choir "ahh" + celesta arpeggios */
+      if (phase >= 24) {
+        choir(c.rootH,        t,           BAR * 0.92, 0.52);
+        choir(c.fifth,        t + B * 0.4, BAR * 0.88, 0.30);
+        [c.rootH * 2, c.third * 2, c.fifth * 2, c.rootH * 4].forEach(function (f, i) {
+          pno(f, t + i * B * 0.5, 0.048);
+        });
+      }
+    }
+
+    /* ── Look-ahead scheduler (~100 ms tick, 250 ms lookahead) ─────────── */
+    function tick() {
+      if (!on) return;
+      while (nextT < ctx.currentTime + 0.25) {
+        renderBar(nextT, barN);
+        barN++; nextT += BAR;
+      }
+      sched = setTimeout(tick, 80);
+    }
+
+    /* ── Toggle ─────────────────────────────────────────────────────────── */
     btn.addEventListener('click', function () {
       on = !on;
       btn.setAttribute('aria-pressed', String(on));
-      var state = btn.querySelector('.state');
-      if (state) state.textContent = on ? 'ON' : 'OFF';
+      var st = btn.querySelector('.state');
+      if (st) st.textContent = on ? 'ON' : 'OFF';
       if (on) {
-        if (!ctx) build();
+        if (!ctx) init();
         if (ctx.resume) ctx.resume();
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
-        master.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 1.2);
-        clearTimeout(barTimer);
-        barIdx = 0;
-        nextBar = ctx.currentTime + 0.1;
-        scheduleBar();
+        master.gain.linearRampToValueAtTime(0.42, ctx.currentTime + 1.5);
+        barN = 0; nextT = ctx.currentTime + 0.1;
+        clearTimeout(sched); tick();
       } else if (ctx) {
-        clearTimeout(barTimer);
+        clearTimeout(sched);
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
         master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
