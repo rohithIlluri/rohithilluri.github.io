@@ -152,7 +152,8 @@ describe('soundtrack', () => {
   test('no audio element, no autoplay — sound is generative and gesture-gated', () => {
     assert.equal(sdoc.querySelectorAll('audio, video').length, 0);
     assert.ok(!html.includes('autoplay'), 'autoplay attribute found');
-    assert.ok(html.includes('AudioContext'), 'WebAudio engine missing');
+    // Tone.js wraps AudioContext internally; gesture gate is Tone.start()
+    assert.ok(html.includes('Tone.start') || html.includes('AudioContext'), 'WebAudio engine missing');
   });
 });
 
