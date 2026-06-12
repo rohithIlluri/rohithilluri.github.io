@@ -1,0 +1,29 @@
+{
+  "name": "agent-primer",
+  "version": "0.1.0",
+  "description": "Set up any AI coding CLI (Claude Code, Codex, ...) for maximum efficiency: one preference interview, one memory store, native configs for every tool.",
+  "type": "module",
+  "bin": {
+    "agent-primer": "bin/agent-primer.js"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./adapters": "./src/adapters/index.js"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "ai",
+    "agents",
+    "onboarding",
+    "config",
+    "memory"
+  ],
+  "license": "MIT"
+}
