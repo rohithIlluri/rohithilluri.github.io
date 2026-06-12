@@ -157,6 +157,49 @@ describe('soundtrack', () => {
   });
 });
 
+describe('security', () => {
+  test('CSP meta tag is present', () => {
+    const csp = sdoc.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    assert.ok(csp, 'Content-Security-Policy meta tag missing');
+    const content = csp.getAttribute('content') || '';
+    assert.ok(content.includes('default-src'), 'CSP missing default-src directive');
+    assert.ok(content.includes('cdn.jsdelivr.net'), 'CSP must allowlist cdn.jsdelivr.net for Tone.js');
+  });
+
+  test('Referrer-Policy meta tag is present', () => {
+    const rp = sdoc.querySelector('meta[name="referrer"]');
+    assert.ok(rp, 'referrer meta tag missing');
+    assert.ok(rp.getAttribute('content'), 'referrer meta tag has no content');
+  });
+
+  test('Tone.js CDN script has SRI integrity attribute', () => {
+    const toneScript = [...sdoc.querySelectorAll('script[src]')]
+      .find(s => s.src.includes('cdn.jsdelivr.net'));
+    assert.ok(toneScript, 'Tone.js CDN script tag not found');
+    assert.ok(toneScript.getAttribute('integrity'), 'Tone.js script missing integrity= (SRI)');
+    assert.ok(toneScript.getAttribute('crossorigin'), 'Tone.js script missing crossorigin= (required for SRI)');
+  });
+
+  test('no http:// mixed content URLs in external resources', () => {
+    const srcs = [...sdoc.querySelectorAll('[src],[href]')]
+      .map(el => el.getAttribute('src') || el.getAttribute('href'))
+      .filter(u => u && u.startsWith('http://'));
+    assert.equal(srcs.length, 0, `http:// resources found: ${srcs.join(', ')}`);
+  });
+
+  test('all target=_blank links have rel=noopener', () => {
+    const unsafe = [...sdoc.querySelectorAll('a[target="_blank"]')]
+      .filter(a => !(a.getAttribute('rel') || '').includes('noopener'));
+    assert.equal(unsafe.length, 0,
+      `target=_blank without noopener: ${unsafe.map(a => a.href || a.textContent).join(', ')}`);
+  });
+
+  test('no eval or document.write in inline scripts', () => {
+    assert.ok(!html.includes('eval('), 'eval() found in HTML');
+    assert.ok(!html.includes('document.write'), 'document.write found in HTML');
+  });
+});
+
 describe('navigation', () => {
   test('every nav link targets an existing section id', () => {
     const links = [...sdoc.querySelectorAll('nav.frieze a')];

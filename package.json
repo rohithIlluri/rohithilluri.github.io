@@ -1,47 +1,11 @@
 {
-  "name": "just-ship-it",
+  "name": "rohithilluri-github-io",
   "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "gsap": "^3.12.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-icons": "^4.12.0",
-    "react-router-dom": "^6.20.0"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "autoprefixer": "^10.4.16",
-    "jsdom": "^29.0.0",
-    "postcss": "^8.4.31",
-    "puppeteer-core": "^24.37.2",
-    "react-scripts": "5.0.1",
-    "serve": "^14.2.5",
-    "tailwindcss": "^3.3.0"
-  },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
     "test:poc": "node --test tests/poc/poc.test.mjs"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "homepage": "https://rohithilluri.github.io"
+  "devDependencies": {
+    "jsdom": "^29.0.0"
+  }
 }

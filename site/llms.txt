@@ -1,0 +1,32 @@
+# Rohith Illuri
+
+> Self-taught developer. Portfolio is a single static HTML page with a dark antiquarian aesthetic — no frameworks, no build step.
+
+## About
+
+Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
+
+## Site
+
+Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler.
+
+Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section.
+
+## Sections
+
+- Hero: name, tagline, nav
+- Living Paintings: classical art that reacts to scroll/hover
+- Motion Posters: film posters with animated overlays
+- Music: embedded audio toggle (Tone.js orchestral BGM)
+- Contact: email, GitHub, LinkedIn, Twitter
+
+## Links
+
+- GitHub: https://github.com/rohithIlluri
+- LinkedIn: https://linkedin.com/in/rohithilluri
+- Email: rohith.illuri@gmail.com
+
+## Tech
+
+Static HTML/CSS/JS · Tone.js (generative audio) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings)
+Source: https://github.com/rohithIlluri/rohithilluri.github.io

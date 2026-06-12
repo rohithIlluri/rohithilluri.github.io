@@ -8,6 +8,9 @@
 <meta name="theme-color" content="#0c0a07" />
 <meta property="og:title" content="Rohith Illuri — Portfolio" />
 <meta property="og:description" content="Self-taught developer. Deeds, not words." />
+<!-- Security headers (meta equivalents — framing/MIME headers set at CDN layer) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <link rel="canonical" href="https://rohithilluri.github.io/" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -959,7 +962,7 @@
   <div class="colophon reveal">wrought in HTML &amp; CSS — no frameworks were harmed</div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js" integrity="sha384-YEteyAKbjYSLDrpbBY0aFgK1CrQHo0Erb5XT/MU5FYvkb3SmPSZSisW7LOYTKvTx" crossorigin="anonymous"></script>
 <script>
 (function () {
   'use strict';
