@@ -15,6 +15,7 @@ export default {
       {
         adapter: this.id,
         scope,
+        role: 'memory',
         kind: 'upsert-block',
         path: path.join(cwd, 'AGENTS.md'),
         content: renderMemory(profile),

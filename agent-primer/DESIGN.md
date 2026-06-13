@@ -160,7 +160,27 @@ Adapters own *where* and *in what format*; templates own *what* (one memory
 renderer for all tools, permission presets per tool format). Registry in
 `src/adapters/index.js`.
 
-### 3.3 Derivation rules
+### 3.3 Project memory unification (single source of truth)
+Adapters emit memory files independently, so a multi-tool user would otherwise
+get the same instructions duplicated across `CLAUDE.md` and `AGENTS.md` — two
+blocks free to drift apart. A coordination pass in `buildPlan`
+(`unifyProjectMemory`) resolves this at **project scope**:
+- If a project `AGENTS.md` is planned (the open convention 30+ tools read), it
+  becomes the single source of truth holding the full content.
+- Duplicate `AGENTS.md` writers (e.g. codex + the generic adapter) collapse to
+  one action.
+- Every other project memory file (`CLAUDE.md`) is rewritten to a thin
+  `@AGENTS.md` import — Claude Code's documented bridge — so the instructions
+  live in exactly one place.
+- If no `AGENTS.md` is present (Claude Code is the only tool), each memory file
+  keeps its full content; we never create a file just to import a missing one.
+
+Memory actions carry `role: 'memory'` so the coordinator identifies them
+without hardcoding filenames, keeping new adapters automatically eligible.
+Global scope is left untouched: `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`
+are different directories that cannot share a relative import.
+
+### 3.4 Derivation rules
 - `tools` = adapters whose binary is on PATH; fallback `agents-md` so the
   tool is useful even before any AI CLI is installed.
 - `scope` = `both` when cwd has project markers and a tool was detected;
@@ -170,7 +190,7 @@ renderer for all tools, permission presets per tool format). Registry in
   test command; `go.mod`/`Cargo.toml`/`pyproject.toml`/`pom.xml` similarly.
 - `autonomy` defaults to `cautious`; flag-overridable, never guessed upward.
 
-### 3.4 Safety model (invariants, enforced by tests)
+### 3.5 Safety model (invariants, enforced by tests)
 1. Managed blocks: we only ever edit between
    `<!-- agent-primer:begin -->` / `<!-- agent-primer:end -->`; user content
    outside survives byte-for-byte.
@@ -179,7 +199,11 @@ renderer for all tools, permission presets per tool format). Registry in
 3. TOML is never rewritten — create-if-absent only (until the comment-block
    strategy lands with tests).
 4. Any changed file is first copied to `<file>.bak-<timestamp>`.
-5. Re-running is idempotent: second `integrate` reports `unchanged` for all.
+5. Re-running is idempotent: the managed-block writer is a fixed point, so a
+   second `integrate` reports `unchanged` for all. The block is matched by its
+   stable `agent-primer:begin` prefix (not exact marker text), so marker
+   wording can evolve across versions without orphaning old blocks, and any
+   duplicate/legacy blocks self-heal into the single canonical block.
 6. Secrets: deny-rules for `.env`/keys are emitted into tool permissions, and
    the scanner itself never opens such files.
 7. No network: CI greps `src/` for `fetch|http|net|dns|tls` imports and fails
@@ -203,7 +227,8 @@ Flags: `--scope global|project|both`, `--autonomy cautious|balanced|autonomous`,
 ## 5. Roadmap
 
 - **M1 (now):** scanner, deriver, executor; adapters: claude-code, codex,
-  agents-md; permission presets; tests for all invariants in §3.4.
+  agents-md; permission presets; project-memory unification (§3.3); tests for
+  all invariants in §3.5.
 - **M2:** gemini adapter; `upsert-toml-block` for Codex `mcp_servers`;
   `uninstall` command (remove managed blocks, restore from backups); shell
   completion.
@@ -216,12 +241,16 @@ Flags: `--scope global|project|both`, `--autonomy cautious|balanced|autonomous`,
   report (diff between plan and disk).
 
 ## 6. Open questions
-1. Should the project-scope Claude memory be a `CLAUDE.md` containing
-   `@AGENTS.md` (single source, Claude-official bridge) instead of a parallel
-   managed block? Leaning yes for M2 — eliminates duplication.
+1. ~~Should project-scope Claude memory import `@AGENTS.md` instead of a
+   parallel block?~~ **Resolved (implemented):** yes — project memory unifies
+   onto a single `AGENTS.md` with a `CLAUDE.md` import stub. See §3.3.
 2. Codex `approval_policy` granular forms — adopt once stabilized upstream.
 3. Per-OS managed/system scopes (e.g. `/etc/claude-code/`) are intentionally
    untouched — org territory, not ours.
+4. Gemini's `GEMINI.md` (project) could join the same unification via its
+   `@import` support, but we won't flip `contextFileName` to point at
+   AGENTS.md — changing which files a tool reads is too surprising. Decide
+   when the Gemini adapter lands (M2).
 
 ## 7. Sources
 - Claude Code docs: code.claude.com/docs (settings, memory, permissions,

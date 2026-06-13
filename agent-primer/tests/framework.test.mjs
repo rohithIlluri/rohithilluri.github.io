@@ -149,6 +149,36 @@ test('buildPlan: covers every selected tool in every requested scope', () => {
   assert.ok(!projectOnly.some((a) => a.path.includes('config.toml')));
 });
 
+test('buildPlan: project memory unifies onto a single AGENTS.md', () => {
+  const profile = makeProfile({ tools: ['claude-code', 'codex'] });
+  const cwd = '/tmp/proj';
+  const plan = buildPlan(profile, 'project', cwd);
+
+  const memory = plan.filter((a) => a.role === 'memory');
+  const agents = memory.filter((a) => path.basename(a.path) === 'AGENTS.md');
+  assert.equal(agents.length, 1, 'exactly one canonical AGENTS.md');
+  assert.ok(agents[0].content.includes('Guardrails'), 'AGENTS.md holds full content');
+
+  const claudeMd = memory.find((a) => path.basename(a.path) === 'CLAUDE.md');
+  assert.ok(claudeMd.content.includes('@AGENTS.md'), 'CLAUDE.md imports the canonical file');
+  assert.ok(!claudeMd.content.includes('## Guardrails'), 'CLAUDE.md is a stub, not a duplicate');
+});
+
+test('buildPlan: duplicate AGENTS.md writers collapse to one action', () => {
+  const profile = makeProfile({ tools: ['codex', 'agents-md'] });
+  const plan = buildPlan(profile, 'project', '/tmp/proj');
+  const agents = plan.filter((a) => a.path === path.join('/tmp/proj', 'AGENTS.md'));
+  assert.equal(agents.length, 1, 'codex + agents-md collapse to a single AGENTS.md');
+});
+
+test('buildPlan: Claude-only project keeps full CLAUDE.md (no AGENTS.md to import)', () => {
+  const profile = makeProfile({ tools: ['claude-code'] });
+  const plan = buildPlan(profile, 'project', '/tmp/proj');
+  const claudeMd = plan.find((a) => a.role === 'memory');
+  assert.ok(claudeMd.content.includes('## Guardrails'), 'full content retained');
+  assert.ok(!claudeMd.content.includes('@AGENTS.md'), 'no import stub without a canonical file');
+});
+
 test('getAdapter: helpful error for unknown tools', () => {
   assert.throws(() => getAdapter('cursor'), /known tools: claude-code, codex, agents-md/);
 });

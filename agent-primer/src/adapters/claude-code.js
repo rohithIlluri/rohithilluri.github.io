@@ -23,6 +23,7 @@ export default {
       {
         adapter: this.id,
         scope,
+        role: 'memory',
         kind: 'upsert-block',
         path: memoryFile,
         content: renderMemory(profile),

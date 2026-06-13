@@ -39,6 +39,12 @@ Scanner → Inventory → Deriver → Adapters → Plan → Safe writes
 | Codex CLI | `~/.codex/AGENTS.md` / `./AGENTS.md` | `config.toml` approval/sandbox (created only if missing) |
 | 30+ other tools | `./AGENTS.md` (shared open convention) | — |
 
+**One source of truth.** At project scope, agent-primer unifies memory onto a
+single `AGENTS.md` (the open standard 30+ tools read) and points Claude Code's
+`CLAUDE.md` at it with a one-line `@AGENTS.md` import — so your instructions
+live in exactly one file instead of drifting across duplicates. If Claude Code
+is your only tool, `CLAUDE.md` just holds the content directly.
+
 ## Local-first guarantees
 
 - **No network.** There is no network code in this project — a test fails CI

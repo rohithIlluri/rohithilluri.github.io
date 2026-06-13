@@ -49,3 +49,20 @@ export function renderMemory(profile) {
 
   return lines.join('\n');
 }
+
+// At project scope, AGENTS.md is the single source of truth (it is read by
+// 30+ tools). Tools that don't read it natively but support file imports —
+// Claude Code via `@path` — get a thin stub that points at it, so the
+// instructions live in exactly one place. `target` is the import path
+// relative to the file holding this stub (usually "AGENTS.md").
+export function renderImportStub(target) {
+  return [
+    '# How to work with me',
+    '',
+    `My instructions live in \`${target}\`, the shared agent guide most AI tools`,
+    'read. This file imports it so Claude Code uses the same instructions —',
+    `edit \`${target}\`, not this block.`,
+    '',
+    `@${target}`,
+  ].join('\n');
+}

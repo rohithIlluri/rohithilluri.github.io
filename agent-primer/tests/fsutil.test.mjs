@@ -43,6 +43,36 @@ test('upsertManagedBlock: creates, replaces, preserves user content', () => {
   assert.ok(appended.includes(BLOCK_END));
 });
 
+test('upsertManagedBlock: idempotent fixed point (re-applying same content is a no-op)', () => {
+  // Standalone block.
+  const once = upsertManagedBlock(null, 'content');
+  const twice = upsertManagedBlock(once, 'content');
+  assert.equal(twice, once, 'standalone block is stable across runs');
+
+  // With user content around it.
+  const withUser = upsertManagedBlock('# Notes\n\nkeep me', 'content');
+  const withUserAgain = upsertManagedBlock(withUser, 'content');
+  assert.equal(withUserAgain, withUser, 'block beside user content is stable');
+  assert.ok(withUser.includes('keep me'));
+});
+
+test('upsertManagedBlock: self-heals duplicate and legacy-marker blocks into one', () => {
+  // Simulate a file that a buggy earlier version left with two blocks, one
+  // using an older begin-marker wording.
+  const legacy =
+    '<!-- agent-primer:begin (old wording) -->\nstale one\n<!-- agent-primer:end -->\n\n' +
+    `${BLOCK_BEGIN}\nstale two\n${BLOCK_END}\n`;
+  const healed = upsertManagedBlock(legacy, 'fresh');
+  const begins = healed.split(BLOCK_BEGIN).length - 1;
+  const ends = healed.split(BLOCK_END).length - 1;
+  assert.equal(begins, 1, 'collapses to exactly one begin marker');
+  assert.equal(ends, 1, 'collapses to exactly one end marker');
+  assert.ok(healed.includes('fresh'));
+  assert.ok(!healed.includes('stale'), 'old content removed');
+  // And the healed result is itself a fixed point.
+  assert.equal(upsertManagedBlock(healed, 'fresh'), healed);
+});
+
 test('applyActions: idempotent, backs up on change, respects dry-run', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'primer-'));
   const md = path.join(dir, 'MEMORY.md');

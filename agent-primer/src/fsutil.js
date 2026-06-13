@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-export const BLOCK_BEGIN = '<!-- agent-primer:begin (managed — edits inside this block are overwritten by `agent-primer apply`) -->';
+export const BLOCK_BEGIN = '<!-- agent-primer:begin (managed — edits inside this block are overwritten by `agent-primer integrate`) -->';
 export const BLOCK_END = '<!-- agent-primer:end -->';
 
 /** Expand a leading "~" to the user's home directory. */
@@ -56,21 +56,27 @@ function isPlainObject(v) {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
+// Matches any agent-primer managed block by its stable `begin` prefix through
+// the next `end` marker, plus surrounding whitespace. Matching the prefix (not
+// the full marker text) means the exact wording after `agent-primer:begin` can
+// change between versions without orphaning old blocks, and the global flag
+// lets us strip duplicate blocks that buggy older versions may have appended.
+const MANAGED_BLOCK_RE =
+  /\s*<!-- agent-primer:begin[\s\S]*?<!-- agent-primer:end -->\s*/g;
+
 /**
- * Insert or replace the agent-primer managed block in a document.
- * Content outside the markers is preserved verbatim.
+ * Insert or replace the agent-primer managed block in a document, preserving
+ * all content outside the markers. Idempotent: the output is a fixed point, so
+ * re-applying the same content yields byte-identical results. Self-healing: any
+ * number of pre-existing managed blocks (including from older marker formats)
+ * collapse into the single canonical block.
  */
 export function upsertManagedBlock(existing, content) {
   const block = `${BLOCK_BEGIN}\n${content.trim()}\n${BLOCK_END}`;
-  if (existing === null || existing.trim() === '') return block + '\n';
-  const begin = existing.indexOf(BLOCK_BEGIN);
-  const end = existing.indexOf(BLOCK_END);
-  if (begin !== -1 && end !== -1 && end > begin) {
-    return (
-      existing.slice(0, begin) + block + existing.slice(end + BLOCK_END.length)
-    );
-  }
-  return existing.replace(/\s*$/, '') + '\n\n' + block + '\n';
+  if (existing === null) return block + '\n';
+  const remainder = existing.replace(MANAGED_BLOCK_RE, '').replace(/\s+$/, '');
+  if (remainder === '') return block + '\n';
+  return `${remainder}\n\n${block}\n`;
 }
 
 function backup(file) {
