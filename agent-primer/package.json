@@ -1,7 +1,7 @@
 {
   "name": "agent-primer",
-  "version": "0.1.0",
-  "description": "Set up any AI coding CLI (Claude Code, Codex, ...) for maximum efficiency: one preference interview, one memory store, native configs for every tool.",
+  "version": "0.2.0",
+  "description": "Scans your machine and integrates into your AI coding workflows (Claude Code, Codex, AGENTS.md tools). Fully local, zero telemetry, zero dependencies.",
   "type": "module",
   "bin": {
     "agent-primer": "bin/agent-primer.js"

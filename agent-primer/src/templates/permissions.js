@@ -30,7 +30,7 @@ const DENY_SECRETS = [
 
 /** Settings fragment for Claude Code settings.json (merged, never replaced). */
 export function claudeSettings(profile) {
-  const autonomy = profile.behavior.autonomy;
+  const autonomy = profile.autonomy;
   const allow =
     autonomy === 'cautious'
       ? SAFE_READ
@@ -52,7 +52,7 @@ export function claudeSettings(profile) {
 
 /** Full config.toml for Codex CLI (written only when none exists). */
 export function codexConfigToml(profile) {
-  const autonomy = profile.behavior.autonomy;
+  const autonomy = profile.autonomy;
   const approval =
     autonomy === 'cautious'
       ? 'untrusted'

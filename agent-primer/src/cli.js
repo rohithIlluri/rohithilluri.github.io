@@ -1,51 +1,73 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runWizard } from './wizard.js';
-import { runDoctor } from './doctor.js';
+import { runScan } from './scan.js';
+import { deriveProfile } from './derive.js';
 import { buildPlan } from './adapters/index.js';
 import { applyActions } from './fsutil.js';
-import {
-  defaultProfile,
-  loadProfile,
-  requireProfile,
-  saveProfile,
-  profilePath,
-} from './profile.js';
+import { saveState, stateDir } from './profile.js';
 
-const HELP = `agent-primer — one preference interview, every AI coding tool configured.
+const HELP = `agent-primer — scans your machine and integrates into your AI workflows.
+Strictly local: no network code exists in this project; nothing leaves your disk.
 
 Usage: agent-primer <command> [options]
 
 Commands:
-  init              interview you, save a profile, write all configs
-  apply             re-write configs from the saved profile
-  remember "fact"   add a fact to your memory store and sync all tools
-  forget <n>        remove fact number n (see \`show\`)
-  show              print the saved profile
-  doctor            check your environment and config health
-  help              show this message
+  scan          detect AI tools, project stack, and what integration would do
+  integrate     scan, then write/merge configs for every detected tool
+  help          show this message
 
 Options:
-  --dry-run         show what would be written without writing
-  --defaults        (init) skip the interview, use safe beginner defaults
+  --dry-run         (integrate) show what would be written without writing
   --scope <s>       override scope: global | project | both
+  --autonomy <a>    permission preset: cautious (default) | balanced | autonomous
 `;
 
 function parseFlags(args) {
-  const flags = { dryRun: false, defaults: false, scope: null, rest: [] };
+  const flags = { dryRun: false, scope: null, autonomy: 'cautious', rest: [] };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--dry-run') flags.dryRun = true;
-    else if (a === '--defaults' || a === '--yes') flags.defaults = true;
     else if (a === '--scope') flags.scope = args[++i];
     else if (a.startsWith('--scope=')) flags.scope = a.slice('--scope='.length);
+    else if (a === '--autonomy') flags.autonomy = args[++i];
+    else if (a.startsWith('--autonomy=')) flags.autonomy = a.slice('--autonomy='.length);
     else flags.rest.push(a);
   }
   if (flags.scope && !['global', 'project', 'both'].includes(flags.scope)) {
     throw new Error(`invalid --scope "${flags.scope}" (global | project | both)`);
   }
+  if (!['cautious', 'balanced', 'autonomous'].includes(flags.autonomy)) {
+    throw new Error(`invalid --autonomy "${flags.autonomy}" (cautious | balanced | autonomous)`);
+  }
   return flags;
+}
+
+function printScanReport(inventory, profile, planResults) {
+  console.log('\nScan complete — everything below was read locally; nothing leaves this machine.\n');
+
+  console.log('Detected tools:');
+  for (const [name, info] of Object.entries(inventory.binaries)) {
+    const mark = info.found ? 'ok ' : '-- ';
+    console.log(`  ${mark} ${name}${info.version ? `  (${info.version})` : ''}`);
+  }
+
+  if (inventory.identity.name) {
+    console.log(`\nIdentity (git): ${inventory.identity.name}`);
+  }
+
+  const p = inventory.project;
+  console.log(`\nProject: ${p.dir}`);
+  if (p.isProject) {
+    console.log(`  languages: ${p.languages.join(', ')}`);
+    if (p.packageManager) console.log(`  package manager: ${p.packageManager}`);
+    if (p.testCommand) console.log(`  tests: ${p.testCommand}`);
+  } else {
+    console.log('  no project markers found (global integration only)');
+  }
+
+  console.log(`\nIntegration targets: ${profile.tools.join(', ')} (scope: ${profile.scope})`);
+  printResults(planResults);
 }
 
 function printResults(results) {
@@ -56,80 +78,35 @@ function printResults(results) {
   }
 }
 
-function applyProfile(profile, flags) {
-  const plan = buildPlan(profile, flags.scope ?? profile.scope);
-  const results = applyActions(plan, { dryRun: flags.dryRun });
-  console.log(flags.dryRun ? '\nPlan (dry run, nothing written):' : '\nConfigs written:');
-  printResults(results);
-  return results;
-}
-
 export async function main(argv) {
   const [command, ...args] = argv;
   const flags = parseFlags(args);
 
   switch (command) {
-    case 'init': {
-      const existing = loadProfile();
-      const profile = flags.defaults
-        ? (existing ?? defaultProfile())
-        : await runWizard(existing);
+    case 'scan':
+    case undefined: {
+      const inventory = runScan();
+      const profile = deriveProfile(inventory, { autonomy: flags.autonomy });
+      const plan = buildPlan(profile, flags.scope ?? profile.scope);
+      const results = applyActions(plan, { dryRun: true });
+      printScanReport(inventory, profile, results);
+      const file = saveState('inventory', inventory);
+      console.log(`\nInventory saved to ${file} (local only).`);
+      console.log('Run `agent-primer integrate` to apply the plan above.');
+      return 0;
+    }
+
+    case 'integrate': {
+      const inventory = runScan();
+      const profile = deriveProfile(inventory, { autonomy: flags.autonomy });
+      const plan = buildPlan(profile, flags.scope ?? profile.scope);
+      const results = applyActions(plan, { dryRun: flags.dryRun });
+      console.log(flags.dryRun ? '\nPlan (dry run, nothing written):' : '\nIntegrated:');
+      printResults(results);
       if (!flags.dryRun) {
-        const file = saveProfile(profile);
-        console.log(`\nProfile saved to ${file}`);
-      }
-      applyProfile(profile, flags);
-      console.log('\nDone. Your AI tools now know your preferences.');
-      console.log('Tip: `agent-primer remember "I prefer X"` keeps them up to date.');
-      return 0;
-    }
-
-    case 'apply': {
-      applyProfile(requireProfile(), flags);
-      return 0;
-    }
-
-    case 'remember': {
-      const fact = flags.rest.join(' ').trim();
-      if (!fact) throw new Error('usage: agent-primer remember "your fact here"');
-      const profile = requireProfile();
-      profile.memory.facts.push(fact);
-      saveProfile(profile);
-      console.log(`Remembered: "${fact}"`);
-      applyProfile(profile, flags);
-      return 0;
-    }
-
-    case 'forget': {
-      const n = Number(flags.rest[0]);
-      const profile = requireProfile();
-      if (!Number.isInteger(n) || n < 1 || n > profile.memory.facts.length) {
-        throw new Error(
-          `usage: agent-primer forget <1-${profile.memory.facts.length || 0}> (see \`agent-primer show\`)`,
-        );
-      }
-      const [removed] = profile.memory.facts.splice(n - 1, 1);
-      saveProfile(profile);
-      console.log(`Forgot: "${removed}"`);
-      applyProfile(profile, flags);
-      return 0;
-    }
-
-    case 'show': {
-      const profile = requireProfile();
-      console.log(`Profile: ${profilePath()}\n`);
-      console.log(JSON.stringify(profile, null, 2));
-      if (profile.memory.facts.length) {
-        console.log('\nFacts:');
-        profile.memory.facts.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
-      }
-      return 0;
-    }
-
-    case 'doctor': {
-      for (const item of runDoctor()) {
-        const mark = item.ok ? 'ok ' : '!! ';
-        console.log(`  ${mark} ${item.label}${item.detail ? ` — ${item.detail}` : ''}`);
+        saveState('inventory', inventory);
+        saveState('profile', profile);
+        console.log(`\nState saved under ${stateDir()} (local only).`);
       }
       return 0;
     }
@@ -147,8 +124,7 @@ export async function main(argv) {
     }
 
     case 'help':
-    case '--help':
-    case undefined: {
+    case '--help': {
       console.log(HELP);
       return 0;
     }

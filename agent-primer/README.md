@@ -1,106 +1,82 @@
 # agent-primer
 
-**One preference interview. Every AI coding tool configured.**
+**Scans your machine. Integrates into your AI workflows. Nothing leaves your disk.**
 
-agent-primer is a small framework that sets up AI coding CLIs (Claude Code,
-Codex CLI, and anything that reads `AGENTS.md`) for people who are new to
-them. It asks you a few plain-language questions, stores the answers in a
-single memory store, and writes each tool's native config — memory files,
-permission settings, safety guardrails — tuned to your experience level.
+agent-primer is an open-source (MIT), fully local framework that sets up AI
+coding CLIs automatically. It detects which tools you have (Claude Code,
+Codex CLI, anything that reads `AGENTS.md`), learns how you work from local
+evidence — git identity, project markers, lockfiles — and writes each tool's
+native config: memory files, permission settings, safety guardrails. No
+interview, no account, no telemetry, no network code at all.
 
 Zero dependencies. No build step. Node 18+.
 
 ## Quick start
 
 ```bash
-npx agent-primer init        # interview → configs for every tool you use
-npx agent-primer init --defaults   # skip the interview, safe beginner setup
+npx agent-primer scan        # read-only: what's installed + what would change
+npx agent-primer integrate   # write/merge configs for every detected tool
 ```
 
-That's it. Open Claude Code or Codex and it already knows your name, your
-stack, how much explanation you want, and what it must never do.
+## How it works
 
-## Why
+```
+Scanner → Inventory → Deriver → Adapters → Plan → Safe writes
+```
 
-New users get the worst defaults: the AI doesn't know their experience level,
-permission prompts are confusing, and nothing remembers their preferences
-across tools. agent-primer fixes that with three ideas:
+1. **Scan.** Detects AI CLIs on PATH (with versions), your git identity, and
+   the current project's stack (languages, package manager, test command)
+   from markers like `package.json`, lockfiles, `go.mod`, `Cargo.toml`.
+2. **Derive.** Turns the inventory into a profile — which tools to target,
+   global vs. project scope, what the memory files should say. Every field
+   comes from evidence; safe fallbacks otherwise.
+3. **Integrate.** Adapters render the profile into each tool's native format
+   and an executor applies the plan non-destructively.
 
-1. **One profile, many tools.** Your preferences live in
-   `~/.agent-primer/profile.json`. Adapters translate it into each tool's
-   native format, so they never drift apart.
-2. **Skill-aware guardrails.** A beginner profile makes tools explain every
-   step and ask before anything risky; an advanced profile gets out of the
-   way. Permissions scale the same way (cautious → balanced → autonomous),
-   and secret files (`.env`, keys) are always denied.
-3. **A memory store that syncs.** `agent-primer remember "I prefer pnpm"`
-   adds a fact once and pushes it to every tool's memory file.
+| Tool | Memory | Settings |
+| --- | --- | --- |
+| Claude Code | `~/.claude/CLAUDE.md` / `./CLAUDE.md` | `settings.json` permission rules (deep-merged) |
+| Codex CLI | `~/.codex/AGENTS.md` / `./AGENTS.md` | `config.toml` approval/sandbox (created only if missing) |
+| 30+ other tools | `./AGENTS.md` (shared open convention) | — |
+
+## Local-first guarantees
+
+- **No network.** There is no network code in this project — a test fails CI
+  if any network primitive appears in `src/`.
+- **No surprises.** Memory files are edited only inside a marked
+  `agent-primer` block; your own notes survive byte-for-byte. JSON settings
+  are deep-merged, never replaced. TOML is never rewritten. Every changed
+  file is backed up first (`*.bak-<timestamp>`).
+- **Idempotent.** Running `integrate` twice reports `unchanged` everywhere.
+- **Inspectable.** All state is plain JSON under `~/.agent-primer/`. Delete
+  the directory and agent-primer forgets everything.
+- **Secrets stay secret.** The scanner never opens `.env`/key files, and the
+  permission rules it writes deny AI tools access to them too.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `init` | Interview, save profile, write all configs |
-| `apply` | Re-write configs from the saved profile (idempotent) |
-| `remember "fact"` | Add a fact to the memory store and sync all tools |
-| `forget <n>` | Remove fact *n* (numbers shown by `show`) |
-| `show` | Print the saved profile |
-| `doctor` | Check Node version, installed CLIs, config health |
+| `scan` (default) | Detect tools + stack, show the exact integration plan (dry) |
+| `integrate` | Apply the plan; `--dry-run` to preview |
+| `version`, `help` | The usual |
 
-Flags: `--dry-run` (preview without writing), `--scope global|project|both`,
-`--defaults` (non-interactive init).
+Flags: `--scope global|project|both`, `--autonomy cautious|balanced|autonomous`
+(permission preset; default cautious), `--dry-run`.
 
-## What gets written
+## Extending
 
-| Tool | Memory | Permissions |
-| --- | --- | --- |
-| Claude Code | `~/.claude/CLAUDE.md` / `./CLAUDE.md` | `settings.json` (allow/deny rules, default mode) |
-| Codex CLI | `~/.codex/AGENTS.md` / `./AGENTS.md` | `config.toml` (approval policy, sandbox) — created only if missing |
-| Generic | `./AGENTS.md` | — |
-
-Writes are never destructive: memory files are edited only inside a marked
-`agent-primer` block (your own notes are untouched), JSON settings are
-deep-merged, and any changed file is backed up first (`*.bak-<timestamp>`).
-
-## Architecture
-
-```
-Profile (memory store)  →  Adapters (one per tool)  →  Plan (file actions)  →  Executor (safe writes)
-```
-
-- `src/profile.js` — the store: load/save/validate `profile.json`
-- `src/wizard.js` — the interview that builds a profile
-- `src/adapters/` — **the extension point.** An adapter is
-  `{ id, name, binary, plan(profile, scope, cwd) }` returning file actions.
-  Add a file here + one line in `adapters/index.js` to support a new tool.
-- `src/templates/` — renders the profile into markdown memory and
-  permission presets
-- `src/fsutil.js` — managed-block upserts, JSON deep-merge, backups, dry-run
-
-### Adding an adapter
-
-```js
-// src/adapters/mytool.js
-import { renderMemory } from '../templates/memory.js';
-
-export default {
-  id: 'mytool',
-  name: 'My Tool',
-  binary: 'mytool',
-  plan(profile, scope, cwd) {
-    return [{
-      adapter: this.id, scope,
-      kind: 'upsert-block',                  // or merge-json / write-if-absent
-      path: `${cwd}/.mytool/MEMORY.md`,
-      content: renderMemory(profile),
-      description: 'memory file',
-    }];
-  },
-};
-```
+An adapter is one file: `{ id, name, binary, plan(profile, scope, cwd) }`
+returning file actions (`upsert-block`, `merge-json`, `write-if-absent`).
+Register it in `src/adapters/index.js` and both `scan` detection and
+`integrate` pick it up. See [DESIGN.md](DESIGN.md) for the full architecture,
+research notes on each tool's config surface, safety invariants, and roadmap
+(Gemini CLI and Cursor adapters, MCP wiring, uninstall).
 
 ## Development
 
 ```bash
-npm test   # node:test suite, no dependencies
+npm test   # node:test suite — pipeline, adapters, safety invariants
 ```
+
+MIT — see [LICENSE](LICENSE).
