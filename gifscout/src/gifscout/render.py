@@ -13,14 +13,25 @@ from .media import require_ffmpeg
 
 
 def escape_drawtext(text: str) -> str:
-    """Escape a string for ffmpeg's drawtext filter."""
+    """Escape text to sit inside a single-quoted ffmpeg drawtext value.
+
+    The caption is embedded as ``drawtext=text='<value>'`` within a
+    ``filter_complex`` graph. Single quotes already protect filtergraph
+    metacharacters (``: , ; [ ]``), so escaping those would only inject
+    literal backslashes. The characters that actually need handling are:
+
+      * ``'`` — would close the quoted string; emitted via ffmpeg's
+        close-escape-reopen idiom ``'\\''``.
+      * ``\\`` — doubled so it stays literal.
+      * ``{`` / ``}`` — escaped to avoid drawtext's ``%{...}`` expansion.
+    """
     out = []
     for ch in text:
-        if ch in "\\':%":
-            out.append("\\" + ch)
-        elif ch == ",":
-            out.append("\\,")
-        elif ch == "[" or ch == "]":
+        if ch == "\\":
+            out.append("\\\\")
+        elif ch == "'":
+            out.append("'\\''")
+        elif ch in "{}":
             out.append("\\" + ch)
         else:
             out.append(ch)

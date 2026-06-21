@@ -4,9 +4,15 @@ from .conftest import needs_ffmpeg
 
 
 def test_escape_drawtext():
-    assert escape_drawtext("it's 100%") == "it\\'s 100\\%"
-    assert escape_drawtext("a,b:c") == "a\\,b\\:c"
+    # Apostrophes use ffmpeg's close-escape-reopen idiom so captions like
+    # "don't" don't terminate the quoted text value.
+    assert escape_drawtext("don't") == "don'\\''t"
+    # Inside single quotes, filtergraph metacharacters are already protected,
+    # so they pass through untouched (no spurious backslashes).
+    assert escape_drawtext("a,b:c 100%") == "a,b:c 100%"
     assert escape_drawtext("plain words") == "plain words"
+    # Braces are escaped to avoid drawtext %{...} expansion.
+    assert escape_drawtext("a{b}c") == "a\\{b\\}c"
 
 
 def test_build_filtergraph_variants():

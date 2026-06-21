@@ -75,7 +75,11 @@ def iter_frames(
     finally:
         proc.stdout.close()
         proc.wait()
-    if proc.returncode not in (0, None) and i == 0:
+    # This runs only on natural exhaustion (an early break/close raises
+    # GeneratorExit and skips it), so the pipe was fully drained — ffmpeg
+    # should exit 0. A non-zero code here means it errored partway through
+    # and handed us a silently truncated frame set, which must not pass.
+    if proc.returncode not in (0, None):
         stderr = proc.stderr.read().decode(errors="replace") if proc.stderr else ""
         raise RuntimeError(f"ffmpeg failed to decode {video}: {stderr[-800:]}")
 
