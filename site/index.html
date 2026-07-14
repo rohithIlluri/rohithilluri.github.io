@@ -5,19 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Rohith Illuri — Portfolio</title>
 <meta name="description" content="Self-taught developer. Deeds, not words." />
-<meta name="theme-color" content="#0c0a07" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#0c0a07" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#131008" media="(prefers-color-scheme: light)" />
 <meta property="og:title" content="Rohith Illuri — Portfolio" />
 <meta property="og:description" content="Self-taught developer. Deeds, not words." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://rohithilluri.github.io/" />
+<meta name="twitter:card" content="summary" />
 <!-- Security headers (meta equivalents — framing/MIME headers set at CDN layer) -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <link rel="canonical" href="https://rohithilluri.github.io/" />
+<!-- Identity federation (IndieWeb rel=me; readable by verifiers & AI agents) -->
+<link rel="me" href="https://github.com/rohithIlluri" />
+<link rel="me" href="https://linkedin.com/in/rohithilluri" />
+<link rel="author" href="mailto:rohith.illuri@gmail.com" />
+<!-- Advertise the LLM-friendly summary to crawlers/agents -->
+<link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-friendly summary" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <!-- paintings redirect commons -> upload; warm both connections early -->
 <link rel="preconnect" href="https://commons.wikimedia.org" />
 <link rel="preconnect" href="https://upload.wikimedia.org" />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet" />
+<!-- Structured identity for search engines & AI agents (schema.org) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Rohith Illuri",
+  "jobTitle": "Self-taught Developer",
+  "email": "mailto:rohith.illuri@gmail.com",
+  "url": "https://rohithilluri.github.io/",
+  "sameAs": [
+    "https://github.com/rohithIlluri",
+    "https://linkedin.com/in/rohithilluri"
+  ],
+  "knowsAbout": [
+    "JavaScript", "React", "Node.js", "Python",
+    "PostgreSQL", "Docker", "AWS", "GraphQL", "Neural Networks"
+  ],
+  "description": "Self-taught developer. Deeds, not words."
+}
+</script>
 <script>document.documentElement.className += ' js';</script>
 <style>
   :root {
@@ -334,6 +365,8 @@
   /* ---------- SECTIONS ---------- */
   section.scene { padding: 13vh 0 7vh; }
   section .inner { position: relative; z-index: 2; }
+  /* skip rendering off-screen sections until they scroll near — modern perf win */
+  main > section.scene { content-visibility: auto; contain-intrinsic-size: 100vh; }
 
   .section-head { text-align: center; margin-bottom: 8vh; }
   .section-head .numeral {

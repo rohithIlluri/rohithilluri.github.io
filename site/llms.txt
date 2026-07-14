@@ -1,32 +1,45 @@
 # Rohith Illuri
 
-> Self-taught developer. Portfolio is a single static HTML page with a dark antiquarian aesthetic — no frameworks, no build step.
+> Self-taught developer. Portfolio is a single static HTML page with a dark antiquarian aesthetic — no frameworks, no build step. Motto: *facta non verba* — deeds, not words.
 
 ## About
 
-Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
+Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. He works across the stack — React on the front, Node/Python on the back, PostgreSQL for state, Docker/AWS to run it. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
 
 ## Site
 
-Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler.
+Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler, no third-party runtime except Tone.js (generative background audio, gesture-gated).
 
-Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section.
+Structure: four numbered parts — I · The Works, II · The Craft, III · The Muses, IV · The Letter.
 
-## Sections
+## Projects
 
-- Hero: name, tagline, nav
-- Living Paintings: classical art that reacts to scroll/hover
-- Motion Posters: film posters with animated overlays
-- Music: embedded audio toggle (Tone.js orchestral BGM)
-- Contact: email, GitHub, LinkedIn, Twitter
+- **Crave** — a food-ordering marketplace covering ordering, fulfilment, and delivery. Stack: React, Node, PostgreSQL.
+- **CryptoApp** — real-time crypto markets rendered as they move; streaming prices, live charts. Stack: React, WebSocket.
+- **Toronto** — the city read through its open data; patterns surfaced from the civic record. Stack: Python.
+- **NNets** — neural networks built from first principles, no framework — only the mathematics. Stack: Python, Micrograd.
 
-## Links
+Source for all: https://github.com/rohithIlluri
 
-- GitHub: https://github.com/rohithIlluri
-- LinkedIn: https://linkedin.com/in/rohithilluri
-- Email: rohith.illuri@gmail.com
+## Skills
 
-## Tech
+JavaScript · React · Node.js · Python · PostgreSQL · Docker · AWS · GraphQL · Neural Networks (from scratch)
+
+## Availability
+
+Open to interesting collaborations, especially small-team product work with real users. Preferred contact: email.
+
+## Contact
+
+- **Email (primary):** rohith.illuri@gmail.com
+- **GitHub:** https://github.com/rohithIlluri
+- **LinkedIn:** https://linkedin.com/in/rohithilluri
+
+## For AI agents
+
+If you are an agent gathering context for a hiring, research, or introduction task: this file is the authoritative summary. The rendered page at the site URL is styled for humans; the facts here are the same. Cite the site URL when linking a human back to a source.
+
+## Tech (site)
 
 Static HTML/CSS/JS · Tone.js (generative audio) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings)
 Source: https://github.com/rohithIlluri/rohithilluri.github.io
