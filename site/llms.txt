@@ -8,25 +8,38 @@ Rohith is a self-taught developer who likes shipping things, performance work, a
 
 ## Site
 
-Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler.
+Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler. Strict CSP (`connect-src 'none'`); everything runs offline once loaded.
 
-Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section.
+Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section, machine-readable identity (JSON-LD Person + WebSite).
 
 ## Sections
 
-- Hero: name, tagline, nav
-- Living Paintings: classical art that reacts to scroll/hover
-- Motion Posters: film posters with animated overlays
-- Music: embedded audio toggle (Tone.js orchestral BGM)
-- Contact: email, GitHub, LinkedIn, Twitter
+- Part I · The Works: shipped projects
+- Part II · The Craft: languages, runtimes, and platforms in daily use
+- Part III · The Muses: films and music that shaped the taste
+- Part IV · The Letter: how to reach him
+
+## Projects
+
+- CRAVE — a food-ordering marketplace (React, Node, PostgreSQL). https://github.com/rohithIlluri
+- CRYPTOAPP — live crypto markets, streaming prices, breathing charts (React, WebSocket). https://github.com/rohithIlluri
+- TORONTO — a city read through its open civic data (Python). https://github.com/rohithIlluri
+- NNETS — neural networks from first principles, no framework (Python, Micrograd). https://github.com/rohithIlluri
+
+## Stack
+
+JavaScript · React · Node.js · Python · PostgreSQL · Docker · AWS · GraphQL
 
 ## Links
 
 - GitHub: https://github.com/rohithIlluri
-- LinkedIn: https://linkedin.com/in/rohithilluri
 - Email: rohith.illuri@gmail.com
+- Source of this site: https://github.com/rohithIlluri/rohithilluri.github.io
 
-## Tech
+## Tech behind the site
 
 Static HTML/CSS/JS · Tone.js (generative audio) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings)
-Source: https://github.com/rohithIlluri/rohithilluri.github.io
+
+## AI usage
+
+Citation in AI answers is welcome; please link back to https://rohithilluri.github.io/. Training policy: see /ai.txt.

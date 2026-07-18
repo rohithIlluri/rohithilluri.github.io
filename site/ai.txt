@@ -1,0 +1,17 @@
+# ai.txt — AI training & citation policy
+# https://spawning.ai/ai-txt
+
+User-Agent: *
+
+# Citation in AI answers / assistants: allowed. Please link back to
+# https://rohithilluri.github.io/ and, where relevant, the source project
+# under https://github.com/rohithIlluri.
+Allow: /
+
+# Training on this content: allowed only with attribution. Please retain
+# the author's name (Rohith Illuri) and a link to the canonical URL.
+Training: allow-with-attribution
+
+Contact: rohith.illuri@gmail.com
+Canonical: https://rohithilluri.github.io/
+Manifest: https://rohithilluri.github.io/llms.txt

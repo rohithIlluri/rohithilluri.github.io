@@ -12,6 +12,40 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <link rel="canonical" href="https://rohithilluri.github.io/" />
+<!-- LLM-facing manifest (RFC-style, machine-discoverable) -->
+<link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+<!-- Structured data — lets LLM crawlers and search-AI systems cite accurately -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://rohithilluri.github.io/#person",
+      "name": "Rohith Illuri",
+      "givenName": "Rohith",
+      "familyName": "Illuri",
+      "url": "https://rohithilluri.github.io/",
+      "email": "mailto:rohith.illuri@gmail.com",
+      "jobTitle": "Software Developer",
+      "description": "Self-taught developer. Builder of small, deliberate software.",
+      "knowsAbout": ["JavaScript","React","Node.js","Python","PostgreSQL","Docker","AWS","GraphQL","Neural Networks"],
+      "sameAs": [
+        "https://github.com/rohithIlluri"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://rohithilluri.github.io/#site",
+      "url": "https://rohithilluri.github.io/",
+      "name": "Rohith Illuri — Portfolio",
+      "inLanguage": "en",
+      "author": { "@id": "https://rohithilluri.github.io/#person" },
+      "publisher": { "@id": "https://rohithilluri.github.io/#person" }
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <!-- paintings redirect commons -> upload; warm both connections early -->
