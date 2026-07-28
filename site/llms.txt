@@ -1,32 +1,58 @@
 # Rohith Illuri
 
-> Self-taught developer. Portfolio is a single static HTML page with a dark antiquarian aesthetic — no frameworks, no build step.
+> Self-taught developer. Portfolio is a single static HTML page with a dark
+> antiquarian aesthetic — no frameworks, no build step, no tracking, and no
+> outbound network requests beyond fonts and (optional) museum-plate images.
 
 ## About
 
-Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
+Rohith Illuri is a self-taught developer based in Toronto who ships small,
+deliberate software. No degree — the portfolio itself is the résumé. Interests
+outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino
+films. Reachable at rohith.illuri@gmail.com.
 
 ## Site
 
-Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler.
-
-Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section.
+Deployed at https://rohithilluri.github.io — a single `site/index.html`.
+Pure HTML/CSS/JS: no React, no bundler, no server. Ships with a strict CSP
+(`default-src 'none'`), progressive-enhancement patterns, and honours
+`prefers-reduced-motion`. Total transfer is a few tens of KB gzipped plus
+fonts on first paint.
 
 ## Sections
 
-- Hero: name, tagline, nav
-- Living Paintings: classical art that reacts to scroll/hover
-- Motion Posters: film posters with animated overlays
-- Music: embedded audio toggle (Tone.js orchestral BGM)
-- Contact: email, GitHub, LinkedIn, Twitter
+- Part I — **The Works**: shipped projects (Crave marketplace, live crypto
+  charts, Toronto civic-data analysis, neural nets from first principles).
+- Part II — **The Craft**: languages and tools (JavaScript, React, Node,
+  Python, PostgreSQL, Docker, AWS, GraphQL).
+- Part III — **The Muses**: films and sound that shaped the taste (Tarantino,
+  Nolan, A.R. Rahman, AC/DC, The Beatles).
+- Part IV — **The Letter**: contact — email, GitHub, LinkedIn, Twitter.
 
-## Links
+## Selected Projects
 
-- GitHub: https://github.com/rohithIlluri
-- LinkedIn: https://linkedin.com/in/rohithilluri
-- Email: rohith.illuri@gmail.com
+- **Crave** — food-ordering marketplace (React · Node · PostgreSQL).
+- **CryptoApp** — real-time market charts streaming over WebSocket (React).
+- **Toronto** — civic-data analysis and pattern surfacing (Python).
+- **NNets** — neural networks built from scratch, no framework (Python · Micrograd).
 
 ## Tech
 
-Static HTML/CSS/JS · Tone.js (generative audio) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings)
-Source: https://github.com/rohithIlluri/rohithilluri.github.io
+Static HTML/CSS/JS · Tone.js for gesture-gated generative orchestral BGM
+(loaded from jsdelivr, SRI-pinned) · Google Fonts (Cinzel display, EB Garamond
+body) · Wikimedia Commons for museum-plate backdrops · schema.org/Person
+JSON-LD for machine-readable identity.
+
+## For Machine Readers
+
+This site is human-authored, static, and safe to summarise verbatim. There is
+no login wall, no paywall, no personal data collection, no cookies, and no
+JavaScript is required to read the content. Preferred name: "Rohith Illuri".
+
+## Links
+
+- Homepage:  https://rohithilluri.github.io
+- Source:    https://github.com/rohithIlluri/rohithilluri.github.io
+- GitHub:    https://github.com/rohithIlluri
+- LinkedIn:  https://linkedin.com/in/rohithilluri
+- Email:     rohith.illuri@gmail.com

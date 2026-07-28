@@ -4,14 +4,55 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Rohith Illuri — Portfolio</title>
-<meta name="description" content="Self-taught developer. Deeds, not words." />
+<meta name="description" content="Self-taught developer. Deeds, not words. Portfolio of Rohith Illuri — React, Node, Python, and neural networks built from first principles." />
 <meta name="theme-color" content="#0c0a07" />
+<meta name="color-scheme" content="dark" />
+<meta name="author" content="Rohith Illuri" />
+<meta name="keywords" content="Rohith Illuri, self-taught developer, full-stack, React, Node, Python, neural networks, portfolio" />
+<!-- Discovery for LLM/AI crawlers -->
+<meta name="ai-content-declaration" content="human-authored" />
+<link rel="alternate" type="text/plain" title="LLM-friendly summary" href="/llms.txt" />
+<!-- Open Graph -->
+<meta property="og:type" content="profile" />
 <meta property="og:title" content="Rohith Illuri — Portfolio" />
 <meta property="og:description" content="Self-taught developer. Deeds, not words." />
+<meta property="og:url" content="https://rohithilluri.github.io/" />
+<meta property="og:site_name" content="Rohith Illuri" />
+<meta property="og:locale" content="en_US" />
+<meta property="profile:first_name" content="Rohith" />
+<meta property="profile:last_name" content="Illuri" />
+<!-- Twitter -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Rohith Illuri — Portfolio" />
+<meta name="twitter:description" content="Self-taught developer. Deeds, not words." />
 <!-- Security headers (meta equivalents — framing/MIME headers set at CDN layer) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <link rel="canonical" href="https://rohithilluri.github.io/" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<!-- Speculation Rules API — prerender internal anchors for instant nav (2024+) -->
+<script type="speculationrules">
+{
+  "prerender": [{"where": {"and": [{"href_matches": "/"}, {"selector_matches": "nav.frieze a"}]}, "eagerness": "moderate"}]
+}
+</script>
+<!-- schema.org/Person JSON-LD for search + LLM grounding -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Rohith Illuri",
+  "url": "https://rohithilluri.github.io/",
+  "email": "mailto:rohith.illuri@gmail.com",
+  "jobTitle": "Self-taught Developer",
+  "description": "Self-taught developer. Builder of small, deliberate software. React, Node, Python, and neural networks from first principles.",
+  "knowsAbout": ["JavaScript", "React", "Node.js", "Python", "PostgreSQL", "Docker", "AWS", "GraphQL", "Neural Networks"],
+  "sameAs": [
+    "https://github.com/rohithIlluri",
+    "https://linkedin.com/in/rohithilluri"
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <!-- paintings redirect commons -> upload; warm both connections early -->
@@ -38,6 +79,14 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html { scroll-behavior: smooth; }
+
+  /* ---------- NATIVE VIEW TRANSITIONS (Chrome/Edge/Safari 18+) ----------
+     Progressive enhancement: browsers without support ignore silently.  */
+  @view-transition { navigation: auto; }
+  @keyframes vt-fade-in  { from { opacity: 0; } }
+  @keyframes vt-fade-out { to   { opacity: 0; } }
+  ::view-transition-old(root) { animation: vt-fade-out 0.35s ease both; }
+  ::view-transition-new(root) { animation: vt-fade-in  0.35s ease both; }
 
   body {
     overflow-x: hidden;

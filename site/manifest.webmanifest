@@ -1,0 +1,21 @@
+{
+  "name": "Rohith Illuri — Portfolio",
+  "short_name": "R. Illuri",
+  "description": "Self-taught developer. Deeds, not words.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#131008",
+  "theme_color": "#0c0a07",
+  "lang": "en",
+  "categories": ["portfolio", "developer", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23131008'/%3E%3Ctext x='50%25' y='54%25' font-family='Georgia,serif' font-size='340' font-weight='700' fill='%23c8a24a' text-anchor='middle' dominant-baseline='middle'%3ER%3C/text%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
