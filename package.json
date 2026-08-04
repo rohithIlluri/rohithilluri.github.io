@@ -6,6 +6,6 @@
     "test:poc": "node --test tests/poc/poc.test.mjs"
   },
   "devDependencies": {
-    "jsdom": "^29.0.0"
+    "jsdom": "^30.0.1"
   }
 }
