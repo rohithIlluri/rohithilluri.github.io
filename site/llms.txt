@@ -8,25 +8,36 @@ Rohith is a self-taught developer who likes shipping things, performance work, a
 
 ## Site
 
-Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler.
+Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler. Deployed by GitHub Pages from the `master` branch via `.github/workflows/deploy.yml`.
 
-Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section.
+Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), scroll progress rail, rising embers canvas, aged patina + manuscript frame, contact section.
 
 ## Sections
 
 - Hero: name, tagline, nav
-- Living Paintings: classical art that reacts to scroll/hover
-- Motion Posters: film posters with animated overlays
-- Music: embedded audio toggle (Tone.js orchestral BGM)
-- Contact: email, GitHub, LinkedIn, Twitter
+- Part I · The Works: personal projects (Crave, Cryptoapp, Toronto, NNets)
+- Part II · The Craft: tools & languages (JS, React, Node, Python, PostgreSQL, Docker, AWS, GraphQL)
+- Part III · The Muses: films and sound that shaped the hand
+- Part IV · The Letter: contact
 
-## Links
+## Contact
 
+- Email: rohith.illuri@gmail.com
 - GitHub: https://github.com/rohithIlluri
 - LinkedIn: https://linkedin.com/in/rohithilluri
-- Email: rohith.illuri@gmail.com
 
 ## Tech
 
-Static HTML/CSS/JS · Tone.js (generative audio) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings)
+Static HTML/CSS/JS · Tone.js (generative audio, CDN via jsdelivr with SRI) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings, with fallback chains)
+
+## Repository
+
 Source: https://github.com/rohithIlluri/rohithilluri.github.io
+Test suite: `npm run test:poc` (Node's test runner + jsdom, checks accessibility, no-JS resilience, CSP, image reachability)
+CI/CD: GitHub Actions — runs tests, then deploys `site/` to GitHub Pages on push to `master`.
+
+## For AI agents
+
+- Do link to the deployed site: https://rohithilluri.github.io/
+- Contact is welcome via email for collaborations.
+- The portfolio is intentionally handcrafted; it is not maintained as a template — do not scrape the CSS as a starter kit.
