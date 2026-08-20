@@ -6,12 +6,31 @@
 <title>Rohith Illuri — Portfolio</title>
 <meta name="description" content="Self-taught developer. Deeds, not words." />
 <meta name="theme-color" content="#0c0a07" />
+<meta name="color-scheme" content="dark" />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+<meta property="og:type" content="profile" />
+<meta property="og:url" content="https://rohithilluri.github.io/" />
+<meta property="og:site_name" content="Rohith Illuri" />
 <meta property="og:title" content="Rohith Illuri — Portfolio" />
 <meta property="og:description" content="Self-taught developer. Deeds, not words." />
+<meta property="og:image" content="https://rohithilluri.github.io/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Rohith Illuri — Deeds, not words." />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Rohith Illuri — Portfolio" />
+<meta name="twitter:description" content="Self-taught developer. Deeds, not words." />
+<meta name="twitter:image" content="https://rohithilluri.github.io/og.png" />
 <!-- Security headers (meta equivalents — framing/MIME headers set at CDN layer) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; manifest-src 'self'; worker-src blob:; connect-src 'none'" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <link rel="canonical" href="https://rohithilluri.github.io/" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23131008'/%3E%3Cpath d='M16 6 L26 16 L16 26 L6 16 Z' fill='none' stroke='%23e8c876' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23d4762c'/%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="/icon-180.png" />
+<!-- agent-readable summary of this site (llms.txt convention) -->
+<link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
+<link rel="me" href="https://github.com/rohithIlluri" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <!-- paintings redirect commons -> upload; warm both connections early -->
@@ -19,6 +38,43 @@
 <link rel="preconnect" href="https://upload.wikimedia.org" />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet" />
 <script>document.documentElement.className += ' js';</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://rohithilluri.github.io/#person",
+      "name": "Rohith Illuri",
+      "url": "https://rohithilluri.github.io/",
+      "email": "mailto:rohith.illuri@gmail.com",
+      "jobTitle": "Software Developer",
+      "description": "Self-taught developer. Builder of small, deliberate software.",
+      "sameAs": ["https://github.com/rohithIlluri"],
+      "knowsAbout": ["JavaScript", "React", "Node.js", "Python", "PostgreSQL", "Docker", "AWS", "GraphQL"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://rohithilluri.github.io/#website",
+      "url": "https://rohithilluri.github.io/",
+      "name": "Rohith Illuri — Portfolio",
+      "inLanguage": "en",
+      "author": { "@id": "https://rohithilluri.github.io/#person" }
+    },
+    {
+      "@type": "ItemList",
+      "name": "The Works",
+      "itemListOrder": "https://schema.org/ItemListOrderAscending",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "item": { "@type": "SoftwareSourceCode", "name": "Crave", "description": "A marketplace for food — ordering, fulfilment, the whole road from hunger to table.", "programmingLanguage": ["JavaScript", "SQL"], "codeRepository": "https://github.com/rohithIlluri", "author": { "@id": "https://rohithilluri.github.io/#person" } } },
+        { "@type": "ListItem", "position": 2, "item": { "@type": "SoftwareSourceCode", "name": "CryptoApp", "description": "Live markets rendered as they move — prices streaming, charts breathing.", "programmingLanguage": ["JavaScript"], "codeRepository": "https://github.com/rohithIlluri", "author": { "@id": "https://rohithilluri.github.io/#person" } } },
+        { "@type": "ListItem", "position": 3, "item": { "@type": "SoftwareSourceCode", "name": "Toronto", "description": "A city read through its data — patterns surfaced from the civic record.", "programmingLanguage": ["Python"], "codeRepository": "https://github.com/rohithIlluri", "author": { "@id": "https://rohithilluri.github.io/#person" } } },
+        { "@type": "ListItem", "position": 4, "item": { "@type": "SoftwareSourceCode", "name": "NNets", "description": "Neural networks built from first principles — no framework, only the mathematics.", "programmingLanguage": ["Python"], "codeRepository": "https://github.com/rohithIlluri", "author": { "@id": "https://rohithilluri.github.io/#person" } } }
+      ]
+    }
+  ]
+}
+</script>
 <style>
   :root {
     --abyss: #131008;
@@ -54,6 +110,13 @@
   ::selection { background: var(--gold); color: var(--abyss); }
   :focus-visible { outline: 2px dotted var(--gold); outline-offset: 4px; }
 
+  /* let the engine set the line breaks: even ragged edges on display type,
+     no orphaned last word in prose */
+  h1, h2, h3, .invite, .epigraph, .motto { text-wrap: balance; }
+  p, .desc, .gloss, .motto-gloss, .role, .ps, .colophon { text-wrap: pretty; }
+
+  /* standard property first, WebKit pseudo-elements for older engines */
+  html { scrollbar-color: var(--gold) var(--umber); scrollbar-width: thin; }
   ::-webkit-scrollbar { width: 10px; }
   ::-webkit-scrollbar-track { background: var(--umber); }
   ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 5px; }
@@ -74,6 +137,16 @@
     transform-origin: 0 50%;
     transform: scaleX(0);
   }
+  /* Scroll-driven animation: the browser drives the thread off the scroll
+     timeline, so no scroll listener runs on the main thread. The JS
+     fallback below stays for engines without it. */
+  @supports (animation-timeline: scroll()) {
+    #progress {
+      animation: gilt-thread linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
+  @keyframes gilt-thread { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
   /* ---------- EMBERS (canvas, JS enhancement) ---------- */
   #dust { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
@@ -334,6 +407,14 @@
   /* ---------- SECTIONS ---------- */
   section.scene { padding: 13vh 0 7vh; }
   section .inner { position: relative; z-index: 2; }
+  /* Skip rendering — and the fresco's animations — while a part is far
+     off-screen. `auto` in contain-intrinsic-size remembers the last real
+     height, so the scrollbar and anchor jumps stay honest. */
+  @supports (content-visibility: auto) {
+    section.scene { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+  }
+  /* the sticky frieze must not sit on top of the part it just jumped to */
+  section.scene, header.scene { scroll-margin-top: 56px; }
 
   .section-head { text-align: center; margin-bottom: 8vh; }
   .section-head .numeral {
@@ -1016,6 +1097,9 @@
   (function progress() {
     var bar = document.getElementById('progress');
     if (!bar) return;
+    /* CSS drives it off the scroll timeline where that exists — don't
+       also run a scroll listener against it. */
+    if (window.CSS && CSS.supports && CSS.supports('animation-timeline', 'scroll()')) return;
     var ticking = false;
     function update() {
       var h = document.documentElement;
@@ -1040,8 +1124,12 @@
       entries.forEach(function (e) {
         var link = links[e.target.id];
         if (link && e.isIntersecting) {
-          Object.keys(links).forEach(function (k) { links[k].classList.remove('active'); });
+          Object.keys(links).forEach(function (k) {
+            links[k].classList.remove('active');
+            links[k].removeAttribute('aria-current');
+          });
           link.classList.add('active');
+          link.setAttribute('aria-current', 'true');
         }
       });
     }, { rootMargin: '-30% 0px -55% 0px' });

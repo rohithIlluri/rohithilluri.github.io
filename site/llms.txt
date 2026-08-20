@@ -1,32 +1,76 @@
 # Rohith Illuri
 
-> Self-taught developer. Portfolio is a single static HTML page with a dark antiquarian aesthetic — no frameworks, no build step.
+> Self-taught developer. Motto: "Deeds, not words" (facta non verba). The
+> portfolio is a single static HTML page with a dark antiquarian aesthetic —
+> no framework, no build step, no bundler.
 
 ## About
 
-Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
+Rohith is a self-taught developer with no CS degree — every project below was
+learned by building it. He likes shipping small, deliberate software,
+performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at
+unreasonable volumes, and Tarantino films.
 
-## Site
-
-Deployed at https://rohithilluri.github.io — a single `site/index.html` file. Pure HTML/CSS/JS, no React, no bundler.
-
-Features: living-painting gallery (Wikimedia Commons), motion poster wall, orchestral background music (Tone.js generative synthesis, gesture-gated), contact section.
+- Site: https://rohithilluri.github.io
+- GitHub: https://github.com/rohithIlluri
+- Email: rohith.illuri@gmail.com
 
 ## Sections
 
-- Hero: name, tagline, nav
-- Living Paintings: classical art that reacts to scroll/hover
-- Motion Posters: film posters with animated overlays
-- Music: embedded audio toggle (Tone.js orchestral BGM)
-- Contact: email, GitHub, LinkedIn, Twitter
+The page is structured as four numbered parts:
 
-## Links
+- **Part I · The Works** — the projects
+- **Part II · The Craft** — the tools he works in
+- **Part III · The Muses** — films and music that shaped the work
+- **Part IV · The Letter** — how to get in touch
 
-- GitHub: https://github.com/rohithIlluri
-- LinkedIn: https://linkedin.com/in/rohithilluri
-- Email: rohith.illuri@gmail.com
+## Part I · The Works
+
+- **Crave** — a marketplace for food: ordering, fulfilment, the whole road from
+  hunger to table. React, Node, PostgreSQL.
+- **CryptoApp** — live markets rendered as they move: prices streaming, charts
+  breathing. React, WebSocket.
+- **Toronto** — a city read through its data: patterns surfaced from the civic
+  record. Python.
+- **NNets** — neural networks built from first principles, no framework, only
+  the mathematics. Python, Micrograd.
+
+## Part II · The Craft
+
+JavaScript · React · Node.js · Python · PostgreSQL · Docker · AWS · GraphQL
+
+## Part III · The Muses
+
+Films: Kill Bill, Pulp Fiction, Interstellar.
+Sound: A.R. Rahman, AC/DC, The Beatles.
+
+## How the site is built
+
+A single `site/index.html` — inline CSS and inline JS, served straight from
+GitHub Pages. Notable implementation details:
+
+- **Living paintings** — each part sits over a public-domain painting from
+  Wikimedia Commons (Cole, Raphael, Velázquez, Botticelli, Vermeer), layered
+  over a pure-CSS "underpaint" gradient that renders even when the network or
+  JS is unavailable. Images walk a fallback chain and remove themselves rather
+  than leave a gap.
+- **Motion posters** — six tilted, gilded cards for the muses.
+- **Generative soundtrack** — Tone.js synthesizes an orchestral string loop in
+  the browser (A minor, 80 BPM). No audio files, no autostart: it is gated
+  behind an explicit click on the sound toggle.
+- **Progressive enhancement** — nothing is hidden unless JS actually ran
+  (`html.js` gates every reveal), and `prefers-reduced-motion` disables the
+  embers, drifts and Ken Burns pans.
+- **Scroll-driven CSS** — the progress thread runs on a CSS scroll timeline
+  where supported, falling back to a rAF-throttled listener.
+- **Locked-down CSP** — `default-src 'none'` with a narrow allowlist; the one
+  CDN script (Tone.js) is pinned with Subresource Integrity.
 
 ## Tech
 
-Static HTML/CSS/JS · Tone.js (generative audio) · Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings)
+Static HTML/CSS/JS · Tone.js (generative audio, jsDelivr + SRI) ·
+Google Fonts (Cinzel, EB Garamond) · Wikimedia Commons (paintings) ·
+GitHub Pages (hosting) · GitHub Actions (test + deploy)
+
 Source: https://github.com/rohithIlluri/rohithilluri.github.io
+Structured data: JSON-LD (`Person`, `WebSite`, `ItemList`) is embedded in the page head.
