@@ -18,6 +18,36 @@
 <link rel="preconnect" href="https://commons.wikimedia.org" />
 <link rel="preconnect" href="https://upload.wikimedia.org" />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet" />
+
+<!-- Structured data for AI crawlers (Perplexity, ChatGPT, Google AI Overviews) and classic SEO.
+     Pairs with /llms.txt — same facts, machine-shaped. No script execution, data only. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Rohith Illuri",
+  "url": "https://rohithilluri.github.io/",
+  "jobTitle": "Developer",
+  "description": "Self-taught developer. Builder of small, deliberate software. Deeds, not words.",
+  "email": "mailto:rohith.illuri@gmail.com",
+  "sameAs": [
+    "https://github.com/rohithIlluri",
+    "https://linkedin.com/in/rohithilluri"
+  ],
+  "knowsAbout": ["JavaScript","React","Node.js","Python","PostgreSQL","Docker","AWS","GraphQL","WebAudio","Static Sites"]
+}
+</script>
+
+<!-- Speculation Rules: warm the outbound GitHub profile so first click opens instantly.
+     Cross-origin prefetch is advisory; browsers that don't support it ignore the block. -->
+<script type="speculationrules">
+{
+  "prefetch": [
+    { "source": "list", "urls": ["https://github.com/rohithIlluri"], "eagerness": "moderate" }
+  ]
+}
+</script>
+
 <script>document.documentElement.className += ' js';</script>
 <style>
   :root {
@@ -38,6 +68,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html { scroll-behavior: smooth; }
+
+  /* Cross-document View Transitions: supported browsers fade between pages
+     on same-origin navigation. No effect where unsupported — pure progressive
+     enhancement, no JS, no layout cost. */
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation-duration: 420ms; }
 
   body {
     overflow-x: hidden;
