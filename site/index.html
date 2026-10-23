@@ -8,6 +8,18 @@
 <meta name="theme-color" content="#0c0a07" />
 <meta property="og:title" content="Rohith Illuri — Portfolio" />
 <meta property="og:description" content="Self-taught developer. Deeds, not words." />
+<meta property="og:url" content="https://rohithilluri.github.io/" />
+<meta property="og:type" content="profile" />
+<meta property="og:site_name" content="Rohith Illuri" />
+<meta property="profile:first_name" content="Rohith" />
+<meta property="profile:last_name" content="Illuri" />
+<meta property="profile:username" content="rohithIlluri" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Rohith Illuri — Portfolio" />
+<meta name="twitter:description" content="Self-taught developer. Deeds, not words." />
+<meta name="color-scheme" content="dark" />
+<meta name="author" content="Rohith Illuri" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20fill%3D'%23131008'%2F%3E%3Ctext%20x%3D'16'%20y%3D'22'%20text-anchor%3D'middle'%20font-family%3D'serif'%20font-size%3D'20'%20font-weight%3D'700'%20fill%3D'%23c8a24a'%3ER%3C%2Ftext%3E%3C%2Fsvg%3E" />
 <!-- Security headers (meta equivalents — framing/MIME headers set at CDN layer) -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org; worker-src blob:; connect-src 'none'" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -624,6 +636,16 @@
     html { scroll-behavior: auto; }
   }
 
+  /* ---------- AI-era INP win: skip offscreen paint until needed ----------
+     content-visibility: auto lets the browser skip layout/paint for sections
+     that aren't near the viewport. contain-intrinsic-size reserves their
+     height so the scrollbar stays stable. Guarded on html.js so no-JS
+     readers still get instantly-reachable content.                           */
+  .js main > section.scene {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 1200px;
+  }
+
   @media (max-width: 720px) {
     body { font-size: 17px; }
     .opus { grid-template-columns: 56px 1fr; }
@@ -656,6 +678,39 @@
     section.scene { padding: 10vh 0 5vh; }
   }
 </style>
+
+<!-- Structured data for AI crawlers, LLMs, and rich search cards -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Rohith Illuri",
+  "alternateName": "rohithIlluri",
+  "description": "Self-taught developer. Builder of small, deliberate software.",
+  "url": "https://rohithilluri.github.io/",
+  "email": "mailto:rohith.illuri@gmail.com",
+  "jobTitle": "Software Developer",
+  "sameAs": [
+    "https://github.com/rohithIlluri",
+    "https://linkedin.com/in/rohithilluri"
+  ],
+  "knowsAbout": [
+    "JavaScript", "React", "Node.js", "Python",
+    "PostgreSQL", "Docker", "AWS", "GraphQL",
+    "Neural Networks", "WebSockets", "Web Performance"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Rohith Illuri — Portfolio",
+  "url": "https://rohithilluri.github.io/",
+  "inLanguage": "en",
+  "author": { "@type": "Person", "name": "Rohith Illuri" }
+}
+</script>
 </head>
 <body>
 
@@ -936,9 +991,9 @@
       <div class="invite reveal">EVERY GOOD COLLABORATION<br/>BEGAN AS <em>A LETTER.</em></div>
 
       <div class="contact-row reveal">
-        <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener">GitHub</a>
-        <a href="mailto:rohith.illuri@gmail.com">Email</a>
-        <a href="https://twitter.com/" target="_blank" rel="noopener">Twitter</a>
+        <a href="https://github.com/rohithIlluri" target="_blank" rel="noopener me">GitHub</a>
+        <a href="mailto:rohith.illuri@gmail.com" rel="me">Email</a>
+        <a href="https://twitter.com/" target="_blank" rel="noopener me">Twitter</a>
       </div>
 
 

@@ -2,6 +2,9 @@
 
 > Self-taught developer. Portfolio is a single static HTML page with a dark antiquarian aesthetic — no frameworks, no build step.
 
+Last updated: 2026-10-23
+Canonical: https://rohithilluri.github.io/
+
 ## About
 
 Rohith is a self-taught developer who likes shipping things, performance work, and clean UIs. Outside of code: heavy lifting, AC/DC at unreasonable volumes, and Tarantino films.
